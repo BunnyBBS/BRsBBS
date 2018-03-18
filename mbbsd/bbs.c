@@ -409,6 +409,7 @@ set_board(void)
     fprintf(fp2,"\n國家安全局通知\n站長%s進入您的隱藏看板：%s，理由是%s\n如果您認為該站長的行為不當請立即至總統室（看板SYSOP）提報。\n若無其他異況可直接略過本通知。", cuser.userid, bp->brdname, reason);
 	fclose(fp2);
     sendAlert(bp->BM, "[通知] 有站長進入您的看版", "[國家安全局]", "etc/intoHide.log");
+    post_file(BN_SECURITY, "[通知] 有站長進入隱藏看版", "etc/intoHide.log", "[國家安全局]");
 	}
 
     board_note_time = &bp->bupdate;
