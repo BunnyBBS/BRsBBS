@@ -327,6 +327,60 @@ save_violatelaw(void)
 
 static time4_t  *board_note_time = NULL;
 
+//站長進入隱板警訊系統start
+//stable version released at 2018.03.18
+void keeplog(FILE *fin, char *board, char *title, char *owner) {
+    fileheader_t fhdr;
+    char genbuf[256], buf[512];
+    FILE *fout;
+    int bid;
+    
+    sprintf(genbuf, BBSHOME "/home/%c/%s", board[0], board);
+    stampfile(genbuf, &fhdr);
+    
+    if(!(fout = fopen(genbuf, "w"))) {
+	perror(genbuf);
+	return;
+    }
+    
+    while(fgets(buf, 512, fin))
+	fputs(buf, fout);
+    
+    fclose(fin);
+    fclose(fout);
+    
+    strncpy(fhdr.title, title, sizeof(fhdr.title) - 1);
+    fhdr.title[sizeof(fhdr.title) - 1] = '\0';
+    
+    strcpy(fhdr.owner, owner);
+    sprintf(genbuf, BBSHOME "/home/%c/%s/.DIR", board[0], board);
+    append_record(genbuf, &fhdr, sizeof(fhdr));
+    /* XXX: bid of cache.c's getbnum starts from 1 */
+    if((bid = getbnum(board)) > 0)
+	touchbtotal(bid);
+
+}
+int sendAlert(char *board, char *title, char *owner, FILE *fin)
+{
+    FILE *fp;
+
+    attach_SHM();
+    resolve_boards();
+    
+    if(strcmp(fin, "-") == 0)
+	fp = stdin;
+    else {
+	fp = fopen(fin, "r");
+	if(!fp) {
+	    perror(fin);
+	    return 1;
+	}
+    }
+    keeplog(fp, board, title, owner);
+    return 0;
+}
+//站長進入隱板警訊系統end
+
 void
 set_board(void)
 {
@@ -342,8 +396,20 @@ set_board(void)
     if( HasUserPerm(PERM_SYSOP) &&
 	(bp->brdattr & BRD_HIDE) &&
 	!is_BM_cache(bp - bcache + 1) &&
-	!is_hidden_board_friend((int)(bp - bcache) + 1, currutmp->uid) )
-	vmsg("進入未經授權看板");
+	!is_hidden_board_friend((int)(bp - bcache) + 1, currutmp->uid) ){
+	FILE           *fp, *fp2;
+    char            reason[100];
+
+    clear();
+
+    unlink("etc/intoHide.log");
+    fp2 = fopen("etc/intoHide.log", "w");
+
+    getdata(0, 0, "進入隱藏看板，請輸入正當理由:", reason, 40, DOECHO);
+    fprintf(fp2,"\n國家安全局通知\n站長%s進入您的隱藏看板：%s，理由是%s\n如果您認為該站長的行為不當請立即至總統室（看板SYSOP）提報。\n若無其他異況可直接略過本通知。", cuser.userid, bp->brdname, reason);
+	fclose(fp2);
+    sendAlert(bp->BM, "[通知] 有站長進入您的看版", "[國家安全局]", "etc/intoHide.log");
+	}
 
     board_note_time = &bp->bupdate;
 
