@@ -951,28 +951,27 @@ static const commands_t moneylist[] = {
 };
 
 static const commands_t      cmdlist[] = {
-    {admin, PERM_SYSOP,
-				"0Admin   | 系統維護區"},
-    {Announce,	0,		"Announce | 精華公佈欄"},
+    {admin, PERM_SYSOP, "0Admin      〉系統維護區〈"},
+    {Announce,	0,		"Announce    〉精華公佈欄〈"},
 #ifdef DEBUG
-    {Favorite,	0,		"Favorite | 我的最不愛"},
+    {Favorite,	0,		"Favorite    〉我的最不愛〈"},
 #else
-    {Favorite,	0,		"Favorite |  我的最愛 "},
+    {Favorite,	0,		"Favorite    〉 我的最愛 〈"},
 #endif
-    {Class,	0,		"Class    | 分組討論區"},
+    {Class,	0,			"Class       〉分組討論區〈"},
     // TODO 目前很多人被停權時會變成 -R-1-3 (PERM_LOGINOK, PERM_VIOLATELAW,
     // PERM_NOREGCODE) 沒有 PERM_READMAIL，但這樣麻煩的是他們就搞不懂發生什麼事
-    {Mail, 	PERM_LOGINOK,     "Mail     | 私人信件區"},
+    {Mail, PERM_LOGINOK,"Mail        〉私人信件區〈"},
     // 有些 bot 喜歡整天 query online accounts, 所以聊天改為 LOGINOK
-    {Talk, 	PERM_LOGINOK,	"Talk     | 休閒聊天區"},
-    {User, 	PERM_BASIC,	"User     | 個人設定區"},
-    {Xyz, 	0,		"Xyz      | 系統資訊區"},
-    {Play_Play, PERM_LOGINOK, 	"Play     | 娛樂與休閒"},
-    {Name_Menu, PERM_LOGINOK,	"Namelist | 編特別名單"},
+    {Talk, PERM_LOGINOK,"Talk        〉休閒聊天區〈"},
+    {User, 	PERM_BASIC,	"User        〉個人設定區〈"},
+    {Xyz, 	0,			"Xyz         〉系統資訊區〈"},
+    {Play_Play, PERM_LOGINOK,"Play        〉娛樂與休閒〈"},
+    {Name_Menu, PERM_LOGINOK,"Namelist    〉編特別名單〈"},
 #ifdef DEBUG
     {Goodbye, 	0, 		"Goodbye  再見再見再見再見"},
 #else
-    {Goodbye, 	0, 		"Goodbye  |  秘境出口 "},
+    {Goodbye, 	0, 		"Goodbye     〉 秘境出口 〈"},
 #endif
     {NULL, 	0, 		NULL}
 };
