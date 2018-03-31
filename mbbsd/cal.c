@@ -561,12 +561,12 @@ p_sysinfo(void)
 	   build_time);
 	  prints("目前運行的程式是以Ptt的PttBBS(https://github.com/ptt/pttbbs)為基礎,\n");
 	  prints("由本站系統站長my1938進行程式調校修改及新增功能後編譯而成。\n");
-	  prints("原始碼：https://github.com/my1938/pttbbs\n");
     if (*build_remote) {
       prints("基礎版本: %s %s %s\n", build_remote, build_origin, build_hash);
     }
-	   prints("運行版本: BRsBBS 1.2 stable version (2018.03.18)\n");
-	   prints("更新紀錄：\n1.新增：站長進入隱板警訊系統\n");
+	   prints("運行版本: BRsBBS 1.2.1 Beta version (2018.03.31)\n");
+	   prints("更新紀錄：\n1.修正：站長進入隱板警訊系統\n");
+	   prints("2.修改：註冊需閱讀使用者條款\n");
 
 #ifdef REPORT_PIAIP_MODULES
     outs("\n" ANSI_COLOR(1;30)
