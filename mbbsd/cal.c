@@ -564,9 +564,9 @@ p_sysinfo(void)
     if (*build_remote) {
       prints("基礎版本: %s %s %s\n", build_remote, build_origin, build_hash);
     }
-	   prints("運行版本: BRsBBS 1.2.1 Beta version (2018.03.31)\n");
+	   prints("運行版本: BRsBBS 1.2.1 Stable version (2018.04.01 釋出)\n");
 	   prints("更新紀錄：\n1.修正：站長進入隱板警訊系統\n");
-	   prints("2.修改：註冊需閱讀使用者條款\n");
+	   prints("2.修正：修正轉錄選項\n");
 
 #ifdef REPORT_PIAIP_MODULES
     outs("\n" ANSI_COLOR(1;30)

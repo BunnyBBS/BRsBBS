@@ -346,6 +346,7 @@ set_board(void)
 	!is_hidden_board_friend((int)(bp - bcache) + 1, currutmp->uid) ){
 		FILE           *fp, *fp2;
 		char            reason[100];
+		char * bmStr = bp->BM;
 		char * bmArr;
 		int i;
 		struct tm      ptime;
@@ -359,12 +360,13 @@ set_board(void)
 		fp2 = fopen("etc/intoHide.log", "w");
 
 		getdata(0, 0, "進入隱藏看板，請輸入正當理由:", reason, 40, DOECHO);
-		fprintf(fp2,"\n國家安全局通知\n站長%s進入您的隱藏看板：%s，時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，理由是%s\n如果您認為該站長的行為不當請立即至總統室（看板SYSOP）提報。\n若無其他異況可直接略過本通知。", cuser.userid, bp->brdname,ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason);
+		fprintf(fp2,"\n國家安全局通知\n站長%s進入您的隱藏看板：%s，\n時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，\n理由是%s\n如果您認為該站長的行為不當請立即至總統室（看板SYSOP）提報。\n若無其他異況可直接略過本通知。", cuser.userid, bp->brdname,ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason);
 		fclose(fp2);
 		if(does_board_have_public_bm(bp)) {
-			bmArr = strtok(bp->BM,"/");
+			bmArr = strtok(bmStr,"/");
 			while(bmArr != NULL){
-				mail_id(bmArr, "[通知] 有站長進入您的看版", "[國家安全局]", "etc/intoHide.log");
+				mail_id(bp->BM, "[通知] 有站長進入您的看版", "etc/intoHide.log", "[國家安全局]");
+				bmArr = strtok(NULL,"/");
 			}
 		}
 		post_file(BN_SECURITY, "[通知] 有站長進入隱藏看版", "etc/intoHide.log", "[國家安全局]");
@@ -2156,7 +2158,7 @@ cross_post(int ent, fileheader_t * fhdr, const char *direct)
     // 反正本來就只是想解決「不小心」或是「假裝不小心」用到的情形。
     // tn_safe_strip_board(xtitle, xboard);
 
-    getdata(2, 0, "(S)存檔 (L)站內 (Q)取消？[Q] ", genbuf, 3, LCECHO);
+    getdata(2, 0, "(S)存檔 (Q)取消？[Q] ", genbuf, 3, LCECHO);
 
     if (genbuf[0] != 'l' && genbuf[0] != 's')
         return FULLUPDATE;
