@@ -26,7 +26,7 @@
 // #define DBG_DRYRUN	// Dry-run test (mainly for RegForm2)
 
 #define MSG_ERR_MAXTRIES "您嘗試錯誤的輸入次數太多，請下次再來吧"
-//#define HAVE_USERAGREEMENT
+#define HAVE_USERAGREEMENT "etc/UserAgreement"
 
 ////////////////////////////////////////////////////////////////////////////
 // Value Validation
