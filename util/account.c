@@ -455,15 +455,15 @@ main(/*int argc, char **argv*/)
 	    fclose(fp);
 	}
 
-	if (tm_now.tm_wday == 0)
-	    //keeplog("etc/week", BN_RECORD, "本週熱門話題", NULL);
+	/*if (tm_now.tm_wday == 0)
+	    keeplog("etc/week", BN_RECORD, "本週熱門話題", NULL);
 
 	if (tm_now.tm_mday == 1)
-	    //keeplog("etc/month", BN_RECORD, "本月熱門話題", NULL);
+	    keeplog("etc/month", BN_RECORD, "本月熱門話題", NULL);
 
 	if (tm_now.tm_yday == 1)
-	    //keeplog("etc/year", BN_RECORD, "年度熱門話題", NULL);
-    } else if (tm_now.tm_hour == 3 && tm_now.tm_wday == 6) {
+	    keeplog("etc/year", BN_RECORD, "年度熱門話題", NULL);*/
+    if (tm_now.tm_hour == 3 && tm_now.tm_wday == 6) {
 	const char fn1[] = "tmp";
 	const char fn2[] = "suicide";
 
