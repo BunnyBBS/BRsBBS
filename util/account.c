@@ -412,11 +412,11 @@ main(/*int argc, char **argv*/)
         Copy("etc/today", "etc/yesterday");
 	/* system("rm -f note.dat"); */
 
-	keeplog("etc/today", BN_RECORD, "上站人次統計", NULL);
+	//keeplog("etc/today", BN_RECORD, "上站人次統計", NULL);
 	keeplog(FN_MONEY, BN_SECURITY, "本日金錢往來記錄", NULL);
 	keeplog("etc/illegal_money", BN_SECURITY, "本日違法賺錢記錄", NULL);
 	keeplog("etc/osong.log", BN_SECURITY, "本日點歌記錄", NULL);
-	keeplog("etc/chicken", BN_RECORD, "雞場報告", NULL);
+	//keeplog("etc/chicken", BN_RECORD, "雞場報告", NULL);
 
         // Restore etc/yesterday because keeplog removes it.
         Copy("etc/yesterday", "etc/today");
@@ -456,13 +456,13 @@ main(/*int argc, char **argv*/)
 	}
 
 	if (tm_now.tm_wday == 0)
-	    keeplog("etc/week", BN_RECORD, "本週熱門話題", NULL);
+	    //keeplog("etc/week", BN_RECORD, "本週熱門話題", NULL);
 
 	if (tm_now.tm_mday == 1)
-	    keeplog("etc/month", BN_RECORD, "本月熱門話題", NULL);
+	    //keeplog("etc/month", BN_RECORD, "本月熱門話題", NULL);
 
 	if (tm_now.tm_yday == 1)
-	    keeplog("etc/year", BN_RECORD, "年度熱門話題", NULL);
+	    //keeplog("etc/year", BN_RECORD, "年度熱門話題", NULL);
     } else if (tm_now.tm_hour == 3 && tm_now.tm_wday == 6) {
 	const char fn1[] = "tmp";
 	const char fn2[] = "suicide";
