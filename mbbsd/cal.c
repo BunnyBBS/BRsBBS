@@ -559,12 +559,12 @@ p_sysinfo(void)
 #endif
            Cdatelite(&start_time),
 	   build_time);
-	  prints("\n程式是以PTT（批踢踢實業坊 telnet://ptt.cc）所開發釋出的PttBBS（https://github.com/ptt/pttbbs）為基礎，由BunnyBBS（大兔的神密世界 telnet://bunnybbs.nctu.me）工程局長my1938進行程式調校、修改及新增功能後，重新以BRsBBS編列版本後公開釋出並運用於BunnyBBS。\n\n");
+	  prints("\n程式是以PTT（批踢踢實業坊 telnet://ptt.cc）所開發釋出的PttBBS（https://github.com/ptt/pttbbs）為基礎，由BunnyBBS（大兔的神密世界 telnet://bunnybbs.nctu.me）工程局長my1938進行程式調校、修改及增加部分功能後，重新以BRsBBS編列版本後公開釋出並運用於BunnyBBS。\n\n");
     if (*build_remote) {
       prints("基礎版本: %s %s %s\n", build_remote, build_origin, build_hash);
     }
 	   prints("運行版本: BRsBBS 1.2.2 Stable version (2018.04.15 釋出)\n");
-	   prints("更新紀錄：\n  修正：取消Record板部分文章");
+	   prints("更新紀錄：\n  修正：取消Record板部分文章\n");
 
 #ifdef REPORT_PIAIP_MODULES
     outs("\n" ANSI_COLOR(1;30)
