@@ -96,10 +96,13 @@ int parse_bindports_mode(const char *fn)
 static int startbbs_defaults()
 {
     // default: start listening ports with mbbsd.
-    printf("starting mbbsd by at 23, 443, 3000-3010\n");
+    /*printf("starting mbbsd by at 23, 443, 3000-3010\n");
     execl(BBSHOME "/bin/mbbsd", "mbbsd", "-d", "-p23", "-p443",
 	    "-p3000", "-p3001", "-p3002", "-p3003", "-p3004", "-p3005",
-	    "-p3006", "-p3007", "-p3008", "-p3009", "-p3010", NULL);
+	    "-p3006", "-p3007", "-p3008", "-p3009", "-p3010", NULL);*/
+	printf("starting mbbsd by at 23\n");
+    execl(BBSHOME "/bin/mbbsd", "mbbsd", "-d", "-p23", NULL);
+	/*備註：停用port23以外的端口，測試中，可能會發生問題。107.04.23*/
 
     printf("starting daemons failed\n");
     return 1;
