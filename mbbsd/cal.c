@@ -564,7 +564,7 @@ p_sysinfo(void)
       prints("基礎版本: %s %s %s\n", build_remote, build_origin, build_hash);
     }
 	   prints("運行版本：BRsBBS 1.3 Stable version (2018.04.24 釋出)\n");
-	   prints("更新紀錄：\n  修正：站長看不到隱形使用者\n");
+	   prints("更新紀錄：\n  修正：站長不再看到隱形使用者\n");
 
 #ifdef REPORT_PIAIP_MODULES
     outs("\n" ANSI_COLOR(1;30)
