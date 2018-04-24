@@ -64,7 +64,8 @@ isvisible_stat(const userinfo_t * me, const userinfo_t * uentp, int fri_stat)
     else if ((me->userlevel & PERM_SYSOP) ||
 	     ((fri_stat & HRM) && (fri_stat & HFM)))
 	/* 站長看的見任何人 */
-	return 1;
+	return 0;
+	/*大兔：107.4.24改為0，（BRsBBS 1.3）站長不再看見隱形*/
 
     if (uentp->invisible && !(me->userlevel & PERM_SEECLOAK))
 	return 0;
