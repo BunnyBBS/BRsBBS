@@ -420,21 +420,11 @@ set_board(void)
 
 #ifdef QUERY_ARTICLE_URL
 
-
-static int
-IsBoardForWeb(const boardheader_t *bp) {
-    if (!bp || !IS_OPENBRD(bp))
-        return 0;
-    if (strcmp(bp->brdname, BN_ALLPOST) == 0)
-	return 0;
-    return 1;
-}
-
 static int
 GetWebUrl(const boardheader_t *bp, const fileheader_t *fhdr, char *buf,
           size_t szbuf)
 {
-    const char *folder = bp->brdname, *fn = fhdr->filename, *ext = ".html";
+    const char *folder = bp->brdname, *fn = fhdr->filename;
 
 #ifdef USE_AID_URL
     char aidc[32] = "";
@@ -444,14 +434,13 @@ GetWebUrl(const boardheader_t *bp, const fileheader_t *fhdr, char *buf,
 
     aidu2aidc(aidc, aidu);
     fn = aidc;
-    ext = "";
 #endif
 
     if (!fhdr || !*fhdr->filename || *fhdr->filename == 'L' ||
         *fhdr->filename == '.')
 	return 0;
 
-    return snprintf(buf, szbuf, URL_PREFIX "/%s/%s%s", folder, fn, ext);
+    return snprintf(buf, szbuf, URL_PREFIX "/%s", fn);
 }
 
 #endif // QUERY_ARTICLE_URL
@@ -1507,13 +1496,11 @@ do_post_article(int edflags)
     stampfile_u(fpath, &postfile);
 
 #ifdef QUERY_ARTICLE_URL
-    if (IsBoardForWeb(bp)) {
-        char url[STRLEN];
-        if (GetWebUrl(bp, &postfile, url, sizeof(url))) {
-            log_filef(genbuf, LOG_CREAT,
-                      "※ " URL_DISPLAYNAME ": %s\n", url);
-        }
-    }
+	char url[STRLEN];
+	if (GetWebUrl(bp, &postfile, url, sizeof(url))) {
+		log_filef(genbuf, LOG_CREAT,
+				  "※ " URL_DISPLAYNAME ": %s\n", url);
+	}
 #endif
 
     if (append_record(buf, &postfile, sizeof(postfile)) == -1)
@@ -2034,7 +2021,7 @@ forward_post(int ent GCC_UNUSED, fileheader_t * fhdr, const char *direct) {
     if (currbid) {
         char buf[STRLEN];
         const boardheader_t *bp = getbcache(currbid);
-        if (bp && IsBoardForWeb(bp) &&
+        if (bp &&
             GetWebUrl(bp, fhdr, buf, sizeof(buf))) {
             move(b_lines - 4, 0); clrtobot();
             prints("\n" URL_DISPLAYNAME ": " ANSI_COLOR(1)
@@ -3776,8 +3763,6 @@ view_postinfo(int ent GCC_UNUSED, const fileheader_t * fhdr,
 
 	if (!bp) {
 	    prints("│\n");
-	} else if (!IsBoardForWeb(bp)) {
-	    prints("│ 本看板目前不提供" URL_DISPLAYNAME " \n");
 	} else if (!GetWebUrl(bp, fhdr, url, sizeof(url))) {
 	    prints("│ 本文章不提供" URL_DISPLAYNAME " \n");
         } else {
