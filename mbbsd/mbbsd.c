@@ -800,7 +800,7 @@ login_query(char *ruid)
 	prints("current pid: %d ", getpid());
 #endif
 
-	if (getdata(20, 0, "請輸入代號或以 new 註冊: ",
+	if (getdata(20, 0, "請輸入帳號或以 new 註冊: ",
 		uid, sizeof(uid), DOECHO) < 1)
 	{
 	    // got nothing
