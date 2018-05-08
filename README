@@ -1,11 +1,11 @@
-程式是以PTT（批踢踢實業坊 telnet://ptt.cc）所開發釋出的PttBBS（https://github.com/ptt/pttbbs）為基礎，由BunnyBBS（大兔的神密世界 telnet://bunnybbs.nctu.me）工程局長my1938進行程式調校、修改及新增功能後，重新以BRsBBS編列版本後公開釋出並運用於BunnyBBS。
+程式是以PTT（批踢踢實業坊 telnet://ptt.cc）所開發釋出的PttBBS（https://github.com/ptt/pttbbs）為基礎，由BunnyBBS（大兔的神密世界 telnet://bunnybbs.tk）工程局長my1938進行程式調校、修改及新增功能後，重新以BRsBBS編列版本後公開釋出並運用於BunnyBBS。
 使用時請遵守PTT（批踢踢實業坊）的規定。
 
 若有任何問題，歡迎與我聯繫。
-通訊地址：台南水交社郵局第70號信箱
+通訊地址：70099 台南水交社郵局第70號信箱
 Address：P.O.BOX 70 Tainan Shueijiaoshe, Tainan City 70099, Taiwan (R.O.C.)
 E-mail：my1938.tw@gmail.com
-PTT.cc/PTT2.cc ID：my1938
+PTT.cc ID：my1938
 
 快速安裝請參考 docs/INSTALL 以及 docs/FAQ
 詳細文件請見 docs/ 或是 http://github.com/ptt/pttbbs/wiki
