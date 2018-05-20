@@ -2078,15 +2078,13 @@ draw_pickup(int drawall, pickup_t * pickup, int pickup_way,
 	pager[0] = (friend & HRM) ? 'X' : pagerchar[uentp->pager % 5];
 	pager[1] = (uentp->invisible ? ')' : ' ');
 	pager[2] = 0;
-	
-	char isFriend = fri_stat & IFH;
-	
+
 	/* color of userid, userid */
 	if(fcolor[state])
 	    snprintf(xuid, sizeof(xuid), "%s%s",
 		    fcolor[state], uentp->userid);
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，因為找不到更源頭的地方，只好在這裡動手腳...直接做一個判斷式，隱身者沒加站長好友就不顯示*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(isFriend)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(friend & IFH)){
 			vs_cols(ulist_coldef, cols, ULISTCOLS,num,"!","<Hiddden>","隱身","","","","","");
 		}else{
 			vs_cols(ulist_coldef, cols, ULISTCOLS,
