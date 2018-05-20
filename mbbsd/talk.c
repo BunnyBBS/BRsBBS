@@ -2079,22 +2079,26 @@ draw_pickup(int drawall, pickup_t * pickup, int pickup_way,
 	    snprintf(xuid, sizeof(xuid), "%s%s",
 		    fcolor[state], uentp->userid);
 
-	vs_cols(ulist_coldef, cols, ULISTCOLS,
-                // Columns data (9 params)
-		num,
-                pager,
-		fcolor[state] ? xuid : uentp->userid,
-		uentp->nickname,
-                descript(show_mode, uentp, uentp->pager & !(friend & HRM),
-                         description, sizeof(description)),
+	if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true){
+		vs_cols(ulist_coldef, cols, ULISTCOLS,num,"!","Hiddden user","","","","","","");
+	}else{
+		vs_cols(ulist_coldef, cols, ULISTCOLS,
+                	// Columns data (9 params)
+			num,
+        	        pager,
+			fcolor[state] ? xuid : uentp->userid,
+			uentp->nickname,
+                	descript(show_mode, uentp, uentp->pager & !(friend & HRM),
+                        	 description, sizeof(description)),
 #if defined(SHOWBOARD) && defined(DEBUG)
-		show_board ? (uentp->brc_id == 0 ? "" :
-		    getbcache(uentp->brc_id)->brdname) :
+			show_board ? (uentp->brc_id == 0 ? "" :
+			    getbcache(uentp->brc_id)->brdname) :
 #endif
-                    modestring(uentp, 0),
-                mind,
-		idlestr,
-	        "");
+                	    modestring(uentp, 0),
+                	mind,
+			idlestr,
+	        	"");
+	}
     }
 }
 
@@ -2544,14 +2548,18 @@ userlist(void)
 	    case KEY_ENTER:
 	    case 't':
 		if (HasBasicUserPerm(PERM_LOGINOK)) {
-		    if (uentp->pid != currpid &&
-			    strcmp(uentp->userid, cuser.userid) != 0) {
-			move(1, 0);
-			clrtobot();
-			move(3, 0);
-			my_talk(uentp, fri_stat, 0);
-			redrawall = redraw = 1;
-		    }
+			if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true){
+			    break;
+			}else{
+			    if (uentp->pid != currpid &&
+				    strcmp(uentp->userid, cuser.userid) != 0) {
+				move(1, 0);
+				clrtobot();
+				move(3, 0);
+				my_talk(uentp, fri_stat, 0);
+				redrawall = redraw = 1;
+			    }
+			}
 		}
 		break;
 	    case 'K':
