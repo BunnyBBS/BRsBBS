@@ -39,8 +39,9 @@ iswritable_stat(const userinfo_t * uentp, int fri_stat)
     if (uentp == currutmp)
 	return 0;
 
-    if (HasUserPerm(PERM_SYSOP))
-	return 1;
+    /*if (HasUserPerm(PERM_SYSOP))
+	return 1;*/
+	/*大兔：107.05.20 BRsBBS 1.3.2 註解掉這裡（不給站長看見隱形）*/
 
     if (!HasBasicUserPerm(PERM_LOGINOK) || HasUserPerm(PERM_VIOLATELAW))
 	return 0;
@@ -61,12 +62,14 @@ isvisible_stat(const userinfo_t * me, const userinfo_t * uentp, int fri_stat)
 
     if (PERM_HIDE(uentp) && !(PERM_HIDE(me)))	/* 對方紫色隱形而你沒有 */
 	return 0;
-    else if ((me->userlevel & PERM_SYSOP) ||
-	     ((fri_stat & HRM) && (fri_stat & HFM)))
+    /*else if ((me->userlevel & PERM_SYSOP) ||
+	     ((fri_stat & HRM) && (fri_stat & HFM)))*/
 	/* 站長看的見任何人 */
-	return 1;
-	/*大兔：107.4.24改為0，（BRsBBS 1.3）站長不再看見隱形
-	107.5.1改回1（BRsBBS 1.3.1），只改這裡會不穩定站長連沒隱形都看不到。在虛擬機上正常但在正式機卻異常，之後再找問題。*/
+	/*return 1;*/
+	/*大兔：
+	107.04.24 BRsBBS 1.3 改為0，站長不再看見隱形
+	107.05.01 BRsBBS 1.3.1 Beta 改回1，只改這裡會不穩定站長連沒隱形都看不到。
+	107.05.20 BRsBBS 1.3.2 註解掉這裡（不給站長看見隱形）*/
 
     if (uentp->invisible && !(me->userlevel & PERM_SEECLOAK))
 	return 0;
@@ -112,7 +115,9 @@ modestring(const userinfo_t * uentp, int simple)
 	word = ModeTypeTable[mode];
 
     fri_stat = friend_stat(currutmp, uentp);
-    if (!(HasUserPerm(PERM_SYSOP) || HasUserPerm(PERM_SEECLOAK)) &&
+	/*大兔：107.05.20 BRsBBS 1.3.2 站長看不到動態*/
+    /*if (!(HasUserPerm(PERM_SYSOP) || HasUserPerm(PERM_SEECLOAK)) &&*/
+	if HasUserPerm(PERM_SEECLOAK) &&
 	((uentp->invisible || (fri_stat & HRM)) &&
 	 !((fri_stat & HFM) && (fri_stat & HRM))))
 	return notonline;
@@ -130,7 +135,7 @@ modestring(const userinfo_t * uentp, int simple)
 	    snprintf(modestr, sizeof(modestr), "回應呼叫");
     }
     else if (!mode && *uentp->chatid == 3)
-	snprintf(modestr, sizeof(modestr), "水球準備中");
+	snprintf(modestr, sizeof(modestr), "水球正在灌水");
     else if (
 #ifdef NOKILLWATERBALL
 	     uentp->msgcount > 0
@@ -143,7 +148,7 @@ modestring(const userinfo_t * uentp, int simple)
 	    {"", "一", "兩", "三", "四", "五",
 		 "六", "七", "八", "九"};
 	    snprintf(modestr, sizeof(modestr),
-		     "中%s顆水球", cnum[(int)(uentp->msgcount)]);
+		     "中了%s顆水球", cnum[(int)(uentp->msgcount)]);
 	} else
 	    snprintf(modestr, sizeof(modestr), "不行了 @_@");
     else if (!mode)
@@ -2078,27 +2083,27 @@ draw_pickup(int drawall, pickup_t * pickup, int pickup_way,
 	if(fcolor[state])
 	    snprintf(xuid, sizeof(xuid), "%s%s",
 		    fcolor[state], uentp->userid);
-
-	if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true){
-		vs_cols(ulist_coldef, cols, ULISTCOLS,num,"!","Hiddden user","","","","","","");
-	}else{
-		vs_cols(ulist_coldef, cols, ULISTCOLS,
-                	// Columns data (9 params)
-			num,
-        	        pager,
-			fcolor[state] ? xuid : uentp->userid,
-			uentp->nickname,
-                	descript(show_mode, uentp, uentp->pager & !(friend & HRM),
-                        	 description, sizeof(description)),
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，因為找不到更源頭的地方，只好在這裡動手腳...直接做一個判斷式，隱身者沒加站長好友就不顯示*/
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+			vs_cols(ulist_coldef, cols, ULISTCOLS,num,"!","<Hiddden>","隱身","","","","","");
+		}else{
+			vs_cols(ulist_coldef, cols, ULISTCOLS,
+					// Columns data (9 params)
+					num,
+					pager,
+					fcolor[state] ? xuid : uentp->userid,
+					uentp->nickname,
+					descript(show_mode, uentp, uentp->pager & !(friend & HRM),
+							 description, sizeof(description)),
 #if defined(SHOWBOARD) && defined(DEBUG)
-			show_board ? (uentp->brc_id == 0 ? "" :
-			    getbcache(uentp->brc_id)->brdname) :
+					show_board ? (uentp->brc_id == 0 ? "" :
+					getbcache(uentp->brc_id)->brdname) :
 #endif
-                	    modestring(uentp, 0),
-                	mind,
-			idlestr,
-	        	"");
-	}
+					modestring(uentp, 0),
+					mind,
+					idlestr,
+					"");
+		}
     }
 }
 
@@ -2449,7 +2454,7 @@ userlist(void)
 			msg.pid = currpid;
 			strlcpy(msg.userid, cuser.userid, sizeof(msg.userid));
 			snprintf(msg.last_call_in, sizeof(msg.last_call_in),
-				 ANSI_COLOR(1;33;41) "[總統級通知]%s" ANSI_RESET, genbuf);
+				 ANSI_COLOR(1;33;41) "%s" ANSI_RESET, genbuf);
 			for (i = 0; i < SHM->UTMPnumber; ++i) {
 			    // XXX why use sorted list?
 			    //     can we just scan uinfo with proper checking?
@@ -2525,7 +2530,10 @@ userlist(void)
 		break;
 
 	    case 'u':		/* 線上修改資料 */
-		if (HasUserPerm(PERM_ACCOUNTS|PERM_SYSOP)) {
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+			break;
+		}else if (HasUserPerm(PERM_ACCOUNTS|PERM_SYSOP)) {
 		    int             id;
 		    userec_t        muser;
 		    vs_hdr("使用者設定");
@@ -2547,33 +2555,41 @@ userlist(void)
 	    case KEY_RIGHT:
 	    case KEY_ENTER:
 	    case 't':
-		if (HasBasicUserPerm(PERM_LOGINOK)) {
-			if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true){
-			    break;
-			}else{
-			    if (uentp->pid != currpid &&
-				    strcmp(uentp->userid, cuser.userid) != 0) {
-				move(1, 0);
-				clrtobot();
-				move(3, 0);
-				my_talk(uentp, fri_stat, 0);
-				redrawall = redraw = 1;
-			    }
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+			break;
+		}else if (HasBasicUserPerm(PERM_LOGINOK)) {
+			if (uentp->pid != currpid &&
+				strcmp(uentp->userid, cuser.userid) != 0) {
+			move(1, 0);
+			clrtobot();
+			move(3, 0);
+			my_talk(uentp, fri_stat, 0);
+			redrawall = redraw = 1;
 			}
 		}
 		break;
+		
 	    case 'K':
 		if (HasUserPerm(PERM_ACCOUNTS|PERM_SYSOP)) {
 		    my_kick(uentp);
 		    redrawall = redraw = 1;
 		}
 		break;
+		
 	    case 'w':
-		if (call_in(uentp, fri_stat))
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+			break;
+		}else if (call_in(uentp, fri_stat))
 		    redrawall = redraw = 1;
 		break;
+		
 	    case 'a':
-		if (HasBasicUserPerm(PERM_LOGINOK) && !(fri_stat & IFH)) {
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+			break;
+		}else if (HasBasicUserPerm(PERM_LOGINOK) && !(fri_stat & IFH)) {
 		    if (vans("確定要加入好友嗎 [N/y]") == 'y') {
 			friend_add(uentp->userid, FRIEND_OVERRIDE,uentp->nickname);
 			friend_load(FRIEND_OVERRIDE, 0);
@@ -2619,14 +2635,20 @@ userlist(void)
 		*/
 
 	    case 'g':
-		if (HasBasicUserPerm(PERM_LOGINOK) && cuser.money) {
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+			break;
+		}else if (HasBasicUserPerm(PERM_LOGINOK) && cuser.money) {
 		    give_money_ui(uentp->userid);
 		    redrawall = redraw = 1;
 		}
 		break;
 
 	    case 'm':
-		if (HasBasicUserPerm(PERM_LOGINOK)) {
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+			break;
+		}else if (HasBasicUserPerm(PERM_LOGINOK)) {
 		    char   userid[IDLEN + 1];
 		    strlcpy(userid, uentp->userid, sizeof(userid));
 		    vs_hdr("寄  信");
@@ -2638,6 +2660,10 @@ userlist(void)
 		break;
 
 	    case 'q':
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+			break;
+		}
 		my_query(uentp->userid);
 		setutmpmode(LUSERS);
 		redrawall = redraw = 1;
@@ -2650,14 +2676,20 @@ userlist(void)
 		break;
 
 	    case 'c':
-		if (HasBasicUserPerm(PERM_LOGINOK)) {
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+			break;
+		}else if (HasBasicUserPerm(PERM_LOGINOK)) {
 		    chicken_query(uentp->userid);
 		    redrawall = redraw = 1;
 		}
 		break;
 
 	    case 'l':
-		if (HasBasicUserPerm(PERM_LOGINOK)) {
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+			break;
+		}else if (HasBasicUserPerm(PERM_LOGINOK)) {
 		    t_display();
 		    redrawall = redraw = 1;
 		}
