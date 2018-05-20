@@ -39,9 +39,8 @@ iswritable_stat(const userinfo_t * uentp, int fri_stat)
     if (uentp == currutmp)
 	return 0;
 
-    /*if (HasUserPerm(PERM_SYSOP))
-	return 1;*/
-	/*大兔：107.05.20 BRsBBS 1.3.2 註解掉這裡（不給站長看見隱形）*/
+    if (HasUserPerm(PERM_SYSOP))
+	return 1;
 
     if (!HasBasicUserPerm(PERM_LOGINOK) || HasUserPerm(PERM_VIOLATELAW))
 	return 0;
@@ -62,11 +61,10 @@ isvisible_stat(const userinfo_t * me, const userinfo_t * uentp, int fri_stat)
 
     if (PERM_HIDE(uentp) && !(PERM_HIDE(me)))	/* 對方紫色隱形而你沒有 */
 	return 0;
-    /*else if ((me->userlevel & PERM_SYSOP) ||
-	     ((fri_stat & HRM) && (fri_stat & HFM)))*/
+    else if ((me->userlevel & PERM_SYSOP) ||
+	     ((fri_stat & HRM) && (fri_stat & HFM)))
 	/* 站長看的見任何人 */
-	/*return 1;*/
-	/*大兔：107.05.20 BRsBBS 1.3.2 註解掉這裡（不給站長看見隱形）*/
+	return 1;
 
     if (uentp->invisible && !(me->userlevel & PERM_SEECLOAK))
 	return 0;
@@ -113,8 +111,8 @@ modestring(const userinfo_t * uentp, int simple)
 
     fri_stat = friend_stat(currutmp, uentp);
 	/*大兔：107.05.20 BRsBBS 1.3.2 站長看不到動態*/
-    /*if (!(HasUserPerm(PERM_SYSOP) || HasUserPerm(PERM_SEECLOAK)) &&*/
-	if (HasUserPerm(PERM_SEECLOAK) &&
+    if (!(HasUserPerm(PERM_SYSOP) || HasUserPerm(PERM_SEECLOAK)) &&
+	(HasUserPerm(PERM_SYSOP) && !(friend & HFM)) &&
 	((uentp->invisible || (fri_stat & HRM)) &&
 	 !((fri_stat & HFM) && (fri_stat & HRM))))
 	return notonline;
