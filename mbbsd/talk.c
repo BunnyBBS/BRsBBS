@@ -66,10 +66,7 @@ isvisible_stat(const userinfo_t * me, const userinfo_t * uentp, int fri_stat)
 	     ((fri_stat & HRM) && (fri_stat & HFM)))*/
 	/* 站長看的見任何人 */
 	/*return 1;*/
-	/*大兔：
-	107.04.24 BRsBBS 1.3 改為0，站長不再看見隱形
-	107.05.01 BRsBBS 1.3.1 Beta 改回1，只改這裡會不穩定站長連沒隱形都看不到。
-	107.05.20 BRsBBS 1.3.2 註解掉這裡（不給站長看見隱形）*/
+	/*大兔：107.05.20 BRsBBS 1.3.2 註解掉這裡（不給站長看見隱形）*/
 
     if (uentp->invisible && !(me->userlevel & PERM_SEECLOAK))
 	return 0;
@@ -2083,7 +2080,8 @@ draw_pickup(int drawall, pickup_t * pickup, int pickup_way,
 	if(fcolor[state])
 	    snprintf(xuid, sizeof(xuid), "%s%s",
 		    fcolor[state], uentp->userid);
-		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，因為找不到更源頭的地方，只好在這裡動手腳...直接做一個判斷式，隱身者沒加站長好友就不顯示*/
+		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，因為找不到更源頭的地方，只好在這裡動手腳...
+		直接做一個判斷式，隱身者沒加站長好友就不顯示。*/
 		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(friend & HFM)){
 			vs_cols(ulist_coldef, cols, ULISTCOLS,num,"!","<Hiddden>","隱身","","","","","");
 		}else{
