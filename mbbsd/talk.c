@@ -112,7 +112,7 @@ modestring(const userinfo_t * uentp, int simple)
     fri_stat = friend_stat(currutmp, uentp);
 	/*大兔：107.05.20 BRsBBS 1.3.2 站長看不到動態*/
     if (!(HasUserPerm(PERM_SYSOP) || HasUserPerm(PERM_SEECLOAK)) &&
-	(HasUserPerm(PERM_SYSOP) && !(friend & HFM)) &&
+	(HasUserPerm(PERM_SYSOP) && !(fri_stat & HFM)) &&
 	((uentp->invisible || (fri_stat & HRM)) &&
 	 !((fri_stat & HFM) && (fri_stat & HRM))))
 	return notonline;
