@@ -2084,7 +2084,7 @@ draw_pickup(int drawall, pickup_t * pickup, int pickup_way,
 	    snprintf(xuid, sizeof(xuid), "%s%s",
 		    fcolor[state], uentp->userid);
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，因為找不到更源頭的地方，只好在這裡動手腳...直接做一個判斷式，隱身者沒加站長好友就不顯示*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(friend & IFH)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(friend & HFM)){
 			vs_cols(ulist_coldef, cols, ULISTCOLS,num,"!","<Hiddden>","隱身","","","","","");
 		}else{
 			vs_cols(ulist_coldef, cols, ULISTCOLS,
@@ -2531,7 +2531,7 @@ userlist(void)
 
 	    case 'u':		/* 線上修改資料 */
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
 		}else if (HasUserPerm(PERM_ACCOUNTS|PERM_SYSOP)) {
 		    int             id;
@@ -2556,7 +2556,7 @@ userlist(void)
 	    case KEY_ENTER:
 	    case 't':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
 		}else if (HasBasicUserPerm(PERM_LOGINOK)) {
 			if (uentp->pid != currpid &&
@@ -2579,7 +2579,7 @@ userlist(void)
 		
 	    case 'w':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
 		}else if (call_in(uentp, fri_stat))
 		    redrawall = redraw = 1;
@@ -2587,7 +2587,7 @@ userlist(void)
 		
 	    case 'a':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
 		}else if (HasBasicUserPerm(PERM_LOGINOK) && !(fri_stat & IFH)) {
 		    if (vans("確定要加入好友嗎 [N/y]") == 'y') {
@@ -2636,7 +2636,7 @@ userlist(void)
 
 	    case 'g':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
 		}else if (HasBasicUserPerm(PERM_LOGINOK) && cuser.money) {
 		    give_money_ui(uentp->userid);
@@ -2646,7 +2646,7 @@ userlist(void)
 
 	    case 'm':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
 		}else if (HasBasicUserPerm(PERM_LOGINOK)) {
 		    char   userid[IDLEN + 1];
@@ -2661,7 +2661,7 @@ userlist(void)
 
 	    case 'q':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
 		}
 		my_query(uentp->userid);
@@ -2677,7 +2677,7 @@ userlist(void)
 
 	    case 'c':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
 		}else if (HasBasicUserPerm(PERM_LOGINOK)) {
 		    chicken_query(uentp->userid);
@@ -2687,7 +2687,7 @@ userlist(void)
 
 	    case 'l':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & IFH)){
+		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
 		}else if (HasBasicUserPerm(PERM_LOGINOK)) {
 		    t_display();
