@@ -2890,7 +2890,7 @@ recommend(int ent, fileheader_t * fhdr, const char *direct)
     // they tend to use the counter to identify whether an arcitle
     // has new recommends or not.
     // so, make them happy here.
-#ifndef OLDRECOMMEND
+/*#ifndef OLDRECOMMEND
     // no matter it is first time or not.
     if (is_file_owner(fhdr, &cuser))
 #else
@@ -2907,9 +2907,9 @@ recommend(int ent, fileheader_t * fhdr, const char *direct)
 	outs("作者本人首推, 使用 → 加註方式\n");
 #endif
 
-    }
+    }*/
 #ifndef DEBUG
-    else if (!(currmode & MODE_BOARD) &&
+    if (/*!(currmode & MODE_BOARD) &&*/
 	    (now - lastrecommend) < (
 #if 0
 	    /* i'm not sure whether this is better or not */

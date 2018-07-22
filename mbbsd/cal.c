@@ -563,8 +563,8 @@ p_sysinfo(void)
     if (*build_remote) {
       prints("基礎版本: %s %s %s\n", build_remote, build_origin, build_hash);
     }
-	   prints("運行版本：BRsBBS 1.3.2 Stable (2018.05.20 釋出)\n");
-	   prints("更新紀錄：新增：站長不再看見隱身\n	   隱身者沒加站長好友站長就看不見。\n");
+	   prints("運行版本：BRsBBS 1.4 Alpha （可能不太穩定）\n");
+	   prints("更新紀錄：修改：原作者可首推\n	   修改：站長不可連推\n	   修改：罰單紀錄寄送看板變更\n");
 
 #ifdef REPORT_PIAIP_MODULES
     outs("\n" ANSI_COLOR(1;30)

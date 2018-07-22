@@ -119,10 +119,8 @@ post_violatelaw2(const char *crime, const char *police, const char *reason, cons
             ANSI_COLOR(1;35) "%s" ANSI_RESET "行為，\n"
 	    "違反本站站規，處以" ANSI_COLOR(1;35) "%s" ANSI_RESET
             "，特此公告\n\n\n%s\n",
-	    police, crime, reason, result, memo ? memo : "");
-
-    if (!strstr(police, "警察")) {
-	post_msg(BN_POLICELOG, title, msg, "[" BBSMNAME "法院]");
+	    cuser.userid, crime, reason, result, memo ? memo : "");
+	post_msg(BN_SECURITY, title, msg, "[" BBSMNAME2 "法院]");
 
 	snprintf(msg, sizeof(msg),
 		ANSI_COLOR(1;32) "%s" ANSI_RESET "判決：\n"
@@ -131,9 +129,7 @@ post_violatelaw2(const char *crime, const char *police, const char *reason, cons
 		"違反本站站規，處以" ANSI_COLOR(1;35) "%s" ANSI_RESET
                 "，特此公告\n\n\n%s\n",
 		"站務警察", crime, reason, result, memo ? memo : "");
-    }
-
-    post_msg("ViolateLaw", title, msg, "[" BBSMNAME "法院]");
+    post_msg(BN_POLICELOG, title, msg, "[" BBSMNAME2 "法院]");
 }
 
 void
