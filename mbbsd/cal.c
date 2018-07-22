@@ -563,7 +563,7 @@ p_sysinfo(void)
     if (*build_remote) {
       prints("基礎版本: %s %s %s\n", build_remote, build_origin, build_hash);
     }
-	   prints("運行版本：BRsBBS 1.4 Alpha （可能不太穩定）\n");
+	   prints("運行版本：BRsBBS 1.4 Stable（2018.07.22 釋出）\n");
 	   prints("更新紀錄：修改：原作者可首推\n	   修改：站長不可連推\n	   修改：罰單紀錄寄送看板變更\n");
 
 #ifdef REPORT_PIAIP_MODULES
