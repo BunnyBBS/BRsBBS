@@ -10,6 +10,7 @@
 etc/Welcome	歡迎畫面
 etc/Logout	出站畫面
 etc/goodbye	錯誤登入訊息
+etc/Maintain	系統維護畫面
 etc/sysop	站長名單
 etc/mail_account_sysop  帳號站長信箱收信列表
 etc/mail_account_sysop_desc  帳號站長信箱收信說明
@@ -28,6 +29,7 @@ etc/Welcome_login.4 進站畫面4
 # ----------------------------------------
 # 一般檔案
 # ----------------------------------------
+etc/maintainConfig	系統維護參數（檔案存在就開啟維護模式）
 etc/crosspost.txt   過度轉錄開的罰單通知信
 etc/myfav_defaults  我的最愛預設列表
 etc/post.note	發文注意事項

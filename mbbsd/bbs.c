@@ -2821,7 +2821,7 @@ recommend(int ent, fileheader_t * fhdr, const char *direct)
 #ifndef DEBUG
     if (get_board_restriction_reason(currbid, sizeof(msg), msg))
     {
-	vmsgf("未達看板發文限制: %s", msg);
+	vmsgf("未達看板發文限制 %s", msg);
 	return FULLUPDATE;
     }
 #endif
@@ -2862,14 +2862,14 @@ recommend(int ent, fileheader_t * fhdr, const char *direct)
 	setdirpath(path, direct, fhdr->filename);
 	size = dashs(path);
 	if (size > 5*1024*1024) {
-	    vmsg("檔案太大, 無法繼續推文, 請另撰文發表");
+	    vmsg("檔案太大，無法繼續推文，請另撰文發表");
 	    return FULLUPDATE;
 	}
 
 	if (size > 100*1024) {
 	    int d = 10 - (now - lastrecommend);
 	    if (d > 0) {
-		vmsgf("本文已過長, 禁止快速連續推文, 請再等 %d 秒", d);
+		vmsgf("本文已過長，禁止快速連續推文，請再等 %d 秒", d);
 		return FULLUPDATE;
 	    }
 	}
@@ -2883,31 +2883,6 @@ recommend(int ent, fileheader_t * fhdr, const char *direct)
 
     type = RECTYPE_GOOD;
 
-    // why "recommend == 0" here?
-    // some users are complaining that they like to fxck up system
-    // with lots of recommend one-line text.
-    // since we don't support recognizing update of recommends now,
-    // they tend to use the counter to identify whether an arcitle
-    // has new recommends or not.
-    // so, make them happy here.
-/*#ifndef OLDRECOMMEND
-    // no matter it is first time or not.
-    if (is_file_owner(fhdr, &cuser))
-#else
-    // old format is one way counter, so let's relax.
-    if (fhdr->recommend == 0 && is_file_owner(fhdr, &cuser))
-#endif
-    {
-	// owner recommend
-	type = RECTYPE_ARROW;
-	move(ymsg--, 0); clrtoeol();
-#ifndef OLDRECOMMEND
-	outs("作者本人, 使用 → 加註方式\n");
-#else
-	outs("作者本人首推, 使用 → 加註方式\n");
-#endif
-
-    }*/
 #ifndef DEBUG
     if (/*!(currmode & MODE_BOARD) &&*/
 	    (now - lastrecommend) < (
@@ -2921,7 +2896,7 @@ recommend(int ent, fileheader_t * fhdr, const char *direct)
 	// too close
 	type = RECTYPE_ARROW;
 	move(ymsg--, 0); clrtoeol();
-	outs("時間太近, 使用 → 加註方式\n");
+	outs("時間太近，使用 → 加註方式\n");
     }
 #endif
 

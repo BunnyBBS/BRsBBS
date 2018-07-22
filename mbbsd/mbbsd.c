@@ -625,10 +625,6 @@ multi_user_check(void)
 {
     register userinfo_t *ui;
     char            genbuf[3];
-
-    if (HasUserPerm(PERM_SYSOP))
-	return;			/* don't check sysops */
-
     srandom(getpid());
     // race condition here, sleep may help..?
     if (cuser.userlevel) {
@@ -637,36 +633,43 @@ multi_user_check(void)
 	if(ui == NULL)
 	    return;
 
-	move(b_lines-3, 0); clrtobot();
-	outs("\n" ANSI_COLOR(1) "注意: 您有其它連線已登入此帳號。" ANSI_RESET);
-	getdata(b_lines - 1, 0, "您想刪除其他重複登入的連線嗎？[Y/n] ",
-		genbuf, 3, LCECHO);
+		if (HasUserPerm(PERM_SYSOP)){
+			move(b_lines-3, 0); clrtobot();
+			outs("\n" ANSI_COLOR(1) "注意: 您有其它連線已登入此帳號。" ANSI_RESET);
+			pressanykey();
+			return;
+		}else{
+			move(b_lines-3, 0); clrtobot();
+			outs("\n" ANSI_COLOR(1) "注意: 您有其它連線已登入此帳號。" ANSI_RESET);
+			getdata(b_lines - 1, 0, "您想刪除其他重複登入的連線嗎？[Y/n] ",
+				genbuf, 3, LCECHO);
 
-	usleep(random()%5000000); // 0~5s
-	if (genbuf[0] != 'n') {
-	    do {
-		// scan again, old ui may be invalid
-		ui = getotherlogin(1);
-		if(ui==NULL)
-		    return;
-		if (ui->pid > 0) {
-		    if(kill(ui->pid, SIGHUP)<0) {
-			perror("kill SIGHUP fail");
-			break;
-		    }
-		    log_usies("KICK ", cuser.nickname);
-		}  else {
-		    fprintf(stderr, "id=%s ui->pid=0\n", cuser.userid);
+			usleep(random()%5000000); // 0~5s
+			if (genbuf[0] != 'n') {
+				do {
+				// scan again, old ui may be invalid
+				ui = getotherlogin(1);
+				if(ui==NULL)
+					return;
+				if (ui->pid > 0) {
+					if(kill(ui->pid, SIGHUP)<0) {
+					perror("kill SIGHUP fail");
+					break;
+					}
+					log_usies("KICK ", cuser.nickname);
+				}  else {
+					fprintf(stderr, "id=%s ui->pid=0\n", cuser.userid);
+				}
+				usleep(random()%2000000+1000000); // 1~3s
+				} while(getotherlogin(3) != NULL);
+			} else {
+				/* deny login if still have 3 */
+				if (getotherlogin(3) != NULL) {
+				sleep(1);
+				abort_bbs(0);	/* Goodbye(); */
+				}
+			}
 		}
-		usleep(random()%2000000+1000000); // 1~3s
-	    } while(getotherlogin(3) != NULL);
-	} else {
-	    /* deny login if still have 3 */
-	    if (getotherlogin(3) != NULL) {
-		sleep(1);
-		abort_bbs(0);	/* Goodbye(); */
-	    }
-	}
     } else {
 	/* allow multiple guest user */
 	/*if (search_ulistn(usernum, MAX_GUEST) != NULL) {*/
@@ -762,144 +765,161 @@ load_current_user(const char *uid)
     return 1;
 }
 
+bool maintainStatus(){
+	FILE	*file;
+
+	if(file = fopen("etc/maintainConfig", "r")){
+		fclose(file);
+		return true;
+	}
+	return false;
+}
+
 static void
 login_query(char *ruid)
 {
 #ifdef CONVERT
     /* uid 加一位, for gb login */
     char            uid[IDLEN + 2];
-    int		    len;
+    int		    	len;
 #else
     char            uid[IDLEN + 1];
 #endif
 
-    char	    passbuf[PASSLEN];
+    char	    	passbuf[PASSLEN];
     int             attempts;
 
     resolve_garbage();
 
+	if(maintainStatus() == true){
+		more("etc/Maintain", NA);
+		pressanykey();
+		sleep(3);
+		exit(1);
+	}else{
 #ifdef DEBUG
-    move(1, 0);
-    prints("debugging mode\ncurrent pid: %d\n", getpid());
+		move(1, 0);
+		prints("debugging mode\ncurrent pid: %d\n", getpid());
 #else
-    show_file("etc/Welcome", 1, -1, SHOWFILE_ALLOW_ALL);
+    	show_file("etc/Welcome", 1, -1, SHOWFILE_ALLOW_ALL);
 #endif
 
-    attempts = 0;
-    while (1) {
-	if (attempts++ >= LOGINATTEMPTS) {
-	    more("etc/goodbye", NA);
-	    pressanykey();
-	    sleep(3);
-	    exit(1);
-	}
-	pwcuInitZero();
+		attempts = 0;
+		while (1) {
+		if (attempts++ >= LOGINATTEMPTS) {
+			more("etc/goodbye", NA);
+			pressanykey();
+			sleep(3);
+			exit(1);
+		}
+		pwcuInitZero();
 
 #ifdef DEBUG
-	move(19, 0);
-	prints("current pid: %d ", getpid());
+		move(19, 0);
+		prints("current pid: %d ", getpid());
 #endif
 
-	if (getdata(20, 0, "請輸入帳號或以 new 註冊: ",
-		uid, sizeof(uid), DOECHO) < 1)
-	{
-	    // got nothing
-	    outs("請重新輸入。\n");
-	    continue;
-	}
-	telnet_turnoff_client_detect();
+		if (getdata(20, 0, "請輸入帳號或以 new 註冊: ",
+			uid, sizeof(uid), DOECHO) < 1)
+		{
+			// got nothing
+			outs("請重新輸入。\n");
+			continue;
+		}
+		telnet_turnoff_client_detect();
 
 #ifdef CONVERT
-	/* switch to gb mode if uid end with '.' */
-	len = strlen(uid);
-	if (uid[0] && uid[len - 1] == ',') {
-	    set_converting_type(CONV_UTF8);
-	    uid[len - 1] = 0;
-	    redrawwin();
-	}
-        else if (uid[0] && uid[len - 1] == '.') {
-            outs("Sorry, GB encoding is not supported anymore. Please use UTF-8 (id,)");
-            continue;
-	}
-	else if (len >= IDLEN + 1)
-	    uid[IDLEN] = 0;
+		/* switch to gb mode if uid end with '.' */
+		len = strlen(uid);
+		if (uid[0] && uid[len - 1] == ',') {
+			set_converting_type(CONV_UTF8);
+			uid[len - 1] = 0;
+			redrawwin();
+		}
+			else if (uid[0] && uid[len - 1] == '.') {
+				outs("Sorry, GB encoding is not supported anymore. Please use UTF-8 (id,)");
+				continue;
+		}
+		else if (len >= IDLEN + 1)
+			uid[IDLEN] = 0;
 #endif
 
-	if (!is_validuserid(uid)) {
+		if (!is_validuserid(uid)) {
 
-	    outs(err_uid);
+			outs(err_uid);
 
 #ifdef STR_GUEST
-	} else if (strcasecmp(uid, STR_GUEST) == 0) {	/* guest */
+		} else if (strcasecmp(uid, STR_GUEST) == 0) {	/* guest */
 
-	    strlcpy(ruid, STR_GUEST, IDLEN+1);
-	    break;
+			strlcpy(ruid, STR_GUEST, IDLEN+1);
+			break;
 #endif
 
 #ifdef STR_REGNEW
-	} else if (strcasecmp(uid, STR_REGNEW) == 0) {
+		} else if (strcasecmp(uid, STR_REGNEW) == 0) {
 # ifndef LOGINASNEW
-	    outs("本系統目前無法以 " STR_REGNEW " 註冊");
-	    continue;
+			outs("本系統目前無法以 " STR_REGNEW " 註冊");
+			continue;
 # endif // !LOGINASNEW
 
-	    strlcpy(ruid, STR_REGNEW, IDLEN+1);
-	    break;
+			strlcpy(ruid, STR_REGNEW, IDLEN+1);
+			break;
 
 #endif // STR_REGNEW
 
-	} else {
-	    /* normal user */
+		} else {
+			/* normal user */
 
-            int valid_user = 1;
+				int valid_user = 1;
 
-            /* load the user record */
-            if (initcuser(uid) < 1 || !cuser.userid[0])
-                valid_user = 0;
+				/* load the user record */
+				if (initcuser(uid) < 1 || !cuser.userid[0])
+					valid_user = 0;
 
-            /* check if the user is forced to login via secure connection. */
-            if (valid_user &&
-                (passwd_require_secure_connection(&cuser) && !is_secure_connection)) {
-                outs("抱歉，此帳號已設定為只能使用安全連線(如ssh)登入。\n");
-                doupdate();
-                sleep(5);
-                continue;
-            }
+				/* check if the user is forced to login via secure connection. */
+				if (valid_user &&
+					(passwd_require_secure_connection(&cuser) && !is_secure_connection)) {
+					outs("抱歉，此帳號已設定為只能使用安全連線(如ssh)登入。\n");
+					doupdate();
+					sleep(5);
+					continue;
+				}
 
-            /* ask user for password, even the user does not exists. */
-	    getdata(21, 0, MSG_PASSWD,
-		    passbuf, sizeof(passbuf), NOECHO);
-	    passbuf[8] = '\0';
+				/* ask user for password, even the user does not exists. */
+			getdata(21, 0, MSG_PASSWD,
+				passbuf, sizeof(passbuf), NOECHO);
+			passbuf[8] = '\0';
 
-	    move (22, 0); clrtoeol();
-	    outs("正在檢查密碼...");
-	    move(22, 0); refresh();
+			move (22, 0); clrtoeol();
+			outs("正在檢查密碼...");
+			move(22, 0); refresh();
 
-	    /* prepare for later */
-	    clrtoeol();
+			/* prepare for later */
+			clrtoeol();
 
-            if (!valid_user || !checkpasswd(cuser.passwd, passbuf)) {
+				if (!valid_user || !checkpasswd(cuser.passwd, passbuf)) {
 
-		if(is_validuserid(cuser.userid))
-		    logattempt(cuser.userid , '-', login_start_time, fromhost);
-		sleep(1);
-		outs(ERR_PASSWD);
+			if(is_validuserid(cuser.userid))
+				logattempt(cuser.userid , '-', login_start_time, fromhost);
+			sleep(1);
+			outs(ERR_PASSWD);
 
-	    } else {
+			} else {
 
-		strlcpy(ruid, cuser.userid, IDLEN+1);
-		outs("密碼正確！ 開始登入系統...");
-		move(22, 0); refresh();
-		clrtoeol();
-		break;
-	    }
-	}
-    }
+			strlcpy(ruid, cuser.userid, IDLEN+1);
+			outs("密碼正確！ 開始登入系統...");
+			move(22, 0); refresh();
+			clrtoeol();
+			break;
+			}
+		}
+		}
 
     // auth ok.
 #ifdef DETECT_CLIENT
     LogClientCode();
 #endif
+	}
 }
 
 static void
@@ -1210,7 +1230,7 @@ user_login(void)
         if (!HasUserPerm(PERM_BASIC)) {
             vs_hdr2(" 停權通知 ", " 部份功\能已被暫停使用");
             outs(ANSI_COLOR(1;31) "\n\n\t抱歉，你的帳號已被停權。\n"
-                 "\t詳情請至 ViolateLaw 看板搜尋你的 ID。\n" ANSI_RESET);
+                 "\t詳情請至 " BN_POLICELOG " 看板搜尋你的 ID。\n" ANSI_RESET);
             pressanykey();
         }
 
