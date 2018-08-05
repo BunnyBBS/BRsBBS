@@ -15,7 +15,7 @@ MBBSD_OBJS= 	var
 # 下面這些程式, 會被 compile 並且和 $(UTIL_OBJS) 聯結
 CPROG_WITH_UTIL= \
 	boardlist	post		poststat	\
-	account		deluserfile	mmail		\
+	account		deluserfile	mmail	boardtaxmail	\
 	expire		mandex		broadcast	\
 	openticket	topusr		\
 	toplazyBM	writemoney	\
@@ -85,6 +85,7 @@ install: $(PROGS)
 
 clean:
 	rm -f *.o $(CPROGS) $(CPROG_WITH_UTIL) $(CPROG_WITHOUT_UTIL) $(CPP_WITH_UTIL)
+	rm -f shmctl
 
 
 installfiltermail:

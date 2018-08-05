@@ -4,10 +4,10 @@
 #define QCAST   int (*)(const void *, const void *)
 
 static char    * const sig_des[] = {
-    "", "交談", "", "五子棋", "象棋", "暗棋", "圍棋", "黑白棋", "六子旗",
+    "", "交談", "",/* "五子棋", "象棋", "暗棋", "圍棋", "黑白棋", "六子旗",*/
 };
 static char    * const withme_str[] = {
-  "談天", "五子棋", "", "象棋", "暗棋", "圍棋", "黑白棋", "六子旗", NULL
+  "談天"/*, "五子棋", "", "象棋", "暗棋", "圍棋", "黑白棋", "六子旗"*/, NULL
 };
 
 #define MAX_SHOW_MODE 7
@@ -161,9 +161,9 @@ modestring(const userinfo_t * uentp, int simple)
 	else
 	    snprintf(modestr, sizeof(modestr),
 		     "%s %s", word, getuserid(uentp->destuid));
-    } else if (mode == CHESSWATCHING) {
+    } /*else if (mode == CHESSWATCHING) {
 	snprintf(modestr, sizeof(modestr), "觀棋");
-    } else if (mode != PAGE && mode != TQUERY)
+    }*/ else if (mode != PAGE && mode != TQUERY)
 	return word;
     else
 	snprintf(modestr, sizeof(modestr),
@@ -508,10 +508,10 @@ my_query(const char *uident)
 
 	// ------------------------------------------------------------
 
-	prints("《 五子棋 》%5d 勝 %5d 敗 %5d 和  "
+	/*prints("《 五子棋 》%5d 勝 %5d 敗 %5d 和  "
 	       "《象棋戰績》%5d 勝 %5d 敗 %5d 和\n",
 	       muser.five_win, muser.five_lose, muser.five_tie,
-	       muser.chc_win, muser.chc_lose, muser.chc_tie);
+	       muser.chc_win, muser.chc_lose, muser.chc_tie);*/
 
 	showplans_userec(&muser);
 
@@ -1362,10 +1362,10 @@ my_talk(userinfo_t * uin, int fri_stat, char defact)
 		    outc('\n');
 		}
 	    }
-	    move(4, 0);
+	    /*move(4, 0);
 	    outs("要和他(她) (T)談天(F)五子棋"
-		    "(C)象棋(D)暗棋(G)圍棋(R)黑白棋(6)六子旗");
-	    getdata(5, 0, "           (N)沒事找錯人了?[N] ", genbuf, 4, LCECHO);
+		    "(C)象棋(D)暗棋(G)圍棋(R)黑白棋(6)六子旗");*/
+	    getdata(5, 0, "要和他(她) (T)談天 (N)沒事找錯人了?[N] ", genbuf, 4, LCECHO);
 	}
 
 	switch (*genbuf) {
@@ -1373,7 +1373,7 @@ my_talk(userinfo_t * uin, int fri_stat, char defact)
 	case 't':
 	    uin->sig = SIG_TALK;
 	    break;
-	case 'f':
+	/*case 'f':
 	    lockreturn(M_FIVE, LOCK_THIS);
 	    uin->sig = SIG_GOMO;
 	    break;
@@ -1393,7 +1393,7 @@ my_talk(userinfo_t * uin, int fri_stat, char defact)
 	    break;
 	case 'r':
 	    uin->sig = SIG_REVERSI;
-	    break;
+	    break;*/
 	default:
 	    return;
 	}
@@ -1420,10 +1420,10 @@ my_talk(userinfo_t * uin, int fri_stat, char defact)
 	close(sock);
 	currutmp->sockactive = NA;
 
-	if (uin->sig == SIG_CHC || uin->sig == SIG_GOMO ||
+	/*if (uin->sig == SIG_CHC || uin->sig == SIG_GOMO ||
 	    uin->sig == SIG_GO || uin->sig == SIG_REVERSI ||
 	    uin->sig == SIG_CONN6)
-	    ChessEstablishRequest(msgsock);
+	    ChessEstablishRequest(msgsock);*/
 
 	vkey_attach(msgsock);
 	while ((ch = vkey()) != I_OTHERDATA) {
@@ -1443,7 +1443,7 @@ my_talk(userinfo_t * uin, int fri_stat, char defact)
 
 	if (c == 'y') {
 	    switch (uin->sig) {
-	    case SIG_DARK:
+	    /*case SIG_DARK:
 		main_dark(msgsock, uin);
 		break;
 	    case SIG_GOMO:
@@ -1460,7 +1460,7 @@ my_talk(userinfo_t * uin, int fri_stat, char defact)
 		break;
 	    case SIG_CONN6:
 		connect6(msgsock, CHESS_MODE_VERSUS);
-		break;
+		break;*/
 	    case SIG_TALK:
 	    default:
 		ccw_talk(msgsock, currutmp->destuid);
@@ -1933,11 +1933,11 @@ draw_pickup(int drawall, pickup_t * pickup, int pickup_way,
 {
     char           *msg_pickup_way[PICKUP_WAYS] = {
         "嗨! 朋友", "網友代號", "網友動態", "發呆時間", "來自何方",
-        " 五子棋 ", "  象棋  ", "  圍棋  ",
+        /*" 五子棋 ", "  象棋  ", "  圍棋  ",*/
     };
     char           *MODE_STRING[MAX_SHOW_MODE] = {
-	"故鄉", "好友描述", "五子棋戰績", "象棋戰績", "象棋等級分", "圍棋戰績",
-        "暗棋戰績",
+	"故鄉", "好友描述",/* "五子棋戰績", "象棋戰績", "象棋等級分", "圍棋戰績",
+        "暗棋戰績",*/
     };
     char            pagerchar[6] = "* -Wf";
 
@@ -2079,9 +2079,9 @@ draw_pickup(int drawall, pickup_t * pickup, int pickup_way,
 	    snprintf(xuid, sizeof(xuid), "%s%s",
 		    fcolor[state], uentp->userid);
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，因為找不到更源頭的地方，只好在這裡動手腳...
-		直接做一個判斷式，隱身者沒加站長好友就不顯示。*/
-		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(friend & HFM)){
-			vs_cols(ulist_coldef, cols, ULISTCOLS,num,"!","<Hiddden>","隱身","","","","","");
+		直接做一個判斷式，隱身者沒加站長好友就不顯示。08.03微修正判斷式，多揭露了動態、違規、發呆時間。*/
+		if(uentp->invisible == true && !(friend & HFM)){
+			vs_cols(ulist_coldef, cols, ULISTCOLS,num,"!","<Hidden>","隱身了","",modestring(uentp, 0),mind,idlestr,"");
 		}else{
 			vs_cols(ulist_coldef, cols, ULISTCOLS,
 					// Columns data (9 params)
@@ -2450,7 +2450,7 @@ userlist(void)
 			msg.pid = currpid;
 			strlcpy(msg.userid, cuser.userid, sizeof(msg.userid));
 			snprintf(msg.last_call_in, sizeof(msg.last_call_in),
-				 ANSI_COLOR(1;33;41) "%s" ANSI_RESET, genbuf);
+				 ANSI_COLOR(1;33;41) "[廣播] %s" ANSI_RESET, genbuf);
 			for (i = 0; i < SHM->UTMPnumber; ++i) {
 			    // XXX why use sorted list?
 			    //     can we just scan uinfo with proper checking?
@@ -2542,8 +2542,8 @@ userlist(void)
 			    pressanykey();
 		    }
 		    redrawall = redraw = 1;
+			break;
 		}
-		break;
 
 	    case Ctrl('S'):
 		break;
@@ -2563,8 +2563,8 @@ userlist(void)
 			my_talk(uentp, fri_stat, 0);
 			redrawall = redraw = 1;
 			}
+			break;
 		}
-		break;
 		
 	    case 'K':
 		if (HasUserPerm(PERM_ACCOUNTS|PERM_SYSOP)) {
@@ -2577,9 +2577,10 @@ userlist(void)
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
 		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
-		}else if (call_in(uentp, fri_stat))
+		}else if (call_in(uentp, fri_stat)){
 		    redrawall = redraw = 1;
-		break;
+			break;
+		}
 		
 	    case 'a':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
@@ -2591,8 +2592,8 @@ userlist(void)
 			friend_load(FRIEND_OVERRIDE, 0);
 		    }
 		    redrawall = redraw = 1;
+			break;
 		}
-		break;
 
 	    case 'd':
 		if (HasBasicUserPerm(PERM_LOGINOK) && (fri_stat & IFH)) {
@@ -2637,8 +2638,8 @@ userlist(void)
 		}else if (HasBasicUserPerm(PERM_LOGINOK) && cuser.money) {
 		    give_money_ui(uentp->userid);
 		    redrawall = redraw = 1;
+			break;
 		}
-		break;
 
 	    case 'm':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
@@ -2652,18 +2653,19 @@ userlist(void)
 		    my_send(userid);
 		    setutmpmode(LUSERS);
 		    redrawall = redraw = 1;
+			break;
 		}
-		break;
 
 	    case 'q':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
 		if(HasUserPerm(PERM_SYSOP) && uentp->invisible == true && !(fri_stat & HFM)){
 			break;
+		}else{
+			my_query(uentp->userid);
+			setutmpmode(LUSERS);
+			redrawall = redraw = 1;
+			break;
 		}
-		my_query(uentp->userid);
-		setutmpmode(LUSERS);
-		redrawall = redraw = 1;
-		break;
 
 	    case 'Q':
 		t_query();
@@ -2678,8 +2680,8 @@ userlist(void)
 		}else if (HasBasicUserPerm(PERM_LOGINOK)) {
 		    chicken_query(uentp->userid);
 		    redrawall = redraw = 1;
+			break;
 		}
-		break;
 
 	    case 'l':
 		/*大兔：107.05.20 BRsBBS 1.3.2 新增這裡，hidden的禁止進一步操作*/
@@ -2688,8 +2690,8 @@ userlist(void)
 		}else if (HasBasicUserPerm(PERM_LOGINOK)) {
 		    t_display();
 		    redrawall = redraw = 1;
+			break;
 		}
-		break;
 
 	    case 'h':
 		t_showhelp();
@@ -3000,7 +3002,7 @@ talkreply(void)
     uip->destuip = currutmp - &SHM->uinfo[0];
     if (buf[0] == 'y')
 	switch (sig) {
-	case SIG_DARK:
+	/*case SIG_DARK:
 	    main_dark(a, uip);
 	    break;
 	case SIG_GOMO:
@@ -3017,7 +3019,7 @@ talkreply(void)
 	    break;
 	case SIG_CONN6:
 	    connect6(a, CHESS_MODE_VERSUS);
-	    break;
+	    break;*/
 	case SIG_TALK:
 	default:
 	    ccw_talk(a, currutmp->destuid);
@@ -3030,7 +3032,7 @@ talkreply(void)
     currstat = currstat0;
 }
 
-int
+/*int
 t_chat(void)
 {
     static time4_t lastEnter = 0;
@@ -3081,6 +3083,6 @@ t_chat(void)
     syncnow();
     lastEnter = now;
 
-    return ccw_chat(fd);
-}
+    return (fd);
+}*/
 

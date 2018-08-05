@@ -1270,7 +1270,8 @@ give_money(void)
     fclose(fp2);
 
     sprintf(buf, "%s 紅包機: %s", cuser.userid, reason);
-    post_file(BN_SECURITY, buf, "etc/givemoney.log", "[紅包機報告]");
+    post_file(BN_SECURITY, buf, "etc/givemoney.log", "[發錢報告]");
+    post_file(BN_FINANC, buf, "etc/givemoney.log", "[發錢報告]");
     pressanykey();
     return FULLUPDATE;
 }

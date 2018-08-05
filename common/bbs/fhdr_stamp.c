@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -46,6 +47,7 @@ fhdr_stamp(char *fpath, fileheader_t *fh, int type)
     switch (type) {
 	case STAMP_FILE:
 	    do {
+		srand(time(NULL));
 		sprintf(ip, "M.%d.A.%3.3X", (int)(++dtime),
                         (unsigned int)(random() & 0xFFF));
 	    } while ((res = OpenCreate(fpath, O_EXCL | O_WRONLY)) == -1 && 

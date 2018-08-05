@@ -340,10 +340,18 @@ set_board(void)
     }
 
 	/*站長進入隱板警訊系統*/
-    if( HasUserPerm(PERM_SYSOP) &&
-	(bp->brdattr & BRD_HIDE) &&
-	!is_BM_cache(bp - bcache + 1) &&
-	!is_hidden_board_friend((int)(bp - bcache) + 1, currutmp->uid) ){
+    if (BoardPermNeedsSysopOverride(bp)){
+  	char            genbuf[3];
+	clear();
+	move(b_lines-3, 0); clrtobot();
+	outs("\n" ANSI_COLOR(1;31) "注意: "ANSI_COLOR(1)"您將使用站長權限進入隱板，若無合理理由請勿任意進入隱板。" ANSI_RESET);
+	getdata(b_lines - 1, 0, "您確定要繼續操作？[y/N] ",
+		genbuf, 3, LCECHO);
+	if (genbuf[0] != 'y') {
+		vmsg("顧及使用者的隱私，請您重新登入；下次請您看清楚再進入。");
+		sleep(1);
+		abort_bbs(0);
+	} else {
 		FILE           *fp, *fp2;
 		char            reason[100];
 		char * bmStr = bp->BM;
@@ -370,6 +378,7 @@ set_board(void)
 			}
 		}
 		post_file(BN_SECURITY, "[通知] 有站長進入隱藏看版", "etc/intoHide.log", "[國家安全局]");
+	}
 	}
 
     board_note_time = &bp->bupdate;

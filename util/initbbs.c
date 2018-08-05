@@ -10,6 +10,8 @@ static void initDir() {
     Mkdir("tmp");
     Mkdir("run");
     Mkdir("jobspool");
+    Mkdir("log");
+    Mkdir("log/taxpaid");
 }
 
 static void initHome() {
@@ -103,8 +105,8 @@ static void initBoards() {
     
     if(fp) {
 	memset(&b, 0, sizeof(b));
-	
-	strcpy(b.brdname, "SYSOP");
+
+	strcpy(b.brdname, BN_SYSOP);
 	strcpy(b.title, "嘰哩 ◎站長好!");
 	b.brdattr = BRD_POSTMASK;
 	b.level = 0;
@@ -125,7 +127,7 @@ static void initBoards() {
 	b.gid = 2;
 	newboard(fp, &b);
 	
-	strcpy(b.brdname, "Security");
+	strcpy(b.brdname, BN_SECURITY);
 	strcpy(b.title, "發電 ◎站內系統安全");
 	b.brdattr = 0;
 	b.level = PERM_SYSOP;
@@ -153,14 +155,14 @@ static void initBoards() {
 	b.gid = 5;
 	newboard(fp, &b);
 	
-	strcpy(b.brdname, "Note");
+	strcpy(b.brdname, BN_NOTE);
 	strcpy(b.title, "嘰哩 ◎動態看板及歌曲投稿");
 	b.brdattr = 0;
 	b.level = 0;
 	b.gid = 5;
 	newboard(fp, &b);
 	
-	strcpy(b.brdname, "Record");
+	strcpy(b.brdname, BN_RECORD);
 	strcpy(b.title, "嘰哩 ◎我們的成果");
 	b.brdattr = 0 | BRD_POSTMASK;
 	b.level = 0;
@@ -223,31 +225,31 @@ static void initMan() {
     f.multi.money = 0;
     f.filemode = 0;
     
-    if((fp = fopen("man/boards/N/Note/.DIR", "w"))) {
+    if((fp = fopen("man/boards/" BN_NOTE_Alphabet "/" BN_NOTE "/.DIR", "w"))) {
 	strcpy(f.filename, "SONGBOOK");
 	strcpy(f.title, "◆ 【點 歌 歌 本】");
 	fwrite(&f, sizeof(f), 1, fp);
-	Mkdir("man/boards/N/Note/SONGBOOK");
+	Mkdir("man/boards/" BN_NOTE_Alphabet "/" BN_NOTE "/SONGBOOK");
 	
 	strcpy(f.filename, "SONGO");
 	strcpy(f.title, "◆ <點歌> 動態看板");
 	fwrite(&f, sizeof(f), 1, fp);
-	Mkdir("man/boards/N/Note/SONGO");
+	Mkdir("man/boards/" BN_NOTE_Alphabet "/" BN_NOTE "/SONGO");
 	
 	strcpy(f.filename, "SYS");
 	strcpy(f.title, "◆ <系統> 動態看板");
 	fwrite(&f, sizeof(f), 1, fp);
-	Mkdir("man/boards/N/Note/SYS");
+	Mkdir("man/boards/" BN_NOTE_Alphabet "/" BN_NOTE "/SYS");
 	
 	strcpy(f.filename, "AD");
 	strcpy(f.title, "◆ <廣告> 動態看板");
 	fwrite(&f, sizeof(f), 1, fp);
-	Mkdir("man/boards/N/Note/AD");
+	Mkdir("man/boards/" BN_NOTE_Alphabet "/" BN_NOTE "/AD");
 	
 	strcpy(f.filename, "NEWS");
 	strcpy(f.title, "◆ <新聞> 動態看板");
 	fwrite(&f, sizeof(f), 1, fp);
-	Mkdir("man/boards/N/Note/NEWS");
+	Mkdir("man/boards/" BN_NOTE_Alphabet "/" BN_NOTE "/NEWS");
 	
 	fclose(fp);
     }
@@ -255,8 +257,8 @@ static void initMan() {
 }
 
 static void initSymLink() {
-    symlink(BBSHOME "/man/boards/N/Note/SONGBOOK", BBSHOME "/etc/SONGBOOK");
-    symlink(BBSHOME "/man/boards/N/Note/SONGO", BBSHOME "/etc/SONGO");
+    symlink(BBSHOME "/man/boards/" BN_NOTE_Alphabet "/" BN_NOTE "/SONGBOOK", BBSHOME "/etc/SONGBOOK");
+    symlink(BBSHOME "/man/boards/" BN_NOTE_Alphabet "/" BN_NOTE "/SONGO", BBSHOME "/etc/SONGO");
     symlink(BBSHOME "/man/boards/E/EditExp", BBSHOME "/etc/editexp");
 }
 
@@ -278,8 +280,7 @@ int main(int argc, char **argv)
 		"將把 BBS 安裝在 " BBSHOME "\n\n"
 		"確定要執行, 請使用 initbbs -DoIt\n");
 	return 1;
-    }
-
+    }else{
     if(chdir(BBSHOME)) {
 	perror(BBSHOME);
 	exit(1);
@@ -296,4 +297,5 @@ int main(int argc, char **argv)
     initHistory();
     
     return 0;
+	}
 }

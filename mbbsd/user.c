@@ -454,7 +454,7 @@ void Customize(void)
 	"ADBANNER   顯示使用者心情點播(需開啟動態看板)",
 	"MAIL       拒收站外信",
 	"BACKUP     預設備份信件與其它記錄", //"與聊天記錄",
-        "LOGIN      只允許\使用安全連線(ex, ssh)登入",
+    "LOGIN      只允許\使用安全連線(ex, ssh)登入",
 	"MYFAV      新板自動進我的最愛",
 	"MYFAV      單色顯示我的最愛",
 	"MODMARK    隱藏文章修改符號(推文/修文) (~)",
@@ -663,9 +663,9 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 
     ans = vans(adminmode ?
     "(1)改資料(2)密碼(3)權限(4)砍帳(5)改ID(6)寵物(7)審判(8)退文(M)信箱 [0]結束 " :
-    "請選擇 (1)修改資料 (2)設定密碼 (C)個人化設定 [0]結束 ");
+    "請選擇 (1)修改資料 (2)設定密碼 (C)個人化設定 (M)信箱 [0]結束 ");
 
-    if (ans > '2' && ans != 'c' && !adminmode)
+    if (ans > '2' && ans != 'c' && ans != 'm' && !adminmode)
 	ans = '0';
 
     if (ans == '1' || ans == '3' || ans == 'm') {
@@ -696,10 +696,7 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 
     case 'm':
 	while (1) {
-	    getdata_str(y, 0,
-                    adminmode ? "E-Mail (站長變更不需認證): " :
-                                "電子信箱 [變動要重新認證]：",
-                    buf, sizeof(x.email), DOECHO, x.email);
+	    getdata_str(y, 0,"電子信箱：", buf, sizeof(x.email), DOECHO, x.email);
 
 	    strip_blank(buf, buf);
 
@@ -744,10 +741,6 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 #endif
 	    strlcpy(x.email, buf, sizeof(x.email));
 	    mail_changed = 1;
-
-            //  XXX delregcodefile 會看 cuser.userid...
-            if (!adminmode)
-                delregcodefile();
 	}
 	break;
 
@@ -1199,10 +1192,10 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 		 orig_uid, x.userid, cuser.userid);
 	post_msg(BN_SECURITY, title, title, "[系統安全局]");
     }
-    if (mail_changed && !adminmode) {
+    /*if (mail_changed && !adminmode) {
 	// wait registration.
 	x.userlevel &= ~(PERM_LOGINOK | PERM_POST);
-    }
+    }*/
 
     if (tokill) {
 	kick_all(x.userid);

@@ -149,7 +149,7 @@ parse_usies(const char *fn, int *act)
     return 0;
 }
 
-static int
+/*static int
 output_today(struct tm *ptime, int *act, int peak_hour_login, int day_login)
 {
     char buf[256];
@@ -216,7 +216,7 @@ update_history(struct tm *ptime, int peak_hour, int peak_hour_login, int day_log
     if ((fp = fopen("etc/history.data", "r+")) == NULL)
 	return 1;
 
-    /* 最多同時上線 */
+    // 最多同時上線
     if (fscanf(fp, "%d %d %d %d", &max_day_login, &max_hour_login, &max_reg, &max_online) != 4)
 	goto out;
 
@@ -360,7 +360,7 @@ update_holiday(struct tm *ptime)
     strlcpy(SHM->today_is, buf, sizeof(SHM->today_is));
 
     return 0;
-}
+}*/
 
 int
 main(/*int argc, char **argv*/)
@@ -400,16 +400,16 @@ main(/*int argc, char **argv*/)
     }
 
     /* -------------------------------------------------------------- */
-    printf("上站人次統計\n");
-    output_today(&tm_adjusted, act, peak_hour_login, day_login);
+    /*printf("上站人次統計\n");
+    output_today(&tm_adjusted, act, peak_hour_login, day_login);*/
     /* -------------------------------------------------------------- */
 
-    printf("歷史事件處理\n");
     /* Ptt 歷史事件處理 */
-    update_history(&tm_adjusted, peak_hour, peak_hour_login, day_login);
+    /*printf("歷史事件處理\n");
+    update_history(&tm_adjusted, peak_hour, peak_hour_login, day_login);*/
 
     if (tm_now.tm_hour == 0) {
-        Copy("etc/today", "etc/yesterday");
+        /*Copy("etc/today", "etc/yesterday");*/
 	/* system("rm -f note.dat"); */
 
 	//keeplog("etc/today", BN_RECORD, "上站人次統計", NULL);
@@ -419,11 +419,11 @@ main(/*int argc, char **argv*/)
 	//keeplog("etc/chicken", BN_RECORD, "雞場報告", NULL);
 
         // Restore etc/yesterday because keeplog removes it.
-        Copy("etc/yesterday", "etc/today");
+        //Copy("etc/yesterday", "etc/today");
 
 	snprintf(buf, sizeof(buf), "[安全報告] 使用者上線監控 [%02d/%02d:%02d]",
 		tm_now.tm_mon + 1, tm_now.tm_mday, tm_now.tm_hour);
-	keeplog("usies", "Security", buf, "usies");
+	keeplog("usies", BN_SECURITY, buf, "usies");
         // usies is removed - so we have to also delete .act
         remove(act_file);
 	printf("[安全報告] 使用者上線監控\n");
@@ -436,8 +436,8 @@ main(/*int argc, char **argv*/)
 	gzip("etc/mailog", "mailog", buf);
 
 	/* Ptt 節日處理 */
-	printf("節日處理\n");
-	update_holiday_list(&tm_now);
+	/*printf("節日處理\n");
+	update_holiday_list(&tm_now);*/
 
 	/* Ptt 歡迎畫面處理 */
 	printf("歡迎畫面處理\n");
@@ -479,7 +479,7 @@ main(/*int argc, char **argv*/)
     /* Ptt reset Ptt's share memory */
     printf("重設cache 與fcache\n");
 
-    update_holiday(&tm_now);
+    //update_holiday(&tm_now);
 
     SHM->Puptime = 0;
     resolve_fcache();

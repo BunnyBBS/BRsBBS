@@ -125,7 +125,7 @@ load_mailalert(const char *userid)
     fileheader_t    my_mail;
 
     sethomedir(maildir, userid);
-    if (!HasUserPerm(PERM_BASIC))
+    if (!HasUserPerm(PERM_LOGINOK))
 	return 0;
     if (stat(maildir, &st) < 0)
 	return 0;
@@ -654,7 +654,7 @@ built_mail_index(void)
     char command[1024];
     char homepath[PATHLEN];
 
-    if (!HasUserPerm(PERM_BASIC))
+    if (!HasUserPerm(PERM_LOGINOK))
         return DONOTHING;
 
     move(b_lines - 4, 0);
@@ -1064,7 +1064,7 @@ mailbox_reply(int ent, fileheader_t * fhdr, const char *direct)
     int use_multi = 0;
 
     // do not allow guest to use this
-    if (!HasUserPerm(PERM_BASIC))
+    if (!HasUserPerm(PERM_LOGINOK))
 	return DONOTHING;
 
     if (!fhdr || !fhdr->filename[0])
@@ -1774,7 +1774,7 @@ mail_reply(int ent, fileheader_t * fhdr, const char *direct)
     char save_title[STRLEN];
 
     // do not allow guest to use this
-    if (!HasUserPerm(PERM_BASIC))
+    if (!HasUserPerm(PERM_LOGINOK))
 	return DONOTHING;
 
     if (!fhdr || !fhdr->filename[0])
@@ -2120,7 +2120,7 @@ mail_cite(int ent GCC_UNUSED, fileheader_t * fhdr, const char *direct GCC_UNUSED
     char            buf[20];
     int             bid;
 
-    if (!HasUserPerm(PERM_BASIC))
+    if (!HasUserPerm(PERM_LOGINOK))
         return DONOTHING;
 
     setuserfile(fpath, fhdr->filename);
@@ -2315,7 +2315,7 @@ mail_waterball(int ent GCC_UNUSED, fileheader_t * fhdr,
 static int
 mail_recycle_bin(int ent GCC_UNUSED, fileheader_t * fhdr GCC_UNUSED,
                  const char *direct) {
-    if (!HasUserPerm(PERM_BASIC))
+    if (!HasUserPerm(PERM_LOGINOK))
         return DONOTHING;
     return psb_recycle_bin(direct, "­Ó¤H«H½c");
 }

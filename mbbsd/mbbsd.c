@@ -803,7 +803,17 @@ login_query(char *ruid)
 #else
     	show_file("etc/Welcome", 1, -1, SHOWFILE_ALLOW_ALL);
 #endif
-
+		
+#ifdef BETA
+	/*大兔：當系統運用於測試機時，編譯時加上BETA=1的參數，並且在適當處加上可識別的文字，避免不小心在測試操作時誤動到正式系統*/
+	move(1, 69);
+	outs(ANSI_COLOR(1;31) "測試" ANSI_RESET);
+#endif
+		if(is_secure_connection){
+			move(1, 75);
+			outs(ANSI_COLOR(1;32) "安全" ANSI_RESET);
+		}
+		
 		attempts = 0;
 		while (1) {
 		if (attempts++ >= LOGINATTEMPTS) {
@@ -1295,7 +1305,7 @@ user_login(void)
     foreign_warning();
 #endif
 
-    if(HasUserFlag(UF_FAV_ADDNEW)) {
+    if(HasUserFlag(UF_FAV_ADDNEW) && HasUserPerm(PERM_LOGINOK)){
 	fav_load();
 	if (get_fav_root() != NULL) {
 	    int num;

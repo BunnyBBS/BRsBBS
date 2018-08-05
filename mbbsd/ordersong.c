@@ -12,8 +12,11 @@
 #ifndef ORDERSONG_MAX_BADPOST
 #define ORDERSONG_MAX_BADPOST   (1)
 #endif
-#ifndef ORDERSONG_MIN_NUMLOGINDAYS
-#define ORDERSONG_MIN_NUMLOGINDAYS   (0)
+//#ifndef ORDERSONG_MIN_NUMLOGINDAYS
+//#define ORDERSONG_MIN_NUMLOGINDAYS   (30)
+//#endif
+#ifndef ORDERSONG_PAYMONEY
+#define ORDERSONG_PAYMONEY   (100)
 #endif
 
 #define MAX_SONGS (MAX_ADBANNER-100) // (400) XXX MAX_SONGS should be fewer than MAX_ADBANNER.
@@ -33,7 +36,6 @@ do_order_song(void)
     char save_title[STRLEN];
     const char *override_receiver = NULL;
 
-    // 由於變免費了，改成要看退文跟登入天數
 #if defined(ORDERSONG_MAX_BADPOST) && defined(ASSESS)
     if (cuser.badpost > ORDERSONG_MAX_BADPOST) {
         vmsgf("為避免濫用，留言前請先消除退文記錄至 %d 篇以下",
@@ -41,6 +43,7 @@ do_order_song(void)
         return 0;
     }
 #endif
+	
 #ifdef ORDERSONG_MIN_NUMLOGINDAYS
     if (cuser.numlogindays < ORDERSONG_MIN_NUMLOGINDAYS) {
         vmsgf("為避免濫用，留言前要先有%s %d %s",
@@ -63,34 +66,31 @@ do_order_song(void)
 
     while (1) {
 	char ans[4];
-	move(12, 0);
-	clrtobot();
+	clear();
+	vs_hdr2(" " BBSMNAME2 "超市 ", " 點播動態");
 	prints("親愛的 %s 歡迎來到心情點播留言系統\n\n", cuser.userid);
 	outs(ANSI_COLOR(1) "注意心情點播內容請勿涉及謾罵 人身攻擊 猥褻"
 	     "公然侮辱 誹謗\n"
 	     "若有上述違規情形，站方將保留決定是否公開內容的權利\n"
-             "且違規者將不受匿名保護(其 ID 可被公佈於公開看板)\n"
-	     "如不同意請按 (3) 離開。" ANSI_RESET "\n");
-	getdata(18, 0,
-		"請選擇 " ANSI_COLOR(1) "1)" ANSI_RESET " 開始留言、"
-		ANSI_COLOR(1) "2)" ANSI_RESET " 看範本、"
-		"或是 " ANSI_COLOR(1) "3)" ANSI_RESET " 離開: ",
-		ans, sizeof(ans), DOECHO);
+         "且違規者將不受匿名保護(其 ID 可被公佈於公開看板)\n"
+	     "如不同意請按 Q 離開。" ANSI_RESET "\n");
+	getdata(6, 0,"開始留言(Y)  看點歌本(S)  離開[Q] ", ans, sizeof(ans), LCECHO);
 
-	if (ans[0] == '1')
+	if (ans[0] == 'y'){
 	    break;
-	else if (ans[0] == '2') {
+	}else if (ans[0] == 's') {
 	    a_menu("留言範本", SONGBOOK, 0, 0, NULL, NULL);
 	    clear();
-	}
-	else if (ans[0] == '3') {
-	    vmsg("謝謝光臨 :)");
+	}else if (ans[0] == 'q') {
 	    unlockutmpmode();
 	    return 0;
-        }
-    }
+    }else{
+	    unlockutmpmode();
+	    return 0;
+	}
+	}
 
-    getdata_str(19, 0, "留言者(可匿名): ", sender, sizeof(sender), DOECHO,
+    getdata_str(7, 0, "留言者(可匿名): ", sender, sizeof(sender), DOECHO,
                 cuser.userid);
 
 #ifdef USE_ANGEL_SONG
@@ -98,14 +98,14 @@ do_order_song(void)
 #endif
 
     if (!*receiver)
-        getdata(20, 0, "留言給(可匿名): ", receiver, sizeof(receiver), DOECHO);
+        getdata(8, 0, "留言給(可匿名): ", receiver, sizeof(receiver), DOECHO);
 
     do {
-	getdata(21, 0, "想要要對他/她說..:", say, sizeof(say), DOECHO);
+	getdata(9, 0, "想要要對他/她說..:", say, sizeof(say), DOECHO);
 	reduce_blank(say, say);
 	if (!say[0]) {
 	    bell();
-	    mvouts(22, 0, "請重新輸入想說的內容");
+	    mvouts(10, 0, "請重新輸入想說的內容");
 	}
     } while (!say[0]);
 
@@ -114,8 +114,7 @@ do_order_song(void)
     if (override_receiver) {
         *address = 0;
     } else do {
-        move(22, 0); clrtobot();
-        getdata_str(22, 0, "寄到誰的信箱(站內真實ID)?",
+        getdata_str(11, 0, "寄到誰的信箱(站內真實ID)?",
                     address, sizeof(address), LCECHO, receiver);
         if (!*address)
             break;
@@ -129,6 +128,24 @@ do_order_song(void)
         }
         vmsg("請輸入站內 ID 或直接 ENTER");
     } while (1);
+
+#ifdef ORDERSONG_PAYMONEY
+	move(b_lines-2, 0);
+	prints("即將支付點播費用 %d %s", ORDERSONG_PAYMONEY, MONEYNAME);
+	getdata(b_lines - 1, 0, "確定要支付了嗎？ (y/N)",genbuf, 3, LCECHO);
+	if (genbuf[0] != 'y') {
+	    unlockutmpmode();
+	    return 0;
+	}
+
+	reload_money();
+	if (cuser.money < (int)ORDERSONG_PAYMONEY){
+		vmsg(MONEYNAME "不夠繳納點播費用...");
+		unlockutmpmode();
+		return 0;
+	}else{
+		pay((int)ORDERSONG_PAYMONEY, "繳納點播費用。");
+#endif
 
     vmsg("接著要選範本囉...");
     a_menu("留言範本", SONGBOOK, 0, 0, trans_buffer, NULL);
@@ -249,6 +266,9 @@ do_order_song(void)
 
     unlockutmpmode();
     return 1;
+#ifdef ORDERSONG_PAYMONEY
+    }
+#endif
 }
 
 int

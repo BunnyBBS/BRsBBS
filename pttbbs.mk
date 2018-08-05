@@ -73,6 +73,11 @@ PTT_CFLAGS+=	-DDEBUG
 PTT_CXXFLAGS+=	-DDEBUG 
 .endif
 
+# 若有定義 BETA, 則在 CFLAGS內定義 BETA
+.if defined(BETA)
+PTT_CFLAGS+=	-DBETA 
+.endif
+
 .if defined(GDB)
 CFLAGS:=	-g -O0 $(PTT_CFLAGS)
 CXXFLAGS:=	-g -O0 $(PTT_CXXFLAGS)

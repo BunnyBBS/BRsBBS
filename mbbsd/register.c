@@ -1089,7 +1089,7 @@ check_register(void)
 }
 
 static int
-create_regform_request()
+create_regform_request(char *email)
 {
     FILE *fn;
 
@@ -1105,7 +1105,7 @@ create_regform_request()
     fprintf(fn, "name: %s\n",   cuser.realname);
     fprintf(fn, "career: %s\n", cuser.career);
     fprintf(fn, "addr: %s\n",   cuser.address);
-    fprintf(fn, "email: %s\n",  cuser.email); // email is apparently 'x' here.
+    fprintf(fn, "email: %s\n",  email);
     fprintf(fn, "----\n");
     fclose(fn);
 
@@ -1113,7 +1113,7 @@ create_regform_request()
     file_append_record(FN_REQLIST, cuser.userid);
 
     // save justify information
-    pwcuRegSetTemporaryJustify("<Manual>", "x");
+    pwcuRegSetTemporaryJustify("<Manual>", email);
     return 1;
 }
 
@@ -1122,12 +1122,17 @@ toregister(char *email)
 {
     clear();
     vs_hdr("認證設定");
-    if (cuser.userlevel & PERM_NOREGCODE){
+    /*if (cuser.userlevel & PERM_NOREGCODE){
 	strcpy(email, "x");
 	goto REGFORM2;
-    }
+    }*/
     move(1, 0);
-    outs("您好，請填寫您的 E-Mail。\n本站註冊資料的審核採手動審核，\n是以資料完整性作為審核原則，\n所有資料缺一不可，請您詳填。\n若您無 E-Mail，請您輸入 x 採無信箱認證。\n但注意若無 E-Mail 很有可能被退回註冊。\n");
+    outs("您好，請填寫您的 E-Mail。\n"
+		 "本站註冊資料的審核採手動審核，\n"
+		 "是以資料完整性作為審核原則，\n"
+		 "所有資料缺一不可，請您詳填。\n"
+		 "若您無 E-Mail，請您輸入 x 採無信箱認證。\n"
+		 "但注意若無 E-Mail 很有可能被退回註冊。\n");
 
     while (1) {
 	email[0] = 0;
@@ -1196,7 +1201,7 @@ toregister(char *email)
     }
 #endif
  REGFORM2:
-	if (!create_regform_request())
+	if (!create_regform_request(email))
 	    vmsg("註冊申請單建立失敗。請至 " BN_BUGREPORT " 報告。");
 }
 
@@ -2574,8 +2579,11 @@ m_register(void)
     char            genbuf[200];
 
     if (dashs(FN_REQLIST) <= 0) {
+	clear();
+	move(b_lines-3, 0);
 	outs("目前並無新註冊資料");
-	return XEASY;
+	pressanykey();
+	return 0;
     }
     fn = fopen(FN_REQLIST, "r");
     assert(fn);

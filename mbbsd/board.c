@@ -153,16 +153,13 @@ save_brdbuf(void)
     fav_free();
 }
 
-int
-HasBoardPerm(boardheader_t *bptr)
+static inline int
+HasBoardPermNormally(boardheader_t *bptr)
 {
     register int    level, brdattr;
 
     level = bptr->level;
     brdattr = bptr->brdattr;
-
-    if (HasUserPerm(PERM_SYSOP))
-	return 1;
 
     // allow POLICE to enter BM boards
     if ((level & PERM_BM) &&
@@ -179,7 +176,7 @@ HasBoardPerm(boardheader_t *bptr)
 	    if (brdattr & BRD_POSTMASK)
 		return 0;
 	    else
-		return 2;
+		return 2;  // What's this?
 	} else
 	    return 1;
     }
@@ -194,6 +191,21 @@ HasBoardPerm(boardheader_t *bptr)
 	return 0;
 
     return 1;
+}
+
+int
+HasBoardPerm(boardheader_t *bptr)
+{
+    if (HasUserPerm(PERM_SYSOP))
+	return 1;
+
+    return HasBoardPermNormally(bptr);
+}
+
+int
+BoardPermNeedsSysopOverride(boardheader_t *bptr)
+{
+    return HasUserPerm(PERM_SYSOP) && !HasBoardPermNormally(bptr);
 }
 
 // board configuration utilities
@@ -1301,10 +1313,10 @@ brdlist_foot(void)
 {
     vs_footer("  選擇看板  ",
 	    IS_LISTING_FAV() ?
-	    "  (a)增加看板 (s)進入已知板名 (y)列出全部 (v/V)已讀/未讀" :
+	    "  (a)增加看板 (s)進入已知板名 "/*(y)列出全部 */"(v/V)已讀/未讀" :
             IN_CLASS() ?
 	    "  (m)加入/移出最愛 (s)進入已知板名 (v/V)已讀/未讀 " :
-	    "  (m)加入/移出最愛 (y)只列最愛 (v/V)已讀/未讀 ");
+	    "  (m)加入/移出最愛 "/*(y)只列最愛 */"(v/V)已讀/未讀 ");
 }
 
 
@@ -1333,7 +1345,7 @@ show_brdlist(int head, int clsflag, int newflag)
     if (unlikely(IN_CLASSROOT())) {
 	currstat = CLASS;
 	myrow = 6;
-	showtitle("城市地圖", BBSName);
+	showtitle("分類看板", BBSName);
 	move(1, 0);
 	// TODO move ascii art to adbanner?
 	outs(
@@ -1382,7 +1394,7 @@ show_brdlist(int head, int clsflag, int newflag)
 	    } else {
 		// normal user. tell him what to do.
 		mvouts(3, 10,
-		"--- 空目錄，請按 a 新增或用 y 列出全部看板後按 z 增刪 ---");
+		"--- 空目錄，請按 a 新增"/*或用 y 列出全部看板後按 z 增刪*/" ---");
 	    }
 	    return;
 	}
@@ -1472,9 +1484,20 @@ show_brdlist(int head, int clsflag, int newflag)
 		    }
 		}
 
+#ifdef USE_REAL_DESC_FOR_HIDDEN_BOARD_IN_MYFAV
+		const int should_show_sensitive_info = true;
+#else
+		// Show sensitive info if permission is *not* given by solely
+		// PERM_SYSOP, GROUPOP, or both.
+		const int should_show_sensitive_info =
+		    !BoardPermNeedsSysopOverride(B_BH(ptr)) &&
+		    !(GROUPOP() && !HasBoardPerm(B_BH(ptr)));
+#endif
+
+
 		if (newflag && B_BH(ptr)->brdattr & BRD_GROUPBOARD)
 		    outs("          ");
-		else
+		else if (should_show_sensitive_info)
 		    prints("%7d%c%s",
 			    newflag ? (int)(B_TOTAL(ptr)) : head,
 			    !(B_BH(ptr)->brdattr & BRD_HIDE) ? ' ' :
@@ -1482,6 +1505,13 @@ show_brdlist(int head, int clsflag, int newflag)
 			    (ptr->myattr & NBRD_TAG) ? "D " :
 			    (B_BH(ptr)->brdattr & BRD_GROUPBOARD) ? "  " :
 			    unread[ptr->myattr & NBRD_UNREAD ? 1 : 0]);
+		else {
+		    if (newflag)
+			prints("%7s", "");
+		    else
+			prints("%7d", head);
+		    prints(ANSI_COLOR(1;31)"X"ANSI_RESET"%s", (ptr->myattr & NBRD_TAG) ? "D " : unread[0]);
+		}
 
 		if (!IN_CLASSROOT()) {
 		    prints("%s%-13s" ANSI_RESET "%s%5.5s" ANSI_COLOR(0;37)
@@ -1492,12 +1522,18 @@ show_brdlist(int head, int clsflag, int newflag)
                               HILIGHT_COLOR) : "",
 			    B_BH(ptr)->brdname,
 			    make_class_color(B_BH(ptr)->title),
-			    B_BH(ptr)->title, B_BH(ptr)->title + 5, B_BH(ptr)->title + 7);
+			    B_BH(ptr)->title,
+			    should_show_sensitive_info ?
+				B_BH(ptr)->title + 5 : "",
+			    should_show_sensitive_info ?
+				B_BH(ptr)->title + 7 : "");
 
+		    if (!should_show_sensitive_info)
+			outs("   ");
 #ifdef USE_COOLDOWN
-		    if (B_BH(ptr)->brdattr & BRD_COOLDOWN)
+		    else if (B_BH(ptr)->brdattr & BRD_COOLDOWN)
 #else
-                    if (0)      // don't move this line -- preserved for next "else".
+		    else if (0)
 #endif
                         outs("靜 ");
                     // Note the nuser is not updated realtime, or have some bug.
@@ -1977,14 +2013,14 @@ choose_board(int newflag)
 		///////////////////////////////////////////////////////
 		// MyFav Functionality (Require PERM_BASIC)
 		///////////////////////////////////////////////////////
-	case 'y':
+	/*case 'y':
 	    if (HasFavEditPerm() && !(IN_CLASS())) {
 		if (get_current_fav() != NULL || !IS_LISTING_FAV()){
-		    yank_flag ^= 1; /* FAV <=> BRD */
+		    yank_flag ^= 1;
 		}
 		brdnum = -1;
 	    }
-	    break;
+	    break;*/
 	case Ctrl('D'):
 	    if (HasFavEditPerm()) {
 		if (vans("刪除所有標記[N]?") == 'y'){
@@ -2310,3 +2346,4 @@ New(void)
     currstat = stat0;
     return 0;
 }
+
