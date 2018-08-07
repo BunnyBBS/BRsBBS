@@ -160,10 +160,13 @@ int u_cancelbadpost(void)
    return 0;
 }
 
+int getBoardTax(char *userid);
+char *isBrdTaxPaid(char *userid);
+
 void
 user_display(const userec_t * u, int adminmode)
 {
-    int             diff = 0;
+    int             diff = 0, tax;
     char            genbuf[200];
 
     // Many fields are available (and have sync issue) in user->query,
@@ -175,7 +178,10 @@ user_display(const userec_t * u, int adminmode)
            "  " ANSI_COLOR(1;30;45) "    使 用 者" " 資 料        "
 	   "     " ANSI_RESET "  " ANSI_COLOR(30;41) "┴┬┴┬┴┬" ANSI_RESET
            "\n");
-    prints("\t代號暱稱: %s (%s)\n", u->userid, u->nickname);
+    prints("\t代號暱稱: %s (%s)\n\n", u->userid, u->nickname);
+	
+	/* 以下資料本人及PERM_SYSOP、PERM_ACCOUNTS看得見 */
+	if(adminmode && HasUserPerm(PERM_SYSOP|PERM_ACCOUNTS) || !(adminmode) && strcmp(u->userid, cuser.userid) == 0){
     prints("\t真實姓名: %s", u->realname);
 #if FOREIGN_REG_DAY > 0
     prints(" %s%s",
@@ -204,28 +210,16 @@ user_display(const userec_t * u, int adminmode)
 		genbuf[diff] = '-';
 	prints("\t帳號權限: %s\n", genbuf);
 	prints("\t認證資料: %s\n", u->justify);
-    }
-
+	}
 
     sethomedir(genbuf, u->userid);
     prints("\t私人信箱: %d 封  (購買信箱: %d 封)\n",
 	   get_num_records(genbuf, sizeof(fileheader_t)),
 	   u->exmailbox);
-    prints("\t使用記錄: " STR_LOGINDAYS " %d " STR_LOGINDAYS_QTY
-           ,u->numlogindays);
-    prints(" / 文章 %d 篇\n", u->numposts);
-
-    if (adminmode) {
-        prints("\t最後上線: %s (掛站時每日增加) / %s\n",
-               Cdate(&u->lastlogin), u->lasthost);
-    } else {
-	diff = (now - login_start_time) / 60;
-	prints("\t停留期間: %d 小時 %2d 分\n",
-	       diff / 60, diff % 60);
+	outc('\n');
     }
-
-    /* Thor: 想看看這個 user 是那些板的板主 */
-    if (u->userlevel >= PERM_BM) {
+	/* 以上資料本人及PERM_SYSOP、PERM_BOARD看得見 */
+    if (u->userlevel >= PERM_BM && adminmode && HasUserPerm(PERM_SYSOP|PERM_BOARD) || u->userlevel >= PERM_BM && !(adminmode) && strcmp(u->userid, cuser.userid) == 0) {
 	int             i;
 	boardheader_t  *bhdr;
 
@@ -238,12 +232,36 @@ user_display(const userec_t * u, int adminmode)
 	    }
 	}
 	outc('\n');
-    }
 
-    // conditional fields
+	outs("\t納稅狀況: ");
+	tax = getBoardTax(u->userid);
+	if(tax == 0)
+		outs("不須繳納\n");
+	else{
+		char *paid = isBrdTaxPaid(u->userid);
+		if(paid == 0)
+			outs("本月尚未繳納\n");
+		else
+			prints("%s",paid);
+	}
+	outc('\n');
+	}
+
+    prints("\t文章數量: %d 篇", u->numposts);
 #ifdef ASSESS
-    prints("\t退文數目: %u\n", (unsigned int)u->badpost);
+    prints(" (退文: %u篇)", (unsigned int)u->badpost);
 #endif // ASSESS
+	prints("\n");
+
+    if (adminmode) {
+        prints("\t最後上線: %s (掛站時每日增加) / %s\n",
+               Cdate(&u->lastlogin), u->lasthost);
+    } else {
+	diff = (now - login_start_time) / 60;
+	prints("\t停留期間: %d 小時 %2d 分\n",
+	       diff / 60, diff % 60);
+    }
+    prints("\t" STR_LOGINDAYS ": %d" STR_LOGINDAYS_QTY "\n",u->numlogindays);
 
 #ifdef CHESSCOUNTRY
     {
@@ -307,6 +325,39 @@ user_display(const userec_t * u, int adminmode)
 	}
 	prints("\n");
     }
+}
+
+int
+list_user_board(void){
+    char userid[IDLEN+1];
+	int             i, j=0;
+	boardheader_t  *bhdr;
+
+	vs_hdr2(" 土地管理局 ", " 查詢使用者擔任的板主");
+	usercomplete("請輸入要設定的ID ", userid);
+	if (!is_validuserid(userid)){
+		vmsg("查無ID");
+		return 0;
+	}
+	move(1,0);clrtobot();
+	prints("查詢ID  : %s\n",userid);
+	outs("擔任板主: ");
+	for (i = num_boards(), bhdr = bcache; i > 0; i--, bhdr++) {
+	    if ( is_uBM(bhdr->BM, userid)) {
+		outs(bhdr->brdname);
+		outc(' ');
+		j=1;
+	    }
+	}
+	outc('\n');
+	if(j == 0){
+		clear();
+		vmsg("所查的ID沒有擔任板主");
+		return 0;
+	}else{
+		mvouts(b_lines-1,0,"列出完成");
+		pressanykey();
+	}
 }
 
 void

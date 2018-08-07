@@ -722,6 +722,10 @@ int set_board_tax();
 int board_tax_calc();
 int board_tax_log();
 int set_tax_file();
+int list_unpay();
+
+
+int list_user_board();
 
 // ----------------------------------------------------------- MENU DEFINITION
 // 注意每個 menu 最多不能同時顯示超過 11 項 (80x24 標準大小的限制)
@@ -772,7 +776,7 @@ int main_menu(void) {
 	/* 大兔：權限劃分備註：有關使用者資料的項目只能讓SYSOP與ACCOUNT操作；BBSADM計畫作為輔助SYSOP之用，因此其他非敏感操作得讓BBSADM使用；BOARD可以直接在這裡設定看板。*/
 	static const commands_t adminlist[] = {
 		{x_admin_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Board Admin 〉土地管理局〈"},
-		{x_admin_usermenu,	PERM_SYSOP|PERM_ACCOUNTS,			"User Admin  〉民政事務局〈"},
+		{x_admin_usermenu,	PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD,"User Admin  〉民政事務局〈"},
 		{x_admin_money,		PERM_SYSOP|PERM_BBSADM,				"FinancAdmin 〉金融監管署〈"},
 		{x_file,			PERM_SYSOP|PERM_BBSADM,				"SystemFile  〉 系統檔案 〈"},
 		{m_loginmsg,		PERM_SYSOP|PERM_BBSADM,				"LoginMsg    〉 進站水球 〈"},
@@ -792,6 +796,7 @@ int main_menu(void) {
 		static const commands_t m_admin_board[] = {
 			{m_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Set Board   〉 設定看板 〈"},
 			{x_admin_brdtax,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"TBoard Tax  〉看板稅管理〈"},
+			{list_user_board,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"ListUserMod 〉查擔任板主〈"},
 			{NULL, 0, NULL}
 		};
 		static int x_admin_board(void)
@@ -805,6 +810,7 @@ int main_menu(void) {
 			{set_board_tax,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"STax Set    〉查詢與增刪〈"},
 			{set_tax_file,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"FTax File   〉 稅額檔案 〈"},
 			{board_tax_log,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"LTax PayLog 〉 繳納紀錄 〈"},
+			{list_unpay,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"UnPay List  〉未繳納名單〈"},
 			{NULL, 0, NULL}
 		};
 		static int x_admin_brdtax(void)
@@ -815,7 +821,7 @@ int main_menu(void) {
 		}
 		static const commands_t m_admin_money[] = {
 			{view_user_money_log,	PERM_SYSOP|PERM_BBSADM,				"View Log    〉 交易記錄 〈"},
-			{give_money,			PERM_SYSOP|PERM_BBSADM,				"Givemoney   〉 發放"MONEYNAME"〈"},
+			{give_money,			PERM_SYSOP|PERM_BBSADM,				"Givemoney   〉 發放"MONEYNAME" 〈"},
 			{NULL, 0, NULL}
 		};
 		static int x_admin_money(void)
@@ -826,7 +832,7 @@ int main_menu(void) {
 		}
 		static const commands_t m_admin_usermenu[] = {
 			{m_register,		PERM_SYSOP|PERM_ACCOUNTS,			"Register    〉審核註冊單〈"},
-			{m_user,			PERM_SYSOP|PERM_ACCOUNTS,			"User Data   〉使用者資料〈"},
+			{m_user,			PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD,"User Data   〉使用者資料〈"},
 			{x_admin_user,		PERM_SYSOP|PERM_ACCOUNTS,			"LUser Log   〉使用者記錄〈"},
 			{search_user_bypwd,	PERM_SYSOP|PERM_ACCOUNTS,			"Search User 〉搜尋使用者〈"},
 			{NULL, 0, NULL}
@@ -880,6 +886,7 @@ int main_menu(void) {
 		return 0;
 	};
 	static const commands_t banklist[] = {
+		{board_tax_calc,	PERM_LOGINOK,	"CTax Calc   〉 試算稅額 〈"},
 		{p_give,			0,				"Give Money  〉給別人" MONEYNAME"〈"},
 		{save_violatelaw,	0,				"Pay Ticket  〉 繳納罰單 〈"},
 		{pay_board_tax,		PERM_LOGINOK,	"Board Tax   〉繳納看板稅〈"},

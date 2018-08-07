@@ -144,7 +144,7 @@ b_nonzeroNum(const char *buf)
 }
 
 static void
-vote_report(const char *bname, const char *post_bname, const char *fname)
+vote_report(const char *votename, const char *post_bname, const char *fname)
 {
     int bid;
     char buf[PATHLEN];
@@ -152,8 +152,8 @@ vote_report(const char *bname, const char *post_bname, const char *fname)
 
     setbpath(buf, post_bname);
     stampfile(buf, &header);
-    strlcpy(header.owner, "[皑隔贝]", sizeof(header.owner));
-    snprintf(header.title, sizeof(header.title), "[%s] 狾 匡薄厨旧", bname);
+    strlcpy(header.owner, "[щ布╰参]", sizeof(header.owner));
+    snprintf(header.title, sizeof(header.title), "%s", votename);
 
     Copy(fname, buf);
 
@@ -169,7 +169,7 @@ b_result_one(const vote_buffer_t *vbuf, boardheader_t * fh, int *total)
 {
     FILE           *cfp, *tfp, *xfp;
     int             lockfd;
-    char           *bname;
+    char           *bname, votename[200];
     char            inbuf[ANSILINELEN];
     int            *counts;
     int             people_num;
@@ -227,10 +227,14 @@ b_result_one(const vote_buffer_t *vbuf, boardheader_t * fh, int *total)
     // Report: title part
     setbfile(buf, bname, vbuf->title);
     if ((xfp = fopen(buf, "r"))) {
-	fgets(inbuf, sizeof(inbuf), xfp);
-	fprintf(tfp, "%s\n』 щ布嘿: %s\n\n", msg_separator, inbuf);
-	fclose(xfp);
-    }
+		fgets(inbuf, sizeof(inbuf), xfp);
+		snprintf(votename, sizeof(votename), "[秨布] %s", inbuf);
+		fclose(xfp);
+    }else{
+		snprintf(votename, sizeof(votename), "[秨布] %s狾щ布秨布挡狦", bname);
+	}
+    fprintf(tfp, ": [щ布╰参] 狾: %s\n夹肈: %s\n丁: %s\n", bname, votename, ctime4(&now));
+	fprintf(tfp, "%s\n』 щ布嘿: %s\n\n", msg_separator, votename);
     fprintf(tfp, "%s\n』 щ布いゎ: %s\n\n\n』 布匡肈ヘ磞瓃:\n\n",
 	    msg_separator, Cdate(&closetime));
     fh->vtime = now;
@@ -267,9 +271,9 @@ b_result_one(const vote_buffer_t *vbuf, boardheader_t * fh, int *total)
     fclose(tfp);
 
     // Post to boards
-    vote_report(bname, bname, b_report);
+    vote_report(votename, bname, b_report);
     if (!(fh->brdattr & (BRD_NOCOUNT|BRD_HIDE))) { // from ptt2 local modification
-	vote_report(bname, BN_RECORD, b_report);
+	vote_report(votename, BN_RECORD, b_report);
     }
 
     // Reuse the report file, and append old results after it.
