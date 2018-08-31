@@ -775,6 +775,9 @@ bool maintainStatus(){
 	return false;
 }
 
+/* Two Factor Auth in twofa.c */
+int twoFA_main();
+
 static void
 login_query(char *ruid)
 {
@@ -787,7 +790,7 @@ login_query(char *ruid)
 #endif
 
     char	    	passbuf[PASSLEN];
-    int             attempts;
+    int             attempts, twofa;
 
     resolve_garbage();
 
@@ -915,12 +918,30 @@ login_query(char *ruid)
 			outs(ERR_PASSWD);
 
 			} else {
-
-			strlcpy(ruid, cuser.userid, IDLEN+1);
-			outs("密碼正確！ 開始登入系統...");
-			move(22, 0); refresh();
-			clrtoeol();
-			break;
+				if(HasUserFlag(UF_TWOFA_LOGIN)){
+					outs("需要兩步驟驗證，請稍後...");
+					clear();
+					twofa = twoFA_main(cuser.userid);
+					if(twofa != NULL){
+						move(21, 0); clrtoeol();
+						outs("兩步驟驗證失敗。");
+						pressanykey();
+						sleep(3);
+						exit(1);
+					}else{
+						strlcpy(ruid, cuser.userid, IDLEN+1);
+						outs("驗證完成，開始登入系統...");
+						move(22, 0); refresh();
+						clrtoeol();
+						break;
+					}
+				}else{
+					strlcpy(ruid, cuser.userid, IDLEN+1);
+					outs("密碼正確，開始登入系統...");
+					move(22, 0); refresh();
+					clrtoeol();
+					break;
+				}
 			}
 		}
 		}

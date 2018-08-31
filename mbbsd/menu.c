@@ -724,8 +724,10 @@ int board_tax_log();
 int set_tax_file();
 int list_unpay();
 
-
 int list_user_board();
+
+/* Two Factor Auth in twofa.c */
+int twoFA_genRecovCode();
 
 // ----------------------------------------------------------- MENU DEFINITION
 // 注意每個 menu 最多不能同時顯示超過 11 項 (80x24 標準大小的限制)
@@ -932,6 +934,7 @@ int main_menu(void) {
 		{u_mylogs,			PERM_LOGINOK,   "LMy Logs      【個人記錄】 (最近上線...)"},*/
 		{u_info,			PERM_BASIC,		"Info        〉資料與密碼〈"},
 		{u_customize,		PERM_BASIC,		"Customize   〉個人化設定〈"},
+		{twoFA_genRecovCode,PERM_BASIC,		"RecoverCode 〉產生復原碼〈"},
 		{u_editplan,		PERM_LOGINOK,   "QueryEdit   〉編輯名片檔〈"},
 		{u_editsig,			PERM_LOGINOK,   "Signature   〉編輯簽名檔〈"},
 		{u_view_recentlogin,0,				"Login Log   〉 上站記錄 〈"},
