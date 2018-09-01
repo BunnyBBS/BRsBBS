@@ -33,10 +33,10 @@ twoFA_Send(char *user)
 	thttp_cleanup(&t);
 
 	if (ret)
-		return "系統錯誤，請稍後再試。(Error code: 2FA-S-001)";
+		return "系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-S-001)";
 
     if (code != 200){
-		snprintf(buf, sizeof(buf), "系統錯誤，請稍後再試。(Error code: 2FA-S-%3d)", code);
+		snprintf(buf, sizeof(buf), "系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-S-%3d)", code);
 		return buf;
 	}
 
@@ -47,7 +47,7 @@ int twoFA_main(char *user)
 {
     FILE           *fp;
     const char *msg = NULL;
-    char code[7], rev_code[9], code_input[9], buf[200];
+    char code[7], rev_code[9], code_input[9], buf[200], genbuf[3];
 
 	clear();
 	vs_hdr("兩步驟認證");
@@ -60,19 +60,28 @@ int twoFA_main(char *user)
 	
 	setuserfile(buf, "2fa.code");
 	if (!(fp = fopen(buf, "w"))){
-		outs("系統錯誤，請稍後再試。(Error code: 2FA-F-001)");
-		return -1;
+		move(1,0);
+		outs("系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-F-001)");
+		getdata(2, 0, "使用復原碼？ (y/N) ",genbuf, 3, LCECHO);
+		if (genbuf[0] != 'y') {
+			return -1;
+		}
 	}
 	fprintf(fp,"%s", code);
 	fclose(fp);
 
     msg = twoFA_Send(user);
     if (msg){
+		move(1,0);
 		outs(msg);
-		return -1;
+		getdata(2, 0, "使用復原碼？ (y/N) ",genbuf, 3, LCECHO);
+		if (genbuf[0] != 'y') {
+			return -1;
+		}
 	}
 	unlink(buf);
 	
+	move(1,0); clrtobot();
     outs("驗證碼將直接被發送到iBunny\n");
     outs("一共為六位數字\n");
 
@@ -94,7 +103,7 @@ int twoFA_main(char *user)
 		}else if(length == 8){
 			setuserfile(buf, "2fa.recov");
 			if (!(fp = fopen(buf, "r"))){
-				outs("系統錯誤，請稍後再試。(Error code: 2FA-F-002)");
+				outs("系統錯誤，無法使用復原碼，請稍後再試。(Error code: 2FA-F-002)");
 				return -1;
 			}
 			fgets(rev_code, sizeof(rev_code), fp);
