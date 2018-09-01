@@ -1,21 +1,13 @@
 #include "bbs.h"
 
+#ifdef USE_BOARDTAX
+
 #define BOARD_TAX_DEADLINE (15)
 #define BOARD_TAX_DISDATE (25)
 
 #if defined(BOARD_TAX_DEADLINE) && !defined(BOARD_TAX_LATEPAYRATE)
 #define BOARD_TAX_LATEPAYRATE (25)
 #endif
-
-bool isFileExist(char *filedir){
-	FILE	*file;
-
-	if(file = fopen(filedir, "r")){
-		fclose(file);
-		return true;
-	}
-	return false;
-}
 
 int
 getBoardTax(char *userid){
@@ -475,3 +467,5 @@ list_unpay(void)
 		return 0;
 	}
 }
+
+#endif //USE_BOARDTAX

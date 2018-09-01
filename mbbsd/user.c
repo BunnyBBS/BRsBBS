@@ -233,6 +233,7 @@ user_display(const userec_t * u, int adminmode)
 	}
 	outc('\n');
 
+#ifdef USE_BOARDTAX
 	outs("\t納稅狀況: ");
 	tax = getBoardTax(u->userid);
 	if(tax == 0)
@@ -245,6 +246,7 @@ user_display(const userec_t * u, int adminmode)
 			prints("%s",paid);
 	}
 	outc('\n');
+#endif
 	}
 
     prints("\t文章數量: %d 篇", u->numposts);
@@ -481,7 +483,12 @@ void Customize(void)
 	UF_REJ_OUTTAMAIL,
 	UF_DEFBACKUP,
     UF_SECURE_LOGIN,
+#ifdef USE_IBUNNY_NOTILOGIN
+	UF_NOTIFY_LOGIN,
+#endif
+#ifdef USE_IBUNNY_2FALOGIN
     UF_TWOFA_LOGIN,
+#endif
 	UF_FAV_ADDNEW,
 	UF_FAV_NOHILIGHT,
 	UF_NO_MODMARK,
@@ -507,7 +514,12 @@ void Customize(void)
 	"MAIL       拒收站外信",
 	"BACKUP     預設備份信件與其它記錄", //"與聊天記錄",
     "LOGIN      只允許\使用安全連線(ex, ssh)登入",
-    "2FA_LOGIN  使用兩步驟驗證登入",
+#ifdef USE_IBUNNY_NOTILOGIN
+    "NOTI_LOGIN 帳號被登入時發送通知 (需搭配iBunny)",
+#endif
+#ifdef USE_IBUNNY_2FALOGIN
+    "2FA_LOGIN  使用兩步驟驗證登入 (需搭配iBunny)",
+#endif
 	"MYFAV      新板自動進我的最愛",
 	"MYFAV      單色顯示我的最愛",
 	"MODMARK    隱藏文章修改符號(推文/修文) (~)",

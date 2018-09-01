@@ -765,18 +765,20 @@ load_current_user(const char *uid)
     return 1;
 }
 
-bool maintainStatus(){
+bool isFileExist(char *filedir){
 	FILE	*file;
 
-	if(file = fopen("etc/maintainConfig", "r")){
+	if(file = fopen(filedir, "r")){
 		fclose(file);
 		return true;
 	}
 	return false;
 }
 
+#ifdef USE_IBUNNY_2FALOGIN
 /* Two Factor Auth in twofa.c */
 int twoFA_main();
+#endif
 
 static void
 login_query(char *ruid)
@@ -789,12 +791,12 @@ login_query(char *ruid)
     char            uid[IDLEN + 1];
 #endif
 
-    char	    	passbuf[PASSLEN];
+    char	    	passbuf[PASSLEN], buf[200];
     int             attempts, twofa;
 
     resolve_garbage();
 
-	if(maintainStatus() == true){
+	if(isFileExist("etc/maintainConfig") == true){
 		more("etc/Maintain", NA);
 		pressanykey();
 		sleep(3);
@@ -832,7 +834,7 @@ login_query(char *ruid)
 		prints("current pid: %d ", getpid());
 #endif
 
-		if (getdata(20, 0, "請輸入帳號或以 new 註冊: ",
+		if (getdata(20, 0, "請輸入帳號或以 new 註冊：",
 			uid, sizeof(uid), DOECHO) < 1)
 		{
 			// got nothing
@@ -910,38 +912,38 @@ login_query(char *ruid)
 			/* prepare for later */
 			clrtoeol();
 
-				if (!valid_user || !checkpasswd(cuser.passwd, passbuf)) {
-
-			if(is_validuserid(cuser.userid))
-				logattempt(cuser.userid , '-', login_start_time, fromhost);
-			sleep(1);
-			outs(ERR_PASSWD);
-
-			} else {
+			if (!valid_user || !checkpasswd(cuser.passwd, passbuf)) {
+				if(is_validuserid(cuser.userid))
+					logattempt(cuser.userid , '-', login_start_time, fromhost);
+				sleep(1);
+				outs(ERR_PASSWD);
+			}else{
+#ifdef USE_IBUNNY_2FALOGIN
 				if(HasUserFlag(UF_TWOFA_LOGIN)){
-					outs("需要兩步驟驗證，請稍後...");
-					clear();
 					twofa = twoFA_main(cuser.userid);
+					move(22, 0); refresh();
 					if(twofa != NULL){
-						move(21, 0); clrtoeol();
 						outs("兩步驟驗證失敗。");
 						pressanykey();
-						sleep(3);
+						sleep(2);
 						exit(1);
 					}else{
-						strlcpy(ruid, cuser.userid, IDLEN+1);
 						outs("驗證完成，開始登入系統...");
+						strlcpy(ruid, cuser.userid, IDLEN+1);
 						move(22, 0); refresh();
 						clrtoeol();
 						break;
 					}
 				}else{
+#endif
 					strlcpy(ruid, cuser.userid, IDLEN+1);
 					outs("密碼正確，開始登入系統...");
 					move(22, 0); refresh();
 					clrtoeol();
 					break;
+#ifdef USE_IBUNNY_2FALOGIN
 				}
+#endif
 			}
 		}
 		}
@@ -1057,12 +1059,20 @@ inline static void check_bad_login(void)
     setuserfile(genbuf, FN_BADLOGIN);
     if (more(genbuf, NA) != -1) {
 	move(b_lines - 3, 0);
-	outs("通常並沒有辦法知道該ip是誰所有, "
-		"以及其意圖(是不小心按錯或有意測您密碼)\n"
-		"若您有帳號被盜用疑慮, 請經常更改您的密碼或使用加密連線");
+	outs("通常並沒有辦法知道該ip是誰所有，\n"
+		"若您有帳號被盜用疑慮，請經常更改您的密碼或使用加密連線。");
 	if (vans("您要刪除以上錯誤嘗試的記錄嗎? [Y/n] ") != 'n')
 	    unlink(genbuf);
     }
+#ifdef USE_IBUNNY_2FALOGIN
+    setuserfile(genbuf, "2fa.bad");
+    if (more(genbuf, NA) != -1) {
+	move(b_lines - 2, 0);
+	outs("若您有帳號被盜用疑慮，請經常更改您的密碼或使用加密連線。");
+	if (vans("您要刪除以上錯誤嘗試的記錄嗎? [Y/n] ") != 'n')
+	    unlink(genbuf);
+    }
+#endif
 }
 
 void
@@ -1185,6 +1195,7 @@ user_login(void)
 {
     struct tm       ptime, lasttime;
     int             nowusers, i;
+	char buf[200];
 
     /* NOTE! 在 setup_utmp 之前, 不應該有任何 blocking/slow function,
      * 否則可藉機 race condition 達到 multi-login */
@@ -1338,6 +1349,18 @@ user_login(void)
 	    }
 	}
     }
+
+#ifdef USE_IBUNNY_2FALOGIN
+	setuserfile(buf, "2fa.recov");
+	if(HasUserFlag(UF_TWOFA_LOGIN) && isFileExist(buf) == false){
+		clear();
+		move(17,0);
+		outs("您開啟了兩步驟認證，但尚未設定復原碼\n");
+	    if (vans("要現在進行設定嗎？ [y/N]") == 'y') {
+			twoFA_genRecovCode();
+	    }
+	}
+#endif
 
     for (i = 0; i < NUMVIEWFILE; i++)
     {

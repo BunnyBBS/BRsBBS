@@ -716,18 +716,22 @@ int _debug_reportstruct()
 }
 #endif
 
-// boardtax.c 看板稅相關
+#ifdef USE_BOARDTAX
+// in boardtax.c
 int pay_board_tax();
 int set_board_tax();
 int board_tax_calc();
 int board_tax_log();
 int set_tax_file();
 int list_unpay();
+#endif
 
 int list_user_board();
 
+#ifdef USE_IBUNNY_2FALOGIN
 /* Two Factor Auth in twofa.c */
 int twoFA_genRecovCode();
+#endif
 
 // ----------------------------------------------------------- MENU DEFINITION
 // 注意每個 menu 最多不能同時顯示超過 11 項 (80x24 標準大小的限制)
@@ -797,7 +801,9 @@ int main_menu(void) {
 	}
 		static const commands_t m_admin_board[] = {
 			{m_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Set Board   〉 設定看板 〈"},
+		#ifdef USE_BOARDTAX
 			{x_admin_brdtax,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"TBoard Tax  〉看板稅管理〈"},
+		#endif
 			{list_user_board,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"ListUserMod 〉查擔任板主〈"},
 			{NULL, 0, NULL}
 		};
@@ -807,6 +813,7 @@ int main_menu(void) {
 			domenu(M_XMENU, "土地管理局", init, m_admin_board);
 			return 0;
 		}
+		#ifdef USE_BOARDTAX
 		static const commands_t m_admin_brdtax[] = {
 			{board_tax_calc,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"CTax Calc   〉 試算稅額 〈"},
 			{set_board_tax,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"STax Set    〉查詢與增刪〈"},
@@ -821,6 +828,7 @@ int main_menu(void) {
 			domenu(M_XMENU, "看板稅管理", init, m_admin_brdtax);
 			return 0;
 		}
+		#endif
 		static const commands_t m_admin_money[] = {
 			{view_user_money_log,	PERM_SYSOP|PERM_BBSADM,				"View Log    〉 交易記錄 〈"},
 			{give_money,			PERM_SYSOP|PERM_BBSADM,				"Givemoney   〉 發放"MONEYNAME" 〈"},
@@ -888,10 +896,14 @@ int main_menu(void) {
 		return 0;
 	};
 	static const commands_t banklist[] = {
+	#ifdef USE_BOARDTAX
 		{board_tax_calc,	PERM_LOGINOK,	"CTax Calc   〉 試算稅額 〈"},
+	#endif
 		{p_give,			0,				"Give Money  〉給別人" MONEYNAME"〈"},
 		{save_violatelaw,	0,				"Pay Ticket  〉 繳納罰單 〈"},
+	#ifdef USE_BOARDTAX
 		{pay_board_tax,		PERM_LOGINOK,	"Board Tax   〉繳納看板稅〈"},
+	#endif
 		{NULL, 0, NULL}
 	};
 	static int p_bank() {
@@ -934,7 +946,9 @@ int main_menu(void) {
 		{u_mylogs,			PERM_LOGINOK,   "LMy Logs      【個人記錄】 (最近上線...)"},*/
 		{u_info,			PERM_BASIC,		"Info        〉資料與密碼〈"},
 		{u_customize,		PERM_BASIC,		"Customize   〉個人化設定〈"},
+	#ifdef USE_IBUNNY_2FALOGIN
 		{twoFA_genRecovCode,PERM_BASIC,		"RecoverCode 〉產生復原碼〈"},
+	#endif
 		{u_editplan,		PERM_LOGINOK,   "QueryEdit   〉編輯名片檔〈"},
 		{u_editsig,			PERM_LOGINOK,   "Signature   〉編輯簽名檔〈"},
 		{u_view_recentlogin,0,				"Login Log   〉 上站記錄 〈"},
