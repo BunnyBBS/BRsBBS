@@ -215,21 +215,7 @@ mail_redenvelop(const char *from, const char *to, int money, char *fpath)
 float
 calc_rate(int money)
 {
-	if(money < 500){
-		return 0;
-	}else if(money >= 500 && money < 1000){
-		return 0.05;
-	}else if(money >= 1000 && money < 2500){
-		return 0.1;
-	}else if(money >= 2500 && money < 5000){
-		return 0.125;
-	}else if(money >= 5000 && money < 10000){
-		return 0.15;
-	}else if(money >= 10000 && money < 50000){
-		return 0.2;
-	}else if(money >= 50000){
-		return 0.25;
-	}
+	return 0;
 }
 
 int
@@ -388,10 +374,7 @@ give_money_ui(const char *userid)
 	return -1;
     }
 
-    move(10,0);
-	outs("稅率說明：500以下不扣稅、500以上至1000以下扣5%、1000以上至2500以下扣10%、\n"
-		 "2500以上至5000以下扣12.5%、5000以上至10000以下扣15%、\n"
-		 "10000以上至50000以下扣20%、50000以上扣25%。（以上包含；以下不含）\n");
+    move(13,0);
 	outs(alert_trade);
 
     m = 0;
