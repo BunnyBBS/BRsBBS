@@ -775,7 +775,7 @@ bool isFileExist(char *filedir){
 	return false;
 }
 
-#ifdef USE_IBUNNY_2FALOGIN
+#ifdef USE_2FALOGIN
 /* Two Factor Auth in twofa.c */
 int twoFA_main();
 #endif
@@ -918,30 +918,34 @@ login_query(char *ruid)
 				sleep(1);
 				outs(ERR_PASSWD);
 			}else{
-#ifdef USE_IBUNNY_2FALOGIN
+				outs("密碼正確，");
+#ifdef USE_2FALOGIN
 				if(HasUserFlag(UF_TWOFA_LOGIN)){
-					twofa = twoFA_main(cuser.userid);
+					outs("請稍候...");
 					move(22, 0); refresh();
+					twofa = twoFA_main(cuser.userid);
+					move (22, 0); clrtoeol();
 					if(twofa != NULL){
-						outs("兩步驟驗證失敗。");
+						outs("兩步驟認證失敗。");
+						move(22, 0); refresh();
 						pressanykey();
 						sleep(2);
 						exit(1);
 					}else{
 						outs("驗證完成，開始登入系統...");
-						strlcpy(ruid, cuser.userid, IDLEN+1);
 						move(22, 0); refresh();
+						strlcpy(ruid, cuser.userid, IDLEN+1);
 						clrtoeol();
 						break;
 					}
 				}else{
 #endif
 					strlcpy(ruid, cuser.userid, IDLEN+1);
-					outs("密碼正確，開始登入系統...");
+					outs("開始登入系統...");
 					move(22, 0); refresh();
 					clrtoeol();
 					break;
-#ifdef USE_IBUNNY_2FALOGIN
+#ifdef USE_2FALOGIN
 				}
 #endif
 			}
@@ -1064,11 +1068,12 @@ inline static void check_bad_login(void)
 	if (vans("您要刪除以上錯誤嘗試的記錄嗎? [Y/n] ") != 'n')
 	    unlink(genbuf);
     }
-#ifdef USE_IBUNNY_2FALOGIN
+#ifdef USE_2FALOGIN
     setuserfile(genbuf, "2fa.bad");
     if (more(genbuf, NA) != -1) {
-	move(b_lines - 2, 0);
-	outs("若您有帳號被盜用疑慮，請經常更改您的密碼或使用加密連線。");
+	move(b_lines - 3, 0);
+	outs("通常並沒有辦法知道該ip是誰所有，\n"
+		"若您有帳號被盜用疑慮，請經常更改您的密碼或使用加密連線。");
 	if (vans("您要刪除以上錯誤嘗試的記錄嗎? [Y/n] ") != 'n')
 	    unlink(genbuf);
     }
@@ -1350,12 +1355,15 @@ user_login(void)
 	}
     }
 
-#ifdef USE_IBUNNY_2FALOGIN
+#ifdef USE_2FALOGIN
 	setuserfile(buf, "2fa.recov");
 	if(HasUserFlag(UF_TWOFA_LOGIN) && isFileExist(buf) == false){
 		clear();
-		move(17,0);
-		outs("您開啟了兩步驟認證，但尚未設定復原碼\n");
+		move(14,0);
+		outs("復原碼是當您無法使用兩步驟認證時，\n");
+		outs("可以在輸入驗證碼時輸入復原碼取回帳戶存取權。\n");
+		outs("您開啟了兩步驟認證，但尚未設定復原碼，\n");
+		outs("若無法使用兩步驟認證時您將無法存取您的帳戶。\n");
 	    if (vans("要現在進行設定嗎？ [y/N]") == 'y') {
 			twoFA_genRecovCode();
 	    }

@@ -1,6 +1,6 @@
 #include "bbs.h"
 
-#ifdef USE_IBUNNY_2FALOGIN
+#ifdef USE_2FALOGIN
 
 bool isFileExist();
 
@@ -14,16 +14,20 @@ static void twoFA_GenCode(char *buf, size_t len)
 }
 
 static const char *
-twoFA_Send(char *user)
+twoFA_Send(char *user, char *authcode)
 {
 	int ret, code = 0;
 	char uri[320] = "",buf[200];
 
-	snprintf(uri, sizeof(uri), "%s?user=%s"
+	snprintf(uri, sizeof(uri), "/%s/%s?user=%s"
 #ifdef BETA
-			 "&beta=true"
+			 "&beta=true&code=%s"
 #endif
-			 , IBUNNY_2FA_URI, user);
+			 , IBUNNY_API_KEY, IBUNNY_2FA_URI, user
+#ifdef BETA
+			 , authcode
+#endif
+			);
 
 	THTTP t;
 	thttp_init(&t);
@@ -47,16 +51,31 @@ int twoFA_main(char *user)
 {
     FILE           *fp;
     const char *msg = NULL;
-    char code[7], rev_code[9], code_input[9], buf[200], genbuf[3];
+    char code[7], rev_code[9], code_input[9], buf[200], buf2[200], genbuf[3];
+
+#if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
+    extern Fnv32_t  client_code;
+	int	i, trusted = 0, count=0;
+
+	setuserfile(buf, "trust.device");
+	snprintf(buf2, sizeof(buf2), "%8.8X\n", client_code);
+	if(fp = fopen(buf, "r+")){
+		while (fgets(buf, sizeof(buf), fp)) {
+			if (!strcmp(buf, buf2)){
+				trusted = 1;
+			}
+			count++;
+		}
+		fclose(fp);
+		if(trusted == 1)
+			return NULL; //Success
+	}
+#endif
 
 	clear();
-	vs_hdr("兩步驟認證");
+	vs_hdr2(" 兩步驟認證 ", " 輸入驗證碼");
 
-#ifdef BETA /* 因為測試主機與正式主機不同台，測試時無法正常取得驗證碼。 */
-	snprintf(code, sizeof(code), "000000");
-#else
-    twoFA_GenCode(code, 6);
-#endif
+	twoFA_GenCode(code, 6);
 	
 	setuserfile(buf, "2fa.code");
 	if (!(fp = fopen(buf, "w"))){
@@ -70,7 +89,11 @@ int twoFA_main(char *user)
 	fprintf(fp,"%s", code);
 	fclose(fp);
 
-    msg = twoFA_Send(user);
+#ifdef BETA
+    msg = twoFA_Send(user,code);
+#else
+    msg = twoFA_Send(user,NULL);
+#endif
     if (msg){
 		move(1,0);
 		outs(msg);
@@ -81,7 +104,7 @@ int twoFA_main(char *user)
 	}
 	unlink(buf);
 	
-	move(1,0); clrtobot();
+	move(2,0); clrtobot();
     outs("驗證碼將直接被發送到iBunny\n");
     outs("一共為六位數字\n");
 
@@ -98,8 +121,21 @@ int twoFA_main(char *user)
 
 		size_t length = strlen(code_input);
 		if(length == 6){
-			if (!strcmp(code, code_input))
+			if (!strcmp(code, code_input)){
+#if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
+				clear();
+				vs_hdr2(" 兩步驟認證 ", " 設定為信任的裝置？");
+				move(2, 0);
+				outs("設定為信任的裝置下次登入就不需要驗證。\n"
+					 "提請您，請不要在公用電腦上使用此功\能。");
+				getdata(5, 0, "是否將這個裝置設定為信任的裝置(y/n)？ [N]",genbuf, 3, LCECHO);
+				if(genbuf[0] == 'y') {
+					setuserfile(buf, "trust.device");
+					log_filef(buf, LOG_CREAT,"%8.8X\n", client_code);
+				}
+#endif
 				return NULL; //Success
+			}
 		}else if(length == 8){
 			setuserfile(buf, "2fa.recov");
 			if (!(fp = fopen(buf, "r"))){
@@ -119,8 +155,8 @@ int twoFA_main(char *user)
 		
 		now = time(NULL);
 		setuserfile(buf, "2fa.bad");
-		log_filef(buf, LOG_CREAT,"%s 第%d次兩步驟驗證失敗，IP位置：%s。\n",Cdate(&now), 3 - i , fromhost);
-		log_filef("2fa.bad", LOG_CREAT,"%s %s %s (%d/3)\n",Cdate(&now), cuser.userid, fromhost, 3 - i);
+		log_filef(buf, LOG_CREAT,"%s 第%d次兩步驟驗證失敗，IP位置：%s。\n",Cdate(&now), 4 - i , fromhost);
+		log_filef("2fa.bad", LOG_CREAT,"%s %s %s (%d/3)\n",Cdate(&now), cuser.userid, fromhost, 4 - i);
     }
     return -1;
 }
@@ -157,7 +193,7 @@ int twoFA_genRecovCode()
     outs("另外，另外每一組復原碼只能使用一次，使用後就會失效。\n\n");
 	
 	outs("以下操作需要先確認您的身份。\n");
-	getdata(6, 0, MSG_PASSWD, passbuf, sizeof(passbuf), NOECHO);
+	getdata(6, 0, MSG_PASSWD, passbuf, PASS_INPUT_LEN + 1, PASSECHO);
 	passbuf[8] = '\0';
 	if (!(checkpasswd(cuser.passwd, passbuf))){
 		vmsg("密碼錯誤！");
@@ -182,4 +218,38 @@ int twoFA_genRecovCode()
 	return 0;
 }
 
-#endif //USE_IBUNNY_2FALOGIN
+#endif //USE_2FALOGIN
+
+#if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
+
+int twoFA_RemoveTrust()
+{
+    FILE *fp;
+    char rev_code[9], buf[200], genbuf[3];
+	char *user = cuser.userid;
+    char passbuf[PASSLEN];
+	
+	setuserfile(buf, "trust.device");
+    if(isFileExist(buf) == false){
+		vmsg("沒有在任何裝置上設定為信任。");
+		return 0;
+	}
+
+	clear();
+	vs_hdr("撤銷信任裝置");
+	
+	move(2, 0);
+	outs("設定為信任的裝置在登入時不需要驗證。\n");
+	outs("要撤銷掉所有目前設定為信任的裝置嗎？\n");
+	getdata(5, 0, "確定繼續嗎？ (y)繼續 [N]取消 ",genbuf, 3, LCECHO);
+	if (genbuf[0] != 'y') {
+		vmsg("取消操作");
+		return 0;
+	}
+
+	unlink(buf);
+	vmsg("已經撤銷所有信任的裝置");
+	return 0;
+}
+
+#endif //defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)

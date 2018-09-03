@@ -23,7 +23,7 @@ typedef struct pickup_t {
 }               pickup_t;
 
 // If you want to change this, you have to change shm structure and shmctl.c
-#define PICKUP_WAYS     8
+#define PICKUP_WAYS     5
 
 static char    * const fcolor[11] = {
     NULL, ANSI_COLOR(36), ANSI_COLOR(32), ANSI_COLOR(1;32),
@@ -2506,12 +2506,12 @@ userlist(void)
 
 	    case 'S':		/* 顯示好友描述 */
 #ifdef HAVE_DARK_CHESS_LOG
-		show_mode = (show_mode+1) % MAX_SHOW_MODE;
+		//show_mode = (show_mode+1) % MAX_SHOW_MODE;
 #else
-		show_mode = (show_mode+1) % (MAX_SHOW_MODE - 1);
+		//show_mode = (show_mode+1) % (MAX_SHOW_MODE - 1);
 #endif
 #ifdef CHESSCOUNTRY
-		if (show_mode == 2)
+		/*if (show_mode == 2)
 		    user_query_mode = 1;
 		else if (show_mode == 3 || show_mode == 4)
 		    user_query_mode = 2;
@@ -2520,9 +2520,9 @@ userlist(void)
 		else if (show_mode == 6)
 		    user_query_mode = 4;
 		else
-		    user_query_mode = 0;
+		    user_query_mode = 0;*/
 #endif /* defined(CHESSCOUNTRY) */
-		redrawall = redraw = 1;
+		//redrawall = redraw = 1;
 		break;
 
 	    case 'u':		/* 線上修改資料 */

@@ -34,11 +34,11 @@
 #define UF_MENU_LIGHTBAR    0x01000000	// true to use lightbar-based menu
 #define UF_CURSOR_ASCII     0x02000000  // true to enable ASCII-safe cursor.
 
-#ifdef USE_IBUNNY_NOTILOGIN
+#ifdef USE_NOTILOGIN
 #define UF_NOTIFY_LOGIN	0x04000000	// notify new login activity to ibunny.
 #endif
 
-#ifdef USE_IBUNNY_2FALOGIN
+#ifdef USE_2FALOGIN
 #define UF_TWOFA_LOGIN	0x08000000	// two factor authentication.
 #endif
 

@@ -486,7 +486,7 @@ void Customize(void)
 #ifdef USE_IBUNNY_NOTILOGIN
 	UF_NOTIFY_LOGIN,
 #endif
-#ifdef USE_IBUNNY_2FALOGIN
+#ifdef USE_2FALOGIN
     UF_TWOFA_LOGIN,
 #endif
 	UF_FAV_ADDNEW,
@@ -517,7 +517,7 @@ void Customize(void)
 #ifdef USE_IBUNNY_NOTILOGIN
     "NOTI_LOGIN 帳號被登入時發送通知 (需搭配iBunny)",
 #endif
-#ifdef USE_IBUNNY_2FALOGIN
+#ifdef USE_2FALOGIN
     "2FA_LOGIN  使用兩步驟驗證登入 (需搭配iBunny)",
 #endif
 	"MYFAV      新板自動進我的最愛",
@@ -680,6 +680,111 @@ static void set_chess(const char *name, int y,
     p = strtok_r(NULL, "/\r\n", &strtok_pos);
     if (!p) return;
     *p_tie = atoi(p);
+}
+
+int
+userPass_change(userec_t x, int adminmode, int unum)
+{
+    int i = 0, fail = 0;
+    char buf[STRLEN], genbuf[200];
+	
+	clear();
+	vs_hdr2(" " BBSNAME " ", " 修改密碼");
+	
+	move(2,0);
+	prints("正在修改%s的密碼...\n\n",x.userid);
+	if (!adminmode) {
+		outs("以下操作需要先確認您的身份。\n");
+		getdata(5, 0, MSG_PASSWD, buf, PASS_INPUT_LEN + 1, PASSECHO);
+		buf[8] = '\0';
+		if (!(checkpasswd(x.passwd, buf))){
+			vmsg("密碼錯誤！");
+			return 0;
+		}
+	}
+	move(4,0);clrtobot();
+    if (!getdata(4, 0, "請設定新密碼：", buf, PASS_INPUT_LEN + 1,PASSECHO)) {
+	    vmsg("密碼設定取消, 繼續使用舊密碼");
+		return 0;
+	}
+	strlcpy(genbuf, buf, PASSLEN);
+
+	move(6, 0);
+	outs("請注意設定密碼只有前八個字元有效，超過的將自動忽略。");
+
+	getdata(5, 0, "請檢查新密碼：", buf, PASS_INPUT_LEN + 1, PASSECHO);
+	if (strncmp(buf, genbuf, PASSLEN)) {
+	    vmsg("新密碼確認失敗, 無法設定新密碼");
+		return 0;
+	}
+	buf[8] = '\0';
+	strlcpy(x.passwd, genpasswd(buf), sizeof(x.passwd));
+	
+	// for admin mode, do verify after.
+	if (adminmode)
+	{
+            FILE *fp;
+	    char  witness[3][IDLEN+1], title[100];
+	    int uid;
+	    for (i = 0; i < 3; i++) {
+		if (!getdata(7 + i, 0, "請輸入協助證明之使用者：",
+			     witness[i], sizeof(witness[i]), DOECHO)) {
+		    outs("\n不輸入則無法更改\n");
+			return 0;
+		} else if (!(uid = searchuser(witness[i], NULL))) {
+		    outs("\n查無此使用者\n");
+		    return 0;
+		} else {
+		    userec_t        atuser;
+		    passwd_sync_query(uid, &atuser);
+                    if (!(atuser.userlevel & PERM_LOGINOK)) {
+                        outs("\n使用者未通過認證，請重新輸入。\n");
+                        i--;
+                    } else if (atuser.numlogindays < 6*30) {
+			outs("\n" STR_LOGINDAYS "未超過 180，請重新輸入\n");
+			i--;
+		    }
+		    // Adjust upper or lower case
+                    strlcpy(witness[i], atuser.userid, sizeof(witness[i]));
+		}
+	    }
+
+	    if (i < 3 || vans(msg_sure_ny) != 'y')
+			return 0;
+
+	    sprintf(title, "%s 的密碼重設通知 (by %s)",x.userid, cuser.userid);
+            unlink("etc/updatepwd.log");
+	    if(! (fp = fopen("etc/updatepwd.log", "w")))
+	    {
+		move(b_lines-1, 0); clrtobot();
+		outs("系統錯誤: 無法建立通知檔，請至 " BN_BUGREPORT " 報告。");
+		return 0;
+	    }
+
+	    fprintf(fp, "%s 要求密碼重設:\n"
+		    "見證人為 %s, %s, %s",
+		    x.userid, witness[0], witness[1], witness[2] );
+	    fclose(fp);
+
+	    post_file(BN_SECURITY, title, "etc/updatepwd.log", "[系統安全局]");
+	    mail_id(x.userid, title, "etc/updatepwd.log", cuser.userid);
+	    for(i=0; i<3; i++)
+	    {
+		mail_id(witness[i], title, "etc/updatepwd.log", cuser.userid);
+	    }
+	}
+	
+    passwd_sync_update(unum, &x);
+
+    if (!adminmode){
+		vmsg("已修改密碼，請重新登入。");
+		kick_all(x.userid);
+	}else{
+		kick_all(x.userid);
+		vmsg("已修改密碼。");
+	}
+	
+	return 0;
 }
 
 void
@@ -1038,97 +1143,7 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 	break;
 
     case '2':
-	y = 19;
-	if (!adminmode) {
-            if (!getdata(y++, 0, "請輸入原密碼：", buf, PASS_INPUT_LEN + 1,
-                         PASSECHO) ||
-		!checkpasswd(x.passwd, buf)) {
-		outs("\n\n您輸入的密碼不正確\n");
-		fail++;
-		break;
-	    }
-	}
-        if (!getdata(y++, 0, "請設定新密碼：", buf, PASS_INPUT_LEN + 1,
-                     PASSECHO)) {
-	    outs("\n\n密碼設定取消, 繼續使用舊密碼\n");
-	    fail++;
-	    break;
-	}
-	strlcpy(genbuf, buf, PASSLEN);
-
-	move(y+1, 0);
-	outs("請注意設定密碼只有前八個字元有效，超過的將自動忽略。");
-
-	getdata(y++, 0, "請檢查新密碼：", buf, PASS_INPUT_LEN + 1, PASSECHO);
-	if (strncmp(buf, genbuf, PASSLEN)) {
-	    outs("\n\n新密碼確認失敗, 無法設定新密碼\n");
-	    fail++;
-	    break;
-	}
-	buf[8] = '\0';
-	strlcpy(x.passwd, genpasswd(buf), sizeof(x.passwd));
-
-	// for admin mode, do verify after.
-	if (adminmode)
-	{
-            FILE *fp;
-	    char  witness[3][IDLEN+1], title[100];
-	    int uid;
-	    for (i = 0; i < 3; i++) {
-		if (!getdata(y + i, 0, "請輸入協助證明之使用者：",
-			     witness[i], sizeof(witness[i]), DOECHO)) {
-		    outs("\n不輸入則無法更改\n");
-		    fail++;
-		    break;
-		} else if (!(uid = searchuser(witness[i], NULL))) {
-		    outs("\n查無此使用者\n");
-		    fail++;
-		    break;
-		} else {
-		    userec_t        atuser;
-		    passwd_sync_query(uid, &atuser);
-                    if (!(atuser.userlevel & PERM_LOGINOK)) {
-                        outs("\n使用者未通過認證，請重新輸入。\n");
-                        i--;
-                    } else if (atuser.numlogindays < 6*30) {
-			outs("\n" STR_LOGINDAYS "未超過 180，請重新輸入\n");
-			i--;
-		    }
-		    // Adjust upper or lower case
-                    strlcpy(witness[i], atuser.userid, sizeof(witness[i]));
-		}
-	    }
-	    y += 3;
-
-	    if (i < 3 || fail > 0 || vans(msg_sure_ny) != 'y')
-	    {
-		fail++;
-		break;
-	    }
-	    pre_confirmed = 1;
-
-	    sprintf(title, "%s 的密碼重設通知 (by %s)",x.userid, cuser.userid);
-            unlink("etc/updatepwd.log");
-	    if(! (fp = fopen("etc/updatepwd.log", "w")))
-	    {
-		move(b_lines-1, 0); clrtobot();
-		outs("系統錯誤: 無法建立通知檔，請至 " BN_BUGREPORT " 報告。");
-		fail++; pre_confirmed = 0;
-		break;
-	    }
-
-	    fprintf(fp, "%s 要求密碼重設:\n"
-		    "見證人為 %s, %s, %s",
-		    x.userid, witness[0], witness[1], witness[2] );
-	    fclose(fp);
-
-	    post_file(BN_SECURITY, title, "etc/updatepwd.log", "[系統安全局]");
-	    mail_id(x.userid, title, "etc/updatepwd.log", cuser.userid);
-	    for(i=0; i<3; i++)
-	    {
-		mail_id(witness[i], title, "etc/updatepwd.log", cuser.userid);
-	    }
-	}
+		userPass_change(x,adminmode,unum);
 	break;
 
     case '3':

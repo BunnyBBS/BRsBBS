@@ -728,9 +728,32 @@ int list_unpay();
 
 int list_user_board();
 
-#ifdef USE_IBUNNY_2FALOGIN
 /* Two Factor Auth in twofa.c */
+#ifdef USE_2FALOGIN
 int twoFA_genRecovCode();
+#endif
+#if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
+int twoFA_RemoveTrust();
+#endif
+
+/* Password change in user.c */
+int userPass_change();
+static int
+u_pass_change()
+{
+	userPass_change(cuser, 0, usernum);
+	return 0;
+}
+
+/* Mission in mission.c */
+#ifdef USE_MISSION
+int mission();
+static int
+p_mission()
+{
+	mission_main();
+	return 0;
+}
 #endif
 
 // ----------------------------------------------------------- MENU DEFINITION
@@ -745,25 +768,25 @@ static int x_admin_usermenu(void);
 
 static const commands_t      cmdlist[] = {
     {admin,				PERM_SYSOP|PERM_BBSADM|PERM_ACCOUNTS|PERM_BOARD,
-										"0Admin      〉系統維護區〈"},
-    {Announce,			0,				"Announce    〉精華公佈欄〈"},
-    {Favorite,			0,				"Favorite    〉 我的最愛 〈"},
-    {Class,				0,				"Class       〉分組討論區〈"},
+										"0Admin       〉 系統維護區 〈"},
+    {Announce,			0,				"Announce     〉 精華公佈欄 〈"},
+    {Favorite,			0,				"Favorite     〉  我的最愛  〈"},
+    {Class,				0,				"Class        〉 分組討論區 〈"},
 
-    {Mail,				PERM_LOGINOK,	"Mail        〉私人信件區〈"},
+    {Mail,				PERM_LOGINOK,	"Mail         〉 私人信件區 〈"},
     /*大兔：這個目錄的功能用ctrl-u都能辦到，至於多人聊天室效益不大，也沒有啟用天使功能，因此這個選單整個停用*/
-    //{Talk,			PERM_LOGINOK,	"Talk        〉休閒聊天區〈"},
-    {Play_Play, 		PERM_LOGINOK,	"Play        〉娛樂與休閒〈"},
-    {Name_Menu, 		PERM_LOGINOK,	"Namelist    〉編特別名單〈"},
+    //{Talk,			PERM_LOGINOK,	"Talk         〉 休閒聊天區 〈"},
+    {Play_Play, 		PERM_LOGINOK,	"Play         〉 娛樂與休閒 〈"},
+    {Name_Menu, 		PERM_LOGINOK,	"Namelist     〉 編特別名單 〈"},
 
-    {u_register,    	MENU_UNREGONLY, "Register    〉填寫註冊單〈"},
+    {u_register,    	MENU_UNREGONLY, "Register     〉 填寫註冊單 〈"},
 #ifdef USE_MAIL_ACCOUNT_SYSOP
-    {mail_account_sysop,MENU_UNREGONLY,	"Mail Admin  〉寄信給站長〈"},
+    {mail_account_sysop,MENU_UNREGONLY,	"Mail Admin   〉寄給帳號站長〈"},
 #endif
 
-    {User, 				PERM_BASIC,		"User        〉個人設定區〈"},
-    {Xyz, 				0,				"Xyz         〉系統資訊區〈"},
-    {Goodbye, 			0, 				"Goodbye     〉 秘境出口 〈"},
+    {User, 				PERM_BASIC,		"User         〉 個人設定區 〈"},
+    {Xyz, 				0,				"Xyz          〉 系統資訊區 〈"},
+    {Goodbye, 			0, 				"Goodbye      〉  秘境出口  〈"},
     {NULL, 0, NULL}
 };
 int main_menu(void) {
@@ -781,11 +804,11 @@ int main_menu(void) {
 	/* 0Admin Menu */
 	/* 大兔：權限劃分備註：有關使用者資料的項目只能讓SYSOP與ACCOUNT操作；BBSADM計畫作為輔助SYSOP之用，因此其他非敏感操作得讓BBSADM使用；BOARD可以直接在這裡設定看板。*/
 	static const commands_t adminlist[] = {
-		{x_admin_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Board Admin 〉土地管理局〈"},
-		{x_admin_usermenu,	PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD,"User Admin  〉民政事務局〈"},
-		{x_admin_money,		PERM_SYSOP|PERM_BBSADM,				"FinancAdmin 〉金融監管署〈"},
-		{x_file,			PERM_SYSOP|PERM_BBSADM,				"SystemFile  〉 系統檔案 〈"},
-		{m_loginmsg,		PERM_SYSOP|PERM_BBSADM,				"LoginMsg    〉 進站水球 〈"},
+		{x_admin_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Board Admin  〉 土地管理局 〈"},
+		{x_admin_usermenu,	PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD,"User Admin   〉 民政事務局 〈"},
+		{x_admin_money,		PERM_SYSOP|PERM_BBSADM,				"FinancAdmin  〉 金融監管署 〈"},
+		{x_file,			PERM_SYSOP|PERM_BBSADM,				"SystemFile   〉  系統檔案  〈"},
+		{m_loginmsg,		PERM_SYSOP|PERM_BBSADM,				"LoginMsg     〉  進站水球  〈"},
 		{NULL, 0, NULL}
 	};
 	int
@@ -800,11 +823,11 @@ int main_menu(void) {
 		return 0;
 	}
 		static const commands_t m_admin_board[] = {
-			{m_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Set Board   〉 設定看板 〈"},
+			{m_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Set Board    〉  設定看板  〈"},
 		#ifdef USE_BOARDTAX
-			{x_admin_brdtax,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"TBoard Tax  〉看板稅管理〈"},
+			{x_admin_brdtax,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"TBoard Tax   〉 看板稅管理 〈"},
 		#endif
-			{list_user_board,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"ListUserMod 〉查擔任板主〈"},
+			{list_user_board,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"ListUserMod  〉 查擔任板主 〈"},
 			{NULL, 0, NULL}
 		};
 		static int x_admin_board(void)
@@ -815,11 +838,11 @@ int main_menu(void) {
 		}
 		#ifdef USE_BOARDTAX
 		static const commands_t m_admin_brdtax[] = {
-			{board_tax_calc,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"CTax Calc   〉 試算稅額 〈"},
-			{set_board_tax,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"STax Set    〉查詢與增刪〈"},
-			{set_tax_file,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"FTax File   〉 稅額檔案 〈"},
-			{board_tax_log,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"LTax PayLog 〉 繳納紀錄 〈"},
-			{list_unpay,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"UnPay List  〉未繳納名單〈"},
+			{board_tax_calc,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"CTax Calc    〉  試算稅額  〈"},
+			{set_board_tax,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"STax Set     〉 查詢與增刪 〈"},
+			{set_tax_file,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"FTax File    〉  稅額檔案  〈"},
+			{board_tax_log,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"LTax PayLog  〉  繳納紀錄  〈"},
+			{list_unpay,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"UnPay List   〉 未繳納名單 〈"},
 			{NULL, 0, NULL}
 		};
 		static int x_admin_brdtax(void)
@@ -830,8 +853,8 @@ int main_menu(void) {
 		}
 		#endif
 		static const commands_t m_admin_money[] = {
-			{view_user_money_log,	PERM_SYSOP|PERM_BBSADM,				"View Log    〉 交易記錄 〈"},
-			{give_money,			PERM_SYSOP|PERM_BBSADM,				"Givemoney   〉 發放"MONEYNAME" 〈"},
+			{view_user_money_log,	PERM_SYSOP|PERM_BBSADM,	"View Log     〉  交易記錄  〈"},
+			{give_money,			PERM_SYSOP|PERM_BBSADM,"Givemoney    〉  發放"MONEYNAME"  〈"},
 			{NULL, 0, NULL}
 		};
 		static int x_admin_money(void)
@@ -841,10 +864,10 @@ int main_menu(void) {
 			return 0;
 		}
 		static const commands_t m_admin_usermenu[] = {
-			{m_register,		PERM_SYSOP|PERM_ACCOUNTS,			"Register    〉審核註冊單〈"},
-			{m_user,			PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD,"User Data   〉使用者資料〈"},
-			{x_admin_user,		PERM_SYSOP|PERM_ACCOUNTS,			"LUser Log   〉使用者記錄〈"},
-			{search_user_bypwd,	PERM_SYSOP|PERM_ACCOUNTS,			"Search User 〉搜尋使用者〈"},
+			{m_register,		PERM_SYSOP|PERM_ACCOUNTS,			"Register     〉 審核註冊單 〈"},
+			{m_user,			PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD,"User Data    〉 使用者資料 〈"},
+			{x_admin_user,		PERM_SYSOP|PERM_ACCOUNTS,			"LUser Log    〉 使用者記錄 〈"},
+			{search_user_bypwd,	PERM_SYSOP|PERM_ACCOUNTS,			"Search User  〉 搜尋使用者 〈"},
 			{NULL, 0, NULL}
 		};
 		static int x_admin_usermenu(void)
@@ -854,10 +877,10 @@ int main_menu(void) {
 			return 0;
 		}
 		static const commands_t m_admin_user[] = {
-			{view_user_money_log,	PERM_SYSOP|PERM_ACCOUNTS,	"Money Log   〉 交易記錄 〈"},
-			{view_user_login_log,	PERM_SYSOP|PERM_ACCOUNTS,	"Login Log   〉 上線記錄 〈"},
-			{u_list,				PERM_SYSOP|PERM_ACCOUNTS,	"Users List  〉 註冊名冊 〈"},
-			{search_user_bybakpwd,	PERM_SYSOP|PERM_ACCOUNTS,	"Old Data    〉查備份資料〈"},
+			{view_user_money_log,	PERM_SYSOP|PERM_ACCOUNTS,	"Money Log    〉  交易記錄  〈"},
+			{view_user_login_log,	PERM_SYSOP|PERM_ACCOUNTS,	"Login Log    〉  上線記錄  〈"},
+			{u_list,				PERM_SYSOP|PERM_ACCOUNTS,	"Users List   〉  註冊名冊  〈"},
+			{search_user_bybakpwd,	PERM_SYSOP|PERM_ACCOUNTS,	"Old Data     〉 查備份資料 〈"},
 			{NULL, 0, NULL}
 		};
 		static int x_admin_user(void)
@@ -867,15 +890,15 @@ int main_menu(void) {
 		}
 	/* Mail Menu */
 	static const commands_t maillist[] = {
-		{m_read,			PERM_LOGINOK,			"Read        〉 我的信箱 〈"},
-		{m_send,			PERM_LOGINOK,			"Send        〉 站內寄信 〈"},
-		{mail_list,			PERM_LOGINOK,			"Group Mail  〉 群組寄信 〈"},
-		{setforward,		PERM_LOGINOK,			"Forward     〉 自動轉寄 〈"},
-		{mail_mbox, 		PERM_INTERNET,			"Zip Data    〉 打包資料 〈"},
-		{built_mail_index,	PERM_LOGINOK,			"VSavemail   〉 重建索引 〈"},
-		{mail_all,			PERM_SYSOP|PERM_BBSADM,	"Mail All    〉寄給所有人〈"},
+		{m_read,			PERM_LOGINOK,			"Read         〉  我的信箱  〈"},
+		{m_send,			PERM_LOGINOK,			"Send         〉  站內寄信  〈"},
+		{mail_list,			PERM_LOGINOK,			"Group Mail   〉  群組寄信  〈"},
+		{setforward,		PERM_LOGINOK,			"Forward      〉設定自動轉寄〈"},
+		{mail_mbox, 		PERM_INTERNET,			"Zip Data     〉打包私人資料〈"},
+		{built_mail_index,	PERM_LOGINOK,			"VSavemail    〉重建信箱索引〈"},
+		{mail_all,			PERM_SYSOP|PERM_BBSADM,	"Mail All     〉 寄給所有人 〈"},
 	#ifdef USE_MAIL_ACCOUNT_SYSOP
-		{mail_account_sysop,PERM_LOGINOK,			"AMail Admin 〉寄信給站長〈"},
+		{mail_account_sysop,PERM_LOGINOK,			"AMail Admin  〉寄給帳號站長〈"},
 	#endif
 		{NULL, 0, NULL}
 	};
@@ -887,8 +910,8 @@ int main_menu(void) {
 	}
 	/* Play Menu */
 	static const commands_t moneylist[] = {
-		{p_from,			0,	"Edit From   〉 修改故鄉 〈"},
-		{ordersong,			0,	"Order Song  〉 點播動態 〈"},
+		{p_from,			0,	"Edit From    〉  修改故鄉  〈"},
+		{ordersong,			0,	"Order Song   〉點播心情動態〈"},
 		{NULL, 0, NULL}
 	};
 	static int p_money() {
@@ -896,13 +919,11 @@ int main_menu(void) {
 		return 0;
 	};
 	static const commands_t banklist[] = {
+		{p_give,			0,				"Give Money   〉 給別人" MONEYNAME" 〈"},
+		{save_violatelaw,	0,				"Pay Ticket   〉  繳納罰單  〈"},
 	#ifdef USE_BOARDTAX
-		{board_tax_calc,	PERM_LOGINOK,	"CTax Calc   〉 試算稅額 〈"},
-	#endif
-		{p_give,			0,				"Give Money  〉給別人" MONEYNAME"〈"},
-		{save_violatelaw,	0,				"Pay Ticket  〉 繳納罰單 〈"},
-	#ifdef USE_BOARDTAX
-		{pay_board_tax,		PERM_LOGINOK,	"Board Tax   〉繳納看板稅〈"},
+		{board_tax_calc,	PERM_LOGINOK,	"CTax Calc    〉  試算稅額  〈"},
+		{pay_board_tax,		PERM_LOGINOK,	"Board Tax    〉 繳納看板稅 〈"},
 	#endif
 		{NULL, 0, NULL}
 	};
@@ -911,10 +932,15 @@ int main_menu(void) {
 		return 0;
 	};
 	static const commands_t playlist[] = {
-		{p_bank,		0,				"Bank        〉 " BBSMNAME2 "銀行 〈"},
-		{p_money,		PERM_LOGINOK,	"Market      〉 " BBSMNAME2 "超市 〈"},
-		{chicken_main,	PERM_LOGINOK,	"Chicken     〉" BBSMNAME2 "養雞場〈"},
-		{ticket_main,	PERM_LOGINOK,	"Gamble      〉 " BBSMNAME2 "彩券 〈"},
+	#ifdef USE_MISSION
+		{p_mission,		0,				"IMission     〉  任務中心  〈"},
+	#endif
+		{p_bank,		0,				"Bank         〉  " BBSMNAME2 "銀行  〈"},
+		{p_money,		PERM_LOGINOK,	"Market       〉  " BBSMNAME2 "超市  〈"},
+		{chicken_main,	PERM_LOGINOK,	"Chicken      〉 " BBSMNAME2 "養雞場 〈"},
+	#ifndef NO_GAMBLE
+		{ticket_main,	PERM_LOGINOK,	"Gamble       〉  " BBSMNAME2 "彩券  〈"},
+	#endif
 		//{chessroom,		PERM_LOGINOK,	"BChess      【 " BBSMNAME2 "棋院   】"}, /*大兔：效益低，停用，未來可能整個拔除*/
 		{NULL, 0, NULL}
 	};
@@ -926,11 +952,11 @@ int main_menu(void) {
 	}
 	/* Name menu */
 	static const commands_t namelist[] = {
-		{t_override,	PERM_LOGINOK,	"OverRide    〉 好友名單 〈"},
-		{t_reject,		PERM_LOGINOK,	"Black       〉 壞人名單 〈"},
-		{t_aloha,		PERM_LOGINOK,	"ALOHA       〉 上站通知 〈"},
-		{t_fix_aloha,	PERM_LOGINOK,	"XFixALOHA   〉 修正通知 〈"},
-		{t_special,		PERM_LOGINOK,	"Special     〉 特別名單 〈"},
+		{t_override,	PERM_LOGINOK,	"OverRide     〉  好友名單  〈"},
+		{t_reject,		PERM_LOGINOK,	"Black        〉  壞人名單  〈"},
+		{t_aloha,		PERM_LOGINOK,	"ALOHA        〉上站通知名單〈"},
+		{t_fix_aloha,	PERM_LOGINOK,	"XFixALOHA    〉修正上站通知〈"},
+		{t_special,		PERM_LOGINOK,	"Special      〉  特別名單  〈"},
 		{NULL, 0, NULL}
 	};
 	int
@@ -940,23 +966,35 @@ int main_menu(void) {
 		return 0;
 	}
 	/* User menu */
+	static const commands_t seculist[] = {
+		{u_pass_change,		PERM_BASIC,		"Password     〉  修改密碼  〈"},
+	#ifdef USE_2FALOGIN
+		{twoFA_genRecovCode,PERM_BASIC,		"RecoverCode  〉 產生復原碼 〈"},
+	#endif
+	#if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
+		{twoFA_RemoveTrust	,PERM_BASIC,	"TRemoveTrust 〉撤銷信任裝置〈"},
+	#endif
+		{NULL, 0, NULL}
+	};
+	static int u_security() {
+		domenu(M_UMENU, "密碼與安全", 'P', seculist);
+		return 0;
+	};
 	static const commands_t userlist[] = {
 		/*{u_loginview,		PERM_BASIC,     "VLogin View   選擇進站畫面"},
 		{u_myfiles,			PERM_LOGINOK,   "My Files      【個人檔案】 (名片,簽名檔...)"},
 		{u_mylogs,			PERM_LOGINOK,   "LMy Logs      【個人記錄】 (最近上線...)"},*/
-		{u_info,			PERM_BASIC,		"Info        〉資料與密碼〈"},
-		{u_customize,		PERM_BASIC,		"Customize   〉個人化設定〈"},
-	#ifdef USE_IBUNNY_2FALOGIN
-		{twoFA_genRecovCode,PERM_BASIC,		"RecoverCode 〉產生復原碼〈"},
-	#endif
-		{u_editplan,		PERM_LOGINOK,   "QueryEdit   〉編輯名片檔〈"},
-		{u_editsig,			PERM_LOGINOK,   "Signature   〉編輯簽名檔〈"},
-		{u_view_recentlogin,0,				"Login Log   〉 上站記錄 〈"},
+		{u_info,			PERM_BASIC,		"Info         〉個人資料設定〈"},
+		{u_security,		PERM_BASIC,		"Security     〉 密碼與安全 〈"},
+		{u_customize,		PERM_BASIC,		"Customize    〉 個人化設定 〈"},
+		{u_editplan,		PERM_LOGINOK,   "QueryEdit    〉 編輯名片檔 〈"},
+		{u_editsig,			PERM_LOGINOK,   "NSignature   〉 編輯簽名檔 〈"},
+		{u_view_recentlogin,0,				"Login Log    〉  上站記錄  〈"},
 	#ifdef USE_RECENTPAY
-		{u_view_recentpay,	0,				"Pay Log     〉 交易記錄 〈"},
+		{u_view_recentpay,	0,				"Pay Log      〉  交易記錄  〈"},
 	#endif
 	#ifdef ASSESS
-		{u_cancelbadpost,	PERM_LOGINOK,	"Bye BadPost 〉 刪除退文 〈"},
+		{u_cancelbadpost,	PERM_LOGINOK,	"Bye BadPost  〉  刪除退文  〈"},
 	#endif
 		{NULL, 0, NULL}
 	};
@@ -968,30 +1006,30 @@ int main_menu(void) {
 	}
 	/* XYZ tool menu */
 	static const commands_t xyzlist[] = {
-		/*{x_hot,				0,	"THot Topics 〉 熱門看板 〈"},
-		{x_users,				0,	"Users       〉使用者統計〈"},*/
+		/*{x_hot,				0,	"THot Topics  〉  熱門看板  〈"},
+		{x_users,				0,	"Users        〉 使用者統計 〈"},*/
 	#ifndef DEBUG
 		/* All these are useless in debug mode. */
 	#ifdef HAVE_USERAGREEMENT
-		{x_agreement,			0,	"Agreement   〉使用者條款〈"},
+		{x_agreement,			0,	"Agreement    〉 使用者條款 〈"},
 	#endif
 	#ifdef  HAVE_LICENSE
-		{x_gpl,					0,	"ILicense    〉 GNU 執照 〈"},
+		{x_gpl,					0,	"ILicense     〉  GNU 執照  〈"},
 	#endif
 	#ifdef HAVE_INFO
-		{x_program,				0,	"Program     〉 程式版本 〈"},
+		{x_program,				0,	"Program      〉  程式版本  〈"},
 	#endif
-		{x_history,				0,	"History     〉我們的成長〈"},
-		{x_login,				0,	"System      〉 重要公告 〈"},
+		{x_history,				0,	"History      〉 我們的成長 〈"},
+		{x_login,				0,	"System       〉  重要公告  〈"},
 	#ifdef HAVE_SYSUPDATES
-		{x_sys_updates,			0,	"LUpdates    〉 更新紀錄 〈"},
+		{x_sys_updates,			0,	"LUpdates     〉程式更新紀錄〈"},
 	#endif
 
 	#else // !DEBUG
-		{_debug_reportstruct,	0,	"Report      〉 結構報告 〈"},
+		{_debug_reportstruct,	0,	"Report       〉  結構報告  〈"},
 	#endif // !DEBUG
 
-		{p_sysinfo,				0,	"Xinfo       〉 系統資訊 〈"},
+		{p_sysinfo,				0,	"Xinfo        〉  系統資訊  〈"},
 		{NULL, 0, NULL}
 	};
 	int
@@ -1044,8 +1082,8 @@ static int menu_angelbeats() {
 };*/
 
 /*static const commands_t myfilelist[] = {
-    {u_editplan,    PERM_LOGINOK,   "QueryEdit   〉編輯名片檔〈"},
-    {u_editsig,	    PERM_LOGINOK,   "Signature   〉編輯簽名檔〈"},
+    {u_editplan,    PERM_LOGINOK,   "QueryEdit    〉編輯名片檔〈"},
+    {u_editsig,	    PERM_LOGINOK,   "Signature    〉編輯簽名檔〈"},
     {NULL, 0, NULL}
 };
 

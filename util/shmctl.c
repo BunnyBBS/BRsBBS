@@ -578,7 +578,7 @@ int utmpnum(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
-    printf("%d.0\n", SHM->UTMPnumber);
+    printf("%d\n", SHM->UTMPnumber);
     return 0;
 }
 

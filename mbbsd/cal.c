@@ -229,10 +229,11 @@ give_tax(int money)
 int
 cal_before_givetax(int taxed_money)
 {
-    int m = taxed_money / 9.0f * 10 + 1;
+    /*int m = taxed_money / 9.0f * 10 + 1;
     if (m > 1 && taxed_money % 9 == 0)
 	m--;
-    return m;
+    return m;*/
+	return taxed_money;
 }
 
 int
@@ -571,7 +572,7 @@ p_sysinfo(void)
 	   build_time);
 	  prints("\n程式是以批踢踢實業坊PTT所開發釋出的PttBBS（https://github.com/ptt/pttbbs）為\n"
 			 "基礎，由大兔的神密世界BunnyBBS.tk工程業務處開發與修改重新以BRsBBS編列發行版本\n"
-			 "號後公開釋出於https://github.com/my1938/pttbbs並運用於BunnyBBS。\n\n");
+			 "號後公開釋出於https://github.com/my1938/BRsBBS並運用於BunnyBBS。\n\n");
     if (*build_remote) {
       prints("基礎版本: %s %s %s\n", build_remote, build_origin, build_hash);
     }
