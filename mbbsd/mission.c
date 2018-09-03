@@ -19,7 +19,7 @@ int mission_dailylogin(){
 	outs("參加資格：不限\n");
 	outs("任務獎勵：100 " MONEYNAME "\n");
 	
-	setuserfile(buf, "mission.1");
+	setuserfile(buf, "mission.dailylogin");
 	if(isFileExist(buf) == false){
 		if (!(fp = fopen(buf, "w"))){
 			vmsg("系統錯誤，請稍後再試。(Error code: MIS-1-F01)");
@@ -57,7 +57,7 @@ int mission_dailylogin(){
 	}
 }
 
-int mission_mail(){
+int mission_email(){
     FILE *fp;
     char buf[200], buf2[200], genbuf[3];
 	
@@ -73,7 +73,7 @@ int mission_mail(){
 	outs("任務獎勵：250 " MONEYNAME "\n");
 	outs("任務指示：在(U)ser 個人設定區→(I)nfo 個人資料設定 中修改\n");
 	
-	setuserfile(buf, "mission.2");
+	setuserfile(buf, "mission.email");
 	if(isFileExist(buf) == false){
 		if(strcmp(cuser.email, "x")){
 			mvouts(b_lines - 2, 24, ANSI_COLOR(1;33)"電子信箱紀錄正常，不具參加資格。"ANSI_RESET);
@@ -145,7 +145,7 @@ int mission_main()
 		return 0;
 	}
 	if (genbuf[0] == '2') {
-		mission_mail();
+		mission_email();
 		return 0;
 	}
 	
