@@ -33,7 +33,7 @@ static int request(THTTP *t, const char *meth, const char *uri,
     write_string(t, meth);
     write_string(t, " ");
     write_string(t, uri);
-    write_string(t, " HTTP/1.0\r\n");
+    write_string(t, " HTTP/1.1\r\n");
 
     va_list va;
     va_start(va, headers);
@@ -136,7 +136,7 @@ void thttp_set_io_timeout(THTTP *t, int microsecond) {
     t->timeout_read = microsecond;
 }
 
-int thttp_get(THTTP *t, const char *addr, const char *uri, const char *host) {
+int thttp_get(THTTP *t, const char *addr, const char *uri, const char *host, const char *bearer) {
     t->fd = toconnect3(addr, 0, t->timeout_connect);
     if (t->fd < 0)
         return -1;
@@ -152,11 +152,12 @@ int thttp_get(THTTP *t, const char *addr, const char *uri, const char *host) {
     t->read = _read;
     t->write = _write;
 
-    request(t, "GET", uri, "ssss",
+    request(t, "GET", uri, "sssss",
             "Accept", "text/plain",
             "Host", host,
             "Connection", "close",
-            "User-Agent", "pttbbs");
+            "User-Agent", "Mozilla/5.0 (BRsBBS) THTTP/1.1",
+			"Authorization", bearer);
 
     if (t->failed || read_response(t) < 0) {
         close(t->fd);

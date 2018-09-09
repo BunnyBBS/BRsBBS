@@ -19,7 +19,7 @@ int thttp_init(THTTP *t);
 int thttp_cleanup(THTTP *t);
 void thttp_set_connect_timeout(THTTP *t, int microsecond);
 void thttp_set_io_timeout(THTTP *t, int microsecond);
-int thttp_get(THTTP *t, const char *addr, const char *uri, const char *host);
+int thttp_get(THTTP *t, const char *addr, const char *uri, const char *host, const char *bearer);
 int thttp_code(THTTP *t);
 void *thttp_get_content(THTTP *t);
 int thttp_content_length(THTTP *t);

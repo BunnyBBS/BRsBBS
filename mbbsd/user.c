@@ -39,10 +39,12 @@ kill_user(int num, const char *userid)
 
     if(!userid || num<=0 ) return -1;
     sethomepath(src, userid);
-    snprintf(dst, sizeof(dst), "tmp/%s", userid);
     friend_delete_all(userid, FRIEND_ALOHA);
-    if (dashd(src) && Rename(src, dst) == 0) {
-	snprintf(src, sizeof(src), "/bin/rm -fr home/%c/%s >/dev/null 2>&1", userid[0], userid);
+    if (dashd(src)) {
+	snprintf(src, sizeof(src),
+			 "/bin/tar zcvf backup/user_%s.tgz home/%c/%s >/dev/null 2>&1;"
+			 "/bin/rm -fr home/%c/%s >/dev/null 2>&1"
+			 , userid, userid[0], userid, userid[0], userid);
 	system(src);
     }
 

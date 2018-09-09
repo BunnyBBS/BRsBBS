@@ -56,14 +56,6 @@ do_order_song(void)
     lockreturn0(OSONG, LOCK_MULTI);
     pwcuReload();
 
-    /* Jaky 一人一天點一首 */
-    if (!strcmp(buf, Cdatedate(&cuser.lastsong)) && !HasUserPerm(PERM_SYSOP)) {
-	move(22, 0);
-	vmsg("你今天已經留過言囉，明天再來吧....");
-	unlockutmpmode();
-	return 0;
-    }
-
     while (1) {
 	char ans[4];
 	clear();

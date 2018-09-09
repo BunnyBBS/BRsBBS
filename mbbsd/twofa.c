@@ -13,17 +13,26 @@ static void twoFA_GenCode(char *buf, size_t len)
     buf[len] = '\0';
 }
 
+static void twoFA_GenRevCode(char *buf, size_t len)
+{
+	const char * const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+    for (int i = 0; i < len; i++)
+	buf[i] = chars[random() % strlen(chars)];
+    buf[len] = '\0';
+}
+
 static const char *
 twoFA_Send(char *user, char *authcode)
 {
 	int ret, code = 0;
 	char uri[320] = "",buf[200];
 
-	snprintf(uri, sizeof(uri), "/%s/%s?user=%s"
+	snprintf(uri, sizeof(uri), "/%s?user=%s"
 #ifdef BETA
 			 "&beta=true&code=%s"
 #endif
-			 , IBUNNY_API_KEY, IBUNNY_2FA_URI, user
+			 , IBUNNY_2FA_URI, user
 #ifdef BETA
 			 , authcode
 #endif
@@ -31,7 +40,8 @@ twoFA_Send(char *user, char *authcode)
 
 	THTTP t;
 	thttp_init(&t);
-	ret = thttp_get(&t, IBUNNY_SERVER, uri, IBUNNY_SERVER);
+	snprintf(buf, sizeof(buf), "Bearer %s", IBUNNY_API_KEY);
+	ret = thttp_get(&t, IBUNNY_SERVER, uri, IBUNNY_SERVER, buf);
 	if (!ret)
 	code = thttp_code(&t);
 	thttp_cleanup(&t);
@@ -200,7 +210,7 @@ int twoFA_genRecovCode()
 		return 0;
 	}
 	
-	twoFA_GenCode(rev_code, 8);
+	twoFA_GenRevCode(rev_code, 8);
 	if (!(fp = fopen(buf, "w"))){
 		vmsg("系統錯誤，請稍後再試。(Error code: 2FA-F-003)");
 		return 0;
@@ -212,7 +222,8 @@ int twoFA_genRecovCode()
 	outs("您的復原碼是：" ANSI_COLOR(1));
 	outs(rev_code);
 	outs(ANSI_RESET "\n\n");
-	outs(ANSI_COLOR(1;33) "請您記下復原碼並妥善保管，離開本視窗後就不能再重新查詢。" ANSI_RESET);
+	outs("復原碼共計8碼，會出現英文字母I、L、O，不會出現數字0、1。");
+	mvouts(b_lines - 2,12,ANSI_COLOR(1;33) "請您記下復原碼並妥善保管，離開本視窗後就不能再重新查詢。" ANSI_RESET);
 	
 	pressanykey();
 	return 0;

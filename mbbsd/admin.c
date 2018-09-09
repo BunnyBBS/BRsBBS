@@ -717,7 +717,7 @@ m_mod_board(char *bname)
 	else {
 	    strlcpy(bname, bh.brdname, sizeof(bh.brdname));
 	    snprintf(genbuf, sizeof(genbuf),
-		    "/bin/tar zcvf tmp/board_%s.tgz boards/%c/%s man/boards/%c/%s >/dev/null 2>&1;"
+		    "/bin/tar zcvf backup/board_%s.tgz boards/%c/%s man/boards/%c/%s >/dev/null 2>&1;"
 		    "/bin/rm -fr boards/%c/%s man/boards/%c/%s",
 		    bname, bname[0], bname, bname[0],
 		    bname, bname[0], bname, bname[0], bname);
