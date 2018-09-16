@@ -223,8 +223,8 @@ ZA_Select(void)
     localtime4_r(&now, &ptime);
     // TODO refresh status bar?
 	move(b_lines-2, 0); clrtobot();
-	prints(ANSI_COLOR(1;33;42)"\r  快速選單 "ANSI_COLOR(0;30;42)"|"ANSI_COLOR(1;37;42)" %02d"ANSI_COLOR(1;5;37;42)":"ANSI_COLOR(0;1;37;42)"%02d  \r",ptime.tm_hour, ptime.tm_min);
-	prints(ANSI_COLOR(0;31;47)"  (b)"ANSI_COLOR(0;30;47)"文章列表" ANSI_COLOR(0;31;47)" (c)"ANSI_COLOR(0;30;47)"分類 " ANSI_COLOR(0;31;47)"(f)"ANSI_COLOR(0;30;47)"我的最愛 " ANSI_COLOR(0;31;47)"(m)"ANSI_COLOR(0;30;47)"信箱 " ANSI_COLOR(0;31;47)"(u)"ANSI_COLOR(0;30;47)"使用者名單 " ANSI_COLOR(0;31;47)"(x)"ANSI_COLOR(0;30;47)"關閉選單  "ANSI_RESET);
+    vbarf(ANSI_COLOR(1;33;42)"\n  快速選單 "ANSI_COLOR(0;30;42)"|"ANSI_COLOR(1;37;42)" %02d"ANSI_COLOR(1;5;37;42)":"ANSI_COLOR(0;1;37;42)"%02d  \t ",ptime.tm_hour, ptime.tm_min);
+	vbarf(ANSI_COLOR(0;31;47)"\n  (b)"ANSI_COLOR(0;30;47)"文章列表" ANSI_COLOR(0;31;47)" (c)"ANSI_COLOR(0;30;47)"分類 " ANSI_COLOR(0;31;47)"(f)"ANSI_COLOR(0;30;47)"我的最愛 " ANSI_COLOR(0;31;47)"(m)"ANSI_COLOR(0;30;47)"信箱 " ANSI_COLOR(0;31;47)"(u)"ANSI_COLOR(0;30;47)"使用者名單 \t" ANSI_COLOR(0;31;47)"(x)"ANSI_COLOR(0;30;47)"關閉選單  "ANSI_RESET);
     k = vkey();
 
     if (k < ' ' || k >= 'z') return 0;
@@ -300,18 +300,46 @@ show_status(void)
     int i;
     struct tm      ptime;
     char           *myweek = "日一二三四五六";
-
     localtime4_r(&now, &ptime);
     i = ptime.tm_wday << 1;
+#ifdef USE_TIANGANDIZHI
+	char	*tian[]={"癸","甲","乙","丙","丁","戊","己","庚","辛","壬"};
+	char	*di[]={"亥","子","丑","寅","卯","辰","巳","午","未","申","酉","戌"};
+	int t = (ptime.tm_year + 1897) % 10;
+	int d = (ptime.tm_year + 1897) % 12;
+#endif
+	char	*greeting[]={"早安","午安","晚安"};
+	int g = 0;
+	if(ptime.tm_hour >= 0 && ptime.tm_hour < 12)
+		g = 0;
+	if(ptime.tm_hour >= 12 && ptime.tm_hour < 19)
+		g = 1;
+	if(ptime.tm_hour >= 19 && ptime.tm_hour < 24)
+		g = 2;
+
     move(b_lines, 0);
-    vbarf(ANSI_COLOR(1;33;45) " 民國%03d年%02d月%02d日 星期%c%c %02d" ANSI_COLOR(1;5;33;45) ":" ANSI_COLOR(0;1;33;45) "%02d "
-	  ANSI_COLOR(0;30;47) " 線上有 " ANSI_COLOR(1;31;47)
-	  "%d" ANSI_COLOR(0;30;47) " 人, 我是" ANSI_COLOR(1;31;47) "%s"
-	  ANSI_COLOR(0;30;47) "\t[" ANSI_COLOR(1;31;47) "%s"ANSI_COLOR(0;30;47) "] ",
-	  ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],
-	  ptime.tm_hour, ptime.tm_min,
-	  SHM->UTMPnumber, cuser.userid,
-	  str_pager_modes[currutmp->pager % PAGER_MODES]);
+    vbarf(ANSI_COLOR(1;33;45) " "
+#ifdef USE_MINGGUO_CALENDAR
+		  "民國%03d年"
+#ifdef USE_TIANGANDIZHI
+		  " 歲次%s%s "
+#endif //USE_TIANGANDIZHI
+#else //USE_MINGGUO_CALENDAR
+		  "西元%04d年"	  
+#endif //USE_MINGGUO_CALENDAR
+		  "%02d月%02d日 週%c%c "
+	  ANSI_COLOR(0;30;47) "  " ANSI_COLOR(1;31;47) "%s" ANSI_COLOR(0;30;47) " %s！"
+	  ANSI_COLOR(1;31;47) "\t%d" ANSI_COLOR(0;30;47) " 人在線 "ANSI_RESET,
+#ifdef USE_MINGGUO_CALENDAR
+	  ptime.tm_year - 11,
+#ifdef USE_TIANGANDIZHI
+	  tian[t], di[d],
+#endif //USE_TIANGANDIZHI
+#else //USE_MINGGUO_CALENDAR
+	  ptime.tm_year + 1900,  
+#endif //USE_MINGGUO_CALENDAR
+	  ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],
+	  cuser.userid, greeting[g], SHM->UTMPnumber);
 }
 
 /*
