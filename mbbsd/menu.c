@@ -223,7 +223,7 @@ ZA_Select(void)
     localtime4_r(&now, &ptime);
     // TODO refresh status bar?
 	move(b_lines-2, 0); clrtobot();
-    vbarf(ANSI_COLOR(1;33;42)"\n  快速選單 "ANSI_COLOR(0;30;42)"|"ANSI_COLOR(1;37;42)" %02d"ANSI_COLOR(1;5;37;42)":"ANSI_COLOR(0;1;37;42)"%02d  \t ",ptime.tm_hour, ptime.tm_min);
+    vbarf(ANSI_COLOR(1;33;42)"\n  快速選單 "ANSI_COLOR(0;30;42)"|"ANSI_COLOR(1;37;42)" %02d"ANSI_COLOR(1;5;37;42)":"ANSI_COLOR(0;1;37;42)"%02d \t "ANSI_COLOR(1;37;42)"呼叫器["ANSI_COLOR(1;33;42)"%s"ANSI_COLOR(1;37;42)"] ",ptime.tm_hour, ptime.tm_min,str_pager_modes[currutmp->pager % PAGER_MODES]);
 	vbarf(ANSI_COLOR(0;31;47)"\n  (b)"ANSI_COLOR(0;30;47)"文章列表" ANSI_COLOR(0;31;47)" (c)"ANSI_COLOR(0;30;47)"分類 " ANSI_COLOR(0;31;47)"(f)"ANSI_COLOR(0;30;47)"我的最愛 " ANSI_COLOR(0;31;47)"(m)"ANSI_COLOR(0;30;47)"信箱 " ANSI_COLOR(0;31;47)"(u)"ANSI_COLOR(0;30;47)"使用者名單 \t" ANSI_COLOR(0;31;47)"(x)"ANSI_COLOR(0;30;47)"關閉選單  "ANSI_RESET);
     k = vkey();
 
@@ -310,7 +310,9 @@ show_status(void)
 #endif
 	char	*greeting[]={"早安","午安","晚安"};
 	int g = 0;
-	if(ptime.tm_hour >= 0 && ptime.tm_hour < 12)
+	if(ptime.tm_hour >= 0 && ptime.tm_hour < 6)
+		g = 2;
+	if(ptime.tm_hour >= 6 && ptime.tm_hour < 12)
 		g = 0;
 	if(ptime.tm_hour >= 12 && ptime.tm_hour < 19)
 		g = 1;
