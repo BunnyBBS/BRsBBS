@@ -746,45 +746,13 @@ int _debug_reportstruct()
 }
 #endif
 
-#ifdef USE_BOARDTAX
-// in boardtax.c
-int pay_board_tax();
-int set_board_tax();
-int board_tax_calc();
-int board_tax_log();
-int set_tax_file();
-int list_unpay();
-#endif
-
-int list_user_board();
-
-/* Two Factor Auth in twofa.c */
-#ifdef USE_2FALOGIN
-int twoFA_genRecovCode();
-#endif
-#if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
-int twoFA_RemoveTrust();
-#endif
-
 /* Password change in user.c */
-int userPass_change();
 static int
 u_pass_change()
 {
 	userPass_change(cuser, 0, usernum);
 	return 0;
 }
-
-/* Mission in mission.c */
-#ifdef USE_MISSION
-int mission();
-static int
-p_mission()
-{
-	mission_main();
-	return 0;
-}
-#endif
 
 // ----------------------------------------------------------- MENU DEFINITION
 // 注意每個 menu 最多不能同時顯示超過 11 項 (80x24 標準大小的限制)
@@ -940,8 +908,11 @@ int main_menu(void) {
 	}
 	/* Play Menu */
 	static const commands_t moneylist[] = {
-		{p_from,			0,	"Edit From    〉  修改故鄉  〈"},
-		{ordersong,			0,	"Order Song   〉點播心情動態〈"},
+		{p_from,			0,				"Edit From    〉  修改故鄉  〈"},
+		{ordersong,			0,				"Order Song   〉點播心情動態〈"},
+	#ifdef USE_ACHIEVE
+		{achieve_shop,		PERM_LOGINOK,	"Achieve Shop 〉成就勳章商店〈"},
+	#endif
 		{NULL, 0, NULL}
 	};
 	static int p_money() {
@@ -963,7 +934,7 @@ int main_menu(void) {
 	};
 	static const commands_t playlist[] = {
 	#ifdef USE_MISSION
-		{p_mission,		0,				"IMission     〉  任務中心  〈"},
+		{mission_main,		0,				"IMission     〉  任務中心  〈"},
 	#endif
 		{p_bank,		0,				"Bank         〉  " BBSMNAME2 "銀行  〈"},
 		{p_money,		PERM_LOGINOK,	"Market       〉  " BBSMNAME2 "超市  〈"},
@@ -1017,6 +988,9 @@ int main_menu(void) {
 		{u_info,			PERM_BASIC,		"Info         〉個人資料設定〈"},
 		{u_security,		PERM_BASIC,		"Security     〉 密碼與安全 〈"},
 		{u_customize,		PERM_BASIC,		"Customize    〉 個人化設定 〈"},
+	#ifdef USE_ACHIEVE
+		{achieve_user,		PERM_LOGINOK,	"Achieve      〉個人成就勳章〈"},
+	#endif
 		{u_editplan,		PERM_LOGINOK,   "QueryEdit    〉 編輯名片檔 〈"},
 		{u_editsig,			PERM_LOGINOK,   "NSignature   〉 編輯簽名檔 〈"},
 		{u_view_recentlogin,0,				"Login Log    〉  上站記錄  〈"},

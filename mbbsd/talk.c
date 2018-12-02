@@ -456,6 +456,17 @@ my_query(const char *uident)
 	       strlen(muser.userid) + strlen(muser.nickname) >= 25 ? 0 :
 		   (int)(25 - strlen(muser.userid) - strlen(muser.nickname)), "");
 
+#ifdef USE_ACHIEVE
+	outs("\n");
+	// ------------------------------------------------------------
+	prints( "《成就勳章》");
+	if(muser.achieve[0] == NULL)
+		outs("(無)");
+	else
+		outs(getAchName(muser.achieve,false));
+	move(vgety(), 40);
+#endif //USE_ACHIEVE
+
 	prints( "《經濟狀況》%s",
 	       money_level(muser.money));
 	if (uentp && ((fri_stat & HFM && !uentp->invisible) || is_self))

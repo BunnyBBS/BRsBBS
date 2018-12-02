@@ -49,7 +49,7 @@ twoFA_Send(char *user, char *authcode)
 	if (ret)
 		return "系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-S-001)";
 
-    if (code != 200){
+    	if (code != 200){
 		snprintf(buf, sizeof(buf), "系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-S-%3d)", code);
 		return buf;
 	}
@@ -100,23 +100,42 @@ int twoFA_main(char *user)
 	fclose(fp);
 
 #ifdef BETA
-    msg = twoFA_Send(user,code);
+	msg = twoFA_Send(user,code);
 #else
-    msg = twoFA_Send(user,NULL);
+	msg = twoFA_Send(user,NULL);
 #endif
-    if (msg){
+    	if (msg){
 		move(1,0);
 		outs(msg);
-		getdata(2, 0, "使用復原碼？ (y/N) ",genbuf, 3, LCECHO);
-		if (genbuf[0] != 'y') {
+		outs("\n  (如果您有收到驗證碼，但系統誤報錯誤，輸入R即可進入驗證程序。)");
+		getdata(4, 0, "(R)使用復原碼 (T)重試發送 [C]取消登入 ",genbuf, 3, LCECHO);
+		if (genbuf[0] != 'r' && genbuf[0] != 't') {
+			unlink(buf);
 			return -1;
+		}
+		if (genbuf[0] == 't') {
+#ifdef BETA
+			msg = twoFA_Send(user,code);
+#else
+			msg = twoFA_Send(user,NULL);
+#endif
+		    	if (msg){
+				move(1,0); clrtobot();
+				outs(msg);
+				getdata(3, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+				if (genbuf[0] != 'r') {
+					unlink(buf);
+					return -1;
+				}
+			}
+
 		}
 	}
 	unlink(buf);
 	
-	move(2,0); clrtobot();
-    outs("驗證碼將直接被發送到iBunny\n");
-    outs("一共為六位數字\n");
+	move(1,0); clrtobot();
+    mvouts(2, 0, "驗證碼將直接被發送到iBunny\n");
+    outs("驗證碼為6位數字、復原碼為8位英數混合。\n");
 
     for (int i = 3; i > 0; i--) {
 		if (i < 3) {

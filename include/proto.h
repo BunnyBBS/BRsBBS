@@ -765,6 +765,8 @@ int u_editplan(void);
 int u_editsig(void);
 int u_cloak(void);
 int u_list(void);
+int list_user_board();
+int userPass_change();
 
 /* vote */
 void b_suckinfile(FILE *fp, const char *fname);
@@ -862,5 +864,44 @@ void pwcuInitGuestInfo	(void);
 int  pwcuInitAdminPerm	(void);
 
 int verify_captcha(const char *reason);
+
+bool isFileExist(); /* in mbbsd.c */
+
+/* Board Tax */
+#ifdef USE_BOARDTAX
+int getBoardTax(char *userid);
+char *isBrdTaxPaid(char *userid);
+int pay_board_tax(void);
+int brdTaxCalcFunc(int x,int y);
+int set_board_tax(void);
+int board_tax_calc(void);
+int board_tax_log(void);
+int set_tax_file(void);
+int list_unpay(void);
+#endif //USE_BOARDTAX
+
+/* Two Factor Auth */
+#ifdef USE_2FALOGIN
+int twoFA_main(char *user);
+int twoFA_genRecovCode();
+#endif //USE_2FALOGIN
+
+#if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
+int twoFA_RemoveTrust();
+#endif //defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
+
+/* Mission */
+#ifdef USE_MISSION
+int mission_main();
+#endif //USE_MISSION
+
+/* User Achievement */
+#ifdef USE_ACHIEVE
+const char *getAchName(char *achieve, bool noColor);
+const char *getAchDesc(char *achieve);
+const char *getAchAttr(char *achieve);
+int achieve_user();
+int achieve_shop();
+#endif //USE_ACHIEVE
 
 #endif

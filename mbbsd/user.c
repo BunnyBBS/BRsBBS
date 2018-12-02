@@ -162,9 +162,6 @@ int u_cancelbadpost(void)
    return 0;
 }
 
-int getBoardTax(char *userid);
-char *isBrdTaxPaid(char *userid);
-
 void
 user_display(const userec_t * u, int adminmode)
 {

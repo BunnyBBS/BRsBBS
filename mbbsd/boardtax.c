@@ -148,7 +148,7 @@ pay_board_tax(void)
 				}else{
 					reload_money();
 					if (cuser.money < shouldpay){
-						vmsg(MONEYNAME "不夠繳納稅額...");
+						vmsg(MONEYNAME "不夠繳納稅額…");
 						return 0;
 					}else{
 #ifdef BOARD_TAX_DEADLINE
@@ -436,7 +436,7 @@ list_unpay(void)
 		vs_hdr2(" " BBSMNAME2 "銀行 ", " 看板稅未繳納名單");
 
 		move(4, 0);
-		prints("名單整理中...");
+		prints("名單整理中…");
 
 		fp = fopen("etc/boardtax.txt", "r+");
 		fp2 = fopen("etc/boardtaxunpay", "w");
