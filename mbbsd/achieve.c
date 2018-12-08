@@ -106,6 +106,7 @@ int achieve_user()
 		while (fgets(buf2, sizeof(buf2), fp)) {
 			if(buf2[strlen(buf2) - 1] == '\n')
 				buf2[strlen(buf2) - 1] = '\0';
+			if(buf2 != NULL){
 			move(1,0);clrtobot();
 			i = count + 1;
 			outs("成就名稱：");outs(getAchName(buf2,false));outs("\n");
@@ -135,7 +136,7 @@ int achieve_user()
 					return 0;
 				}
 			}
-
+			}
 			count++;
 		}
 		fclose(fp);
@@ -188,7 +189,7 @@ int achieve_buy_1stanniv(char *achieve){
 				}else{
 					reload_money();
 					if (cuser.money < 100){
-						vmsg(MONEYNAME "不夠繳納稅額…");
+						vmsg(MONEYNAME "不夠購買…");
 						return 0;
 					}else{
 						setuserfile(buf, "achieve");

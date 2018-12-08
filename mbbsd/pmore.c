@@ -1624,11 +1624,12 @@ mf_display()
             /* right floating stuff? */
             if (currline == 0 && fh.floats[0])
             {
-                w -= ustrlen(fh.floats[0]) + ustrlen(fh.floats[1]) + 4;
 #ifdef USE_ACHIEVE
                 if(haveAch == 1)
-                    w = w + strlen(buf2) - 10;
+                    w -= ustrlen(fh.floats[0]) + ustrlen(fh.floats[1]) + 4 - strlen(val) - strlen(achName) + 3;
+                else
 #endif //USE_ACHIEVE
+                    w -= ustrlen(fh.floats[0]) + ustrlen(fh.floats[1]) + 4;
             }
 
 #ifdef USE_ACHIEVE
