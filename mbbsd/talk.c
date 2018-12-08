@@ -532,9 +532,16 @@ my_query(const char *uident)
 	{
           if(vmsg("T: 開立罰單")=='T')
 		  violate_law(&muser, tuid);
+	}else{
+#ifdef USE_ACHIEVE
+		if(muser.achieve[0] != NULL){
+			if(vmsg("A: 查詢成就勳章詳情")=='A')
+				achieve_view(muser.achieve);
+		}
+		else
+#endif //USE_ACHIEVE
+			pressanykey();
 	}
-	else
-	   pressanykey();
 	if(now-last_query<1)
 	    sleep(2);
 	else if(now-last_query<2)

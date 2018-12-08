@@ -902,6 +902,7 @@ const char *getAchDesc(char *achieve);
 const char *getAchAttr(char *achieve);
 int achieve_user();
 int achieve_shop();
+int achieve_view(char *achieve);
 #endif //USE_ACHIEVE
 
 #endif

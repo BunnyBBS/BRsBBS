@@ -148,7 +148,7 @@ int achieve_user()
 int achieve_buy_1stanniv(char *achieve){
     FILE *fp;
     char buf[200], date[11], genbuf[3], genbuf2[3];
-    int i, dateint, start = 1071210, end = 1071211;
+    int i, dateint, start = 1071210, end = 1071216;
     struct tm      ptime;
     localtime4_r(&now, &ptime);
     i = ptime.tm_wday << 1;
@@ -163,7 +163,7 @@ int achieve_buy_1stanniv(char *achieve){
 	outs("¦¨´NÄÝ©Ê¡G");outs(getAchAttr(achieve));outs("\n");
 	outs("¦¨´N»ù®æ¡G100 " MONEYNAME "\n\n");
 	outs("¶}©l³c°â¡G107¦~12¤ë10¤é 00:00\n");
-	outs("µ²§ô³c°â¡G107¦~12¤ë11¤é 23:59\n\n");
+	outs("µ²§ô³c°â¡G107¦~12¤ë16¤é 23:59\n\n");
 	
 	if(dateint < start){
 		mvouts(b_lines - 2, 31, ANSI_COLOR(1;33)"ÁÙ¨S¶}©l³c°â³á¡I"ANSI_RESET);
@@ -226,8 +226,10 @@ VIEWLIST:
 	clear();
 	vs_hdr2(" " BBSNAME " ", " ¦¨´N¾±³¹°Ó©±");
 	move(1,0);
-	vbarf(ANSI_REVERSE " ½s¸¹  ¦¨´N¦WºÙ\t»ù®æ              \n");
-	vbarf("   1.  ¤j¨ß¤@¶g¦~¯¸¼y¬ö©À\t100 " MONEYNAME " \[1;31m­­®É³c°â\[m \n");
+	vbarf(ANSI_REVERSE " ½s¸¹  ¦¨´N¦WºÙ\t»ù®æ \n");
+	vbarf("   1.  ¤j¨ß¤@¶g¦~¯¸¼y¬ö©À   \[1;31m­­®É³c°â\[m\t100 " MONEYNAME " \n");
+	vbarf("   2.  §V¤O¦a¼g\t³W¹º¤¤¡K \n");
+	vbarf("   3.  ¶W¯Å¼g¤â\t³W¹º¤¤¡K \n");
 	outs("\n·q½Ð´Á«Ý§ó¦h¦¨´N¾±³¹¡K\n");
 	getdata(b_lines - 1, 0, "¿é¤J½s¸¹ÀËµø¸Ô²Ó»¡©ú©ÎÁÊ¶R¡A¿é¤J[Q]Â÷¶} ",genbuf, 3, LCECHO);
 	
@@ -236,6 +238,20 @@ VIEWLIST:
 		goto VIEWLIST;
 	}
 	
+    return 0;
+}
+
+int achieve_view(char *achieve)
+{
+	clear();
+	vs_hdr2(" " BBSNAME " ", " ¬d¸ß¦¨´N¾±³¹¸Ô±¡");
+	
+	move(2,0);
+	outs("¦¨´N¦WºÙ¡G");outs(getAchName(achieve,false));outs("\n");
+	outs("¦¨´N»¡©ú¡G");outs(getAchDesc(achieve));outs("\n");
+	outs("¦¨´NÄÝ©Ê¡G");outs(getAchAttr(achieve));outs("\n");
+	pressanykey();
+
     return 0;
 }
 

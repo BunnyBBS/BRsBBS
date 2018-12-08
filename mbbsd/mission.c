@@ -131,7 +131,7 @@ int mission_email(){
 int mission_1stanniv(){
     FILE *fp;
     char buf[200], buf2[200], date[11], genbuf[3];
-    int i, dateint, start = 1071210, end = 1071211;
+    int i, dateint, start = 1071210, end = 1071216;
     struct tm      ptime;
     localtime4_r(&now, &ptime);
     i = ptime.tm_wday << 1;
@@ -150,7 +150,7 @@ int mission_1stanniv(){
 	outs("參加資格：所有國民一同歡慶！\n");
 	outs("任務獎勵：5000 " MONEYNAME "\n");
 	outs("任務開始：107年12月10日 00:00\n");
-	outs("任務期限：107年12月11日 23:59\n");
+	outs("任務期限：107年12月16日 23:59\n");
 	
 	if(dateint < start){
 		mvouts(b_lines - 2, 31, ANSI_COLOR(1;33)"還沒開始領取喔！"ANSI_RESET);
