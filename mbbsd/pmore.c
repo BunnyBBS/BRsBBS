@@ -1594,8 +1594,8 @@ mf_display()
             outs(" " PMORE_COLOR_HEADER2 " ");
 
 #ifdef USE_ACHIEVE
-            int haveAch=0;
-            char buf[250]="\0", buf2[250];
+            int haveAch=0, achNameLen, x;
+            char buf[250]="\0", buf2[250], buf3[80]="\0";
             const char *achName;
             if(name == _fh_disp_heads[0]){
                 char *ptr, *id, *nick;
@@ -1610,13 +1610,17 @@ mf_display()
                     userec_t        muser;
                     getuser(id, &muser);
                     if(muser.achieve[0] != NULL){
+                        achNameLen = strlen(getAchName(muser.achieve,true));
                         achName = getAchName(muser.achieve,false);
                         haveAch = 1;
                     }
                 }
                 if(haveAch == 1){
+                    x = 60 - strlen(val) - achNameLen - ustrlen(fh.floats[1]);
+                    for(int i=0;i<x;i++)
+                        strcat(buf3, " ");
                     strcpy(buf2, achName);
-                    snprintf(buf, sizeof(buf), "%s [%s" PMORE_COLOR_HEADER2 "]", val, buf2);
+                    snprintf(buf, sizeof(buf), "%s [%s" PMORE_COLOR_HEADER2 "]%s", val, buf2, buf3);
                 }
             }
 #endif //USE_ACHIEVE
@@ -1625,16 +1629,14 @@ mf_display()
             if (currline == 0 && fh.floats[0])
             {
 #ifdef USE_ACHIEVE
-                if(haveAch == 1)
-                    w -= ustrlen(fh.floats[0]) + ustrlen(fh.floats[1]) + 4 - strlen(val) - strlen(achName) + 3;
-                else
+                if(haveAch == 0)
 #endif //USE_ACHIEVE
                     w -= ustrlen(fh.floats[0]) + ustrlen(fh.floats[1]) + 4;
             }
 
 #ifdef USE_ACHIEVE
             if(haveAch == 1)
-                prints("%-*.*s", w, w, (buf ? buf : ""));
+                prints("%s", buf);
             else
 #endif //USE_ACHIEVE
                 prints("%-*.*s", w, w, (val ? val : ""));

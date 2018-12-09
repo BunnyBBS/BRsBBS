@@ -48,7 +48,7 @@ getAchName(char *achieve, bool noColor){
 			buf2[strlen(buf2) - 1] = '\0';
 		name = buf2;
 	}else
-		name = achieve;
+		return NULL;
 
     if(noColor == false)
 		snprintf(output, sizeof(output), "\[%sm%s\[m", color, name);
@@ -106,36 +106,36 @@ int achieve_user()
 		while (fgets(buf2, sizeof(buf2), fp)) {
 			if(buf2[strlen(buf2) - 1] == '\n')
 				buf2[strlen(buf2) - 1] = '\0';
-			if(buf2 != NULL){
-			move(1,0);clrtobot();
-			i = count + 1;
-			outs("¦¨´N¦WºÙ¡G");outs(getAchName(buf2,false));outs("\n");
-			outs("¦¨´N»¡©ú¡G");outs(getAchDesc(buf2));outs("\n");
-			outs("¦¨´NÄÝ©Ê¡G");outs(getAchAttr(buf2));outs("\n");
-			outs("\nª¬ºA¡G");
-			if(strcmp(cuser.achieve, buf2) == 0)
-				outs(ANSI_COLOR(1;32)"¨Ï¥Î¤¤"ANSI_RESET);
-			else
-				outs("¥¼¨Ï¥Î");
-			outs("\n");
+			if(getAchName(buf2,true) != NULL){
+				move(1,0);clrtobot();
+				i = count + 1;
+				outs("¦¨´N¦WºÙ¡G");outs(getAchName(buf2,false));outs("\n");
+				outs("¦¨´N»¡©ú¡G");outs(getAchDesc(buf2));outs("\n");
+				outs("¦¨´NÄÝ©Ê¡G");outs(getAchAttr(buf2));outs("\n");
+				outs("\nª¬ºA¡G");
+				if(strcmp(cuser.achieve, buf2) == 0)
+					outs(ANSI_COLOR(1;32)"¨Ï¥Î¤¤"ANSI_RESET);
+				else
+					outs("¥¼¨Ï¥Î");
+				outs("\n");
 
-			if(strcmp(cuser.achieve, buf2) == 0){
-				getdata(b_lines - 1, 0, "[ENTER] ¤U¤@­Ó  (U) ©Þ±¼¾±³¹ ",genbuf, 3, LCECHO);
-				if(genbuf[0] == 'u'){
-					strlcpy(cuser.achieve, "", sizeof(cuser.achieve));
-					passwd_update(usernum, &cuser);
-					vmsg("©Þ±¼Åo¡I");
-					return 0;
+				if(strcmp(cuser.achieve, buf2) == 0){
+					getdata(b_lines - 1, 0, "[ENTER] ¤U¤@­Ó  (U) ©Þ±¼¾±³¹ ",genbuf, 3, LCECHO);
+					if(genbuf[0] == 'u'){
+						strlcpy(cuser.achieve, "", sizeof(cuser.achieve));
+						passwd_update(usernum, &cuser);
+						vmsg("©Þ±¼Åo¡I");
+						return 0;
+					}
+				}else{
+					getdata(b_lines - 1, 0, "[ENTER] ¤U¤@­Ó  (W) °tÀ¹¾±³¹ ",genbuf, 3, LCECHO);
+					if(genbuf[0] == 'w'){
+						strlcpy(cuser.achieve, buf2, sizeof(cuser.achieve));
+						passwd_update(usernum, &cuser);
+						vmsg("À¹¤WÅo¡I");
+						return 0;
+					}
 				}
-			}else{
-				getdata(b_lines - 1, 0, "[ENTER] ¤U¤@­Ó  (W) °tÀ¹¾±³¹ ",genbuf, 3, LCECHO);
-				if(genbuf[0] == 'w'){
-					strlcpy(cuser.achieve, buf2, sizeof(cuser.achieve));
-					passwd_update(usernum, &cuser);
-					vmsg("À¹¤WÅo¡I");
-					return 0;
-				}
-			}
 			}
 			count++;
 		}
