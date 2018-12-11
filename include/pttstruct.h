@@ -88,7 +88,7 @@ typedef struct userec_t {
     // r3968 移出 sizeof(chicken_t)=128 bytes
     char	_unused5[4];
     char	career[40];	/* 學歷職業 */
-    char    achieve[20];   /* 成就勳章 *//*char	_unused_phone[20];*/	/* 電話 */
+    /*char    achieve[20];*/   /* 成就勳章 */char	_unused_phone[20];	/* 電話 */
     uint32_t	_unused6;	/* 從前放轉換前的 numlogins, 使用前請先清0 */
     char	chkpad1[44];
     uint32_t    role;           /* Role-specific permissions */

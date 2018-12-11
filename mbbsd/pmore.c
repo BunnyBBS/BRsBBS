@@ -1606,7 +1606,7 @@ mf_display()
                 id = buf2;
                 nick = ptr + 1;
 
-                if(is_validuserid(id)){
+                /*if(is_validuserid(id)){
                     userec_t        muser;
                     getuser(id, &muser);
                     if(muser.achieve[0] != NULL){
@@ -1614,7 +1614,7 @@ mf_display()
                         achName = getAchName(muser.achieve,false);
                         haveAch = 1;
                     }
-                }
+                }*/
                 if(haveAch == 1){
                     x = 60 - strlen(val) - achNameLen - ustrlen(fh.floats[1]);
                     for(int i=0;i<x;i++)
@@ -1652,7 +1652,7 @@ mf_display()
 
             outs(ANSI_RESET);
             MFDISP_SKIPCURLINE();
-        }
+}
         else if (mf.dispe < mf.end)
         {
             /* case 3, normal text */
