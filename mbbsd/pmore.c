@@ -400,7 +400,7 @@ static int debug = 0;
 #define ANSI_COLOR(x)   ESC_STR "[" #x "m"
 #define ANSI_CLRTOEND   ESC_STR "[K"
 #define ANSI_MOVETO(y,x) ESC_STR "[" #y ";" #x "H"
-#define ANSI_REVERSE	ANSI_COLOR(7)
+#define ANSI_REVERSE    ANSI_COLOR(7)
 
 #define ANSI_IN_ESCAPE(x) (((x) >= '0' && (x) <= '9') || \
         (x) == ';' || (x) == ',' || (x) == '[')
@@ -3152,13 +3152,13 @@ pmore_Preference()
 
 // apply system colors if defined
 #ifndef HLP_CATEGORY_COLOR
-#define HLP_CATEGORY_COLOR	PMHLPATTR_HEADER
+#define HLP_CATEGORY_COLOR  PMHLPATTR_HEADER
 #endif
 #ifndef HLP_DESCRIPTION_COLOR
-#define HLP_DESCRIPTION_COLOR	PMHLPATTR_NORMAL
+#define HLP_DESCRIPTION_COLOR   PMHLPATTR_NORMAL
 #endif
 #ifndef HLP_KEYLIST_COLOR
-#define HLP_KEYLIST_COLOR	PMHLPATTR_NORMAL_KEY
+#define HLP_KEYLIST_COLOR   PMHLPATTR_NORMAL_KEY
 #endif
 
 static const char
@@ -3216,29 +3216,29 @@ pmore_Help(void *ctx, int (*help_handler)(int y, void *ctx))
     {
         incomplete = n_t_tables;
         y++;
-	for (i = 0; i < n_t_tables; i++)
-	{
-	    const char *lvar = NULL, *rvar = "";
-	    if (*t_tables[i])
-	    {
-		lvar = *t_tables[i]++;
-		rvar = *t_tables[i]++;
-	    }
-	    if (!rvar) { // draw category
+    for (i = 0; i < n_t_tables; i++)
+    {
+        const char *lvar = NULL, *rvar = "";
+        if (*t_tables[i])
+        {
+        lvar = *t_tables[i]++;
+        rvar = *t_tables[i]++;
+        }
+        if (!rvar) { // draw category
                 prints(HLP_CATEGORY_COLOR "%-*s", col_widths[i], lvar);
-		continue;
-	    }
-	    if (!lvar) { // table is complete...
-		incomplete --;
-		lvar = "";
-	    }
-	    // draw table body
+        continue;
+        }
+        if (!lvar) { // table is complete...
+        incomplete --;
+        lvar = "";
+        }
+        // draw table body
             prints( HLP_DESCRIPTION_COLOR "%-*s"
                     HLP_KEYLIST_COLOR     "%-*s",
                     l_widths[i], lvar,
                     col_widths[i]-l_widths[i], rvar);
-	}
-	outc('\n');
+    }
+    outc('\n');
     } while (incomplete);
 
     // show additional help information

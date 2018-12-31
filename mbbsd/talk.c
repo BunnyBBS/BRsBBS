@@ -460,10 +460,10 @@ my_query(const char *uident)
 	outs("\n");
 	// ------------------------------------------------------------
 	prints( "《成就勳章》");
-	//if(muser.achieve[0] == NULL)
+	if(muser.achieve[0] == NULL)
 		outs("(無)");
-	/*else
-		outs(getAchName(muser.achieve,false));*/
+	else
+		outs(getAchName(muser.achieve,false));
 	move(vgety(), 40);
 #endif //USE_ACHIEVE
 
@@ -534,11 +534,11 @@ my_query(const char *uident)
 		  violate_law(&muser, tuid);
 	}else{
 #ifdef USE_ACHIEVE
-		/*if(muser.achieve[0] != NULL){
+		if(muser.achieve[0] != NULL){
 			if(vmsg("A: 查詢成就勳章詳情")=='A')
 				achieve_view(muser.achieve);
 		}
-		else*/
+		else
 #endif //USE_ACHIEVE
 			pressanykey();
 	}

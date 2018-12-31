@@ -113,13 +113,13 @@ int achieve_user()
 				outs("成就說明：");outs(getAchDesc(buf2));outs("\n");
 				outs("成就屬性：");outs(getAchAttr(buf2));outs("\n");
 				outs("\n狀態：");
-				/*if(strcmp(cuser.achieve, buf2) == 0)
+				if(strcmp(cuser.achieve, buf2) == 0)
 					outs(ANSI_COLOR(1;32)"使用中"ANSI_RESET);
-				else*/
+				else
 					outs("未使用");
 				outs("\n");
-				getdata(b_lines - 1, 0, "[ENTER] 下一個 ",genbuf, 3, LCECHO);
-				/*if(strcmp(cuser.achieve, buf2) == 0){
+
+				if(strcmp(cuser.achieve, buf2) == 0){
 					getdata(b_lines - 1, 0, "[ENTER] 下一個  (U) 拔掉勳章 ",genbuf, 3, LCECHO);
 					if(genbuf[0] == 'u'){
 						strlcpy(cuser.achieve, "", sizeof(cuser.achieve));
@@ -135,7 +135,7 @@ int achieve_user()
 						vmsg("戴上囉！");
 						return 0;
 					}
-				}*/
+				}
 			}
 			count++;
 		}
@@ -198,13 +198,13 @@ int achieve_buy_1stanniv(char *achieve){
 							fprintf(fp,"%s\n", achieve);
 							fclose(fp);
 							mvouts(b_lines - 2, 0, "已購買！可以在個人設定區配戴成就勳章。");
-							/*getdata(b_lines - 1, 0, "還是你要現在配戴嗎？ (y/N)",genbuf2, 3, LCECHO);
+							getdata(b_lines - 1, 0, "還是你要現在配戴嗎？ (y/N)",genbuf2, 3, LCECHO);
 							if(genbuf2[0] == 'y'){
 								strlcpy(cuser.achieve, achieve, sizeof(cuser.achieve));
 								passwd_update(usernum, &cuser);
 								vmsg("戴上囉！");
 								return 0;
-							}*/
+							}
 							vmsg("已購買！");
 							return 0;
 						}else{
