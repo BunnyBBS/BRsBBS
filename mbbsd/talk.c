@@ -528,20 +528,23 @@ my_query(const char *uident)
 
 	ENDSTAT(STAT_QUERY);
 
-	if(HasUserPerm(PERM_SYSOP|PERM_POLICE) )
-	{
-          if(vmsg("T: 開立罰單")=='T')
-		  violate_law(&muser, tuid);
+	if(HasUserPerm(PERM_SYSOP|PERM_POLICE)){
+		char buf[3];
+		getdata(b_lines-1, 0, "(T)開立罰單 (A)查詢成就勳章詳情 ",buf, 3, LCECHO);
+		if(buf[0] == 'T')
+			violate_law(&muser, tuid);
+		else if(buf[0] == 'A')
+			achieve_view(muser.achieve);
 	}else{
 #ifdef USE_ACHIEVE
 		if(muser.achieve[0] != NULL){
 			if(vmsg("A: 查詢成就勳章詳情")=='A')
 				achieve_view(muser.achieve);
-		}
-		else
+		}else
 #endif //USE_ACHIEVE
 			pressanykey();
 	}
+
 	if(now-last_query<1)
 	    sleep(2);
 	else if(now-last_query<2)

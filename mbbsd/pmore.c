@@ -400,7 +400,7 @@ static int debug = 0;
 #define ANSI_COLOR(x)   ESC_STR "[" #x "m"
 #define ANSI_CLRTOEND   ESC_STR "[K"
 #define ANSI_MOVETO(y,x) ESC_STR "[" #y ";" #x "H"
-#define ANSI_REVERSE    ANSI_COLOR(7)
+#define ANSI_REVERSE	ANSI_COLOR(7)
 
 #define ANSI_IN_ESCAPE(x) (((x) >= '0' && (x) <= '9') || \
         (x) == ';' || (x) == ',' || (x) == '[')
@@ -1593,53 +1593,14 @@ mf_display()
             outs(name);
             outs(" " PMORE_COLOR_HEADER2 " ");
 
-#ifdef USE_ACHIEVE
-            int haveAch=0, achNameLen, x;
-            char buf[250]="\0", buf2[250], buf3[80]="\0";
-            const char *achName;
-            if(name == _fh_disp_heads[0]){
-                char *ptr, *id, *nick;
-                snprintf(buf2, sizeof(buf2), "%s", val);
-                if (!(ptr = strchr(buf2, ' ')))
-                continue;
-                *ptr = '\0';
-                id = buf2;
-                nick = ptr + 1;
-
-                /*if(is_validuserid(id)){
-                    userec_t        muser;
-                    getuser(id, &muser);
-                    if(muser.achieve[0] != NULL){
-                        achNameLen = strlen(getAchName(muser.achieve,true));
-                        achName = getAchName(muser.achieve,false);
-                        haveAch = 1;
-                    }
-                }*/
-                if(haveAch == 1){
-                    x = 60 - strlen(val) - achNameLen - ustrlen(fh.floats[1]);
-                    for(int i=0;i<x;i++)
-                        strcat(buf3, " ");
-                    strcpy(buf2, achName);
-                    snprintf(buf, sizeof(buf), "%s [%s" PMORE_COLOR_HEADER2 "]%s", val, buf2, buf3);
-                }
-            }
-#endif //USE_ACHIEVE
-
             /* right floating stuff? */
             if (currline == 0 && fh.floats[0])
             {
-#ifdef USE_ACHIEVE
-                if(haveAch == 0)
-#endif //USE_ACHIEVE
-                    w -= ustrlen(fh.floats[0]) + ustrlen(fh.floats[1]) + 4;
+                w -= ustrlen(fh.floats[0]) + ustrlen(fh.floats[1]) + 4;
             }
 
-#ifdef USE_ACHIEVE
-            if(haveAch == 1)
-                prints("%s", buf);
-            else
-#endif //USE_ACHIEVE
-                prints("%-*.*s", w, w, (val ? val : ""));
+            prints("%-*.*s", w, w,
+                    (val ? val : ""));
 
             if (currline == 0 && fh.floats[0])
             {
@@ -1652,7 +1613,7 @@ mf_display()
 
             outs(ANSI_RESET);
             MFDISP_SKIPCURLINE();
-}
+        }
         else if (mf.dispe < mf.end)
         {
             /* case 3, normal text */
@@ -3152,13 +3113,13 @@ pmore_Preference()
 
 // apply system colors if defined
 #ifndef HLP_CATEGORY_COLOR
-#define HLP_CATEGORY_COLOR  PMHLPATTR_HEADER
+#define HLP_CATEGORY_COLOR	PMHLPATTR_HEADER
 #endif
 #ifndef HLP_DESCRIPTION_COLOR
-#define HLP_DESCRIPTION_COLOR   PMHLPATTR_NORMAL
+#define HLP_DESCRIPTION_COLOR	PMHLPATTR_NORMAL
 #endif
 #ifndef HLP_KEYLIST_COLOR
-#define HLP_KEYLIST_COLOR   PMHLPATTR_NORMAL_KEY
+#define HLP_KEYLIST_COLOR	PMHLPATTR_NORMAL_KEY
 #endif
 
 static const char
@@ -3216,29 +3177,29 @@ pmore_Help(void *ctx, int (*help_handler)(int y, void *ctx))
     {
         incomplete = n_t_tables;
         y++;
-    for (i = 0; i < n_t_tables; i++)
-    {
-        const char *lvar = NULL, *rvar = "";
-        if (*t_tables[i])
-        {
-        lvar = *t_tables[i]++;
-        rvar = *t_tables[i]++;
-        }
-        if (!rvar) { // draw category
+	for (i = 0; i < n_t_tables; i++)
+	{
+	    const char *lvar = NULL, *rvar = "";
+	    if (*t_tables[i])
+	    {
+		lvar = *t_tables[i]++;
+		rvar = *t_tables[i]++;
+	    }
+	    if (!rvar) { // draw category
                 prints(HLP_CATEGORY_COLOR "%-*s", col_widths[i], lvar);
-        continue;
-        }
-        if (!lvar) { // table is complete...
-        incomplete --;
-        lvar = "";
-        }
-        // draw table body
+		continue;
+	    }
+	    if (!lvar) { // table is complete...
+		incomplete --;
+		lvar = "";
+	    }
+	    // draw table body
             prints( HLP_DESCRIPTION_COLOR "%-*s"
                     HLP_KEYLIST_COLOR     "%-*s",
                     l_widths[i], lvar,
                     col_widths[i]-l_widths[i], rvar);
-    }
-    outc('\n');
+	}
+	outc('\n');
     } while (incomplete);
 
     // show additional help information

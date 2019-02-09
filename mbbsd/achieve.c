@@ -48,7 +48,7 @@ getAchName(char *achieve, bool noColor){
 			buf2[strlen(buf2) - 1] = '\0';
 		name = buf2;
 	}else
-		return NULL;
+		name = achieve;
 
     if(noColor == false)
 		snprintf(output, sizeof(output), "\[%sm%s\[m", color, name);
@@ -106,37 +106,36 @@ int achieve_user()
 		while (fgets(buf2, sizeof(buf2), fp)) {
 			if(buf2[strlen(buf2) - 1] == '\n')
 				buf2[strlen(buf2) - 1] = '\0';
-			if(getAchName(buf2,true) != NULL){
-				move(1,0);clrtobot();
-				i = count + 1;
-				outs("¦¨´N¦WºÙ¡G");outs(getAchName(buf2,false));outs("\n");
-				outs("¦¨´N»¡©ú¡G");outs(getAchDesc(buf2));outs("\n");
-				outs("¦¨´NÄÝ©Ê¡G");outs(getAchAttr(buf2));outs("\n");
-				outs("\nª¬ºA¡G");
-				if(strcmp(cuser.achieve, buf2) == 0)
-					outs(ANSI_COLOR(1;32)"¨Ï¥Î¤¤"ANSI_RESET);
-				else
-					outs("¥¼¨Ï¥Î");
-				outs("\n");
+			move(1,0);clrtobot();
+			i = count + 1;
+			outs("¦¨´N¦WºÙ¡G");outs(getAchName(buf2,false));outs("\n");
+			outs("¦¨´N»¡©ú¡G");outs(getAchDesc(buf2));outs("\n");
+			outs("¦¨´NÄÝ©Ê¡G");outs(getAchAttr(buf2));outs("\n");
+			outs("\nª¬ºA¡G");
+			if(strcmp(cuser.achieve, buf2) == 0)
+				outs(ANSI_COLOR(1;32)"¨Ï¥Î¤¤"ANSI_RESET);
+			else
+				outs("¥¼¨Ï¥Î");
+			outs("\n");
 
-				if(strcmp(cuser.achieve, buf2) == 0){
-					getdata(b_lines - 1, 0, "[ENTER] ¤U¤@­Ó  (U) ©Þ±¼¾±³¹ ",genbuf, 3, LCECHO);
-					if(genbuf[0] == 'u'){
-						strlcpy(cuser.achieve, "", sizeof(cuser.achieve));
-						passwd_update(usernum, &cuser);
-						vmsg("©Þ±¼Åo¡I");
-						return 0;
-					}
-				}else{
-					getdata(b_lines - 1, 0, "[ENTER] ¤U¤@­Ó  (W) °tÀ¹¾±³¹ ",genbuf, 3, LCECHO);
-					if(genbuf[0] == 'w'){
-						strlcpy(cuser.achieve, buf2, sizeof(cuser.achieve));
-						passwd_update(usernum, &cuser);
-						vmsg("À¹¤WÅo¡I");
-						return 0;
-					}
+			if(strcmp(cuser.achieve, buf2) == 0){
+				getdata(b_lines - 1, 0, "[ENTER] ¤U¤@­Ó  (U) ©Þ±¼¾±³¹ ",genbuf, 3, LCECHO);
+				if(genbuf[0] == 'u'){
+					strlcpy(cuser.achieve, "", sizeof(cuser.achieve));
+					passwd_update(usernum, &cuser);
+					vmsg("©Þ±¼Åo¡I");
+					return 0;
+				}
+			}else{
+				getdata(b_lines - 1, 0, "[ENTER] ¤U¤@­Ó  (W) °tÀ¹¾±³¹ ",genbuf, 3, LCECHO);
+				if(genbuf[0] == 'w'){
+					strlcpy(cuser.achieve, buf2, sizeof(cuser.achieve));
+					passwd_update(usernum, &cuser);
+					vmsg("À¹¤WÅo¡I");
+					return 0;
 				}
 			}
+
 			count++;
 		}
 		fclose(fp);
@@ -149,7 +148,7 @@ int achieve_user()
 int achieve_buy_1stanniv(char *achieve){
     FILE *fp;
     char buf[200], date[11], genbuf[3], genbuf2[3];
-    int i, dateint, start = 1071210, end = 1071216;
+    int i, dateint, start = 1071210, end = 1071211;
     struct tm      ptime;
     localtime4_r(&now, &ptime);
     i = ptime.tm_wday << 1;
@@ -164,7 +163,7 @@ int achieve_buy_1stanniv(char *achieve){
 	outs("¦¨´NÄÝ©Ê¡G");outs(getAchAttr(achieve));outs("\n");
 	outs("¦¨´N»ù®æ¡G100 " MONEYNAME "\n\n");
 	outs("¶}©l³c°â¡G107¦~12¤ë10¤é 00:00\n");
-	outs("µ²§ô³c°â¡G107¦~12¤ë16¤é 23:59\n\n");
+	outs("µ²§ô³c°â¡G107¦~12¤ë11¤é 23:59\n\n");
 	
 	if(dateint < start){
 		mvouts(b_lines - 2, 31, ANSI_COLOR(1;33)"ÁÙ¨S¶}©l³c°â³á¡I"ANSI_RESET);
@@ -189,7 +188,7 @@ int achieve_buy_1stanniv(char *achieve){
 				}else{
 					reload_money();
 					if (cuser.money < 100){
-						vmsg(MONEYNAME "¤£°÷ÁÊ¶R¡K");
+						vmsg(MONEYNAME "¤£°÷ÁÊ¶R¦¨´N¡K");
 						return 0;
 					}else{
 						setuserfile(buf, "achieve");
@@ -227,15 +226,14 @@ VIEWLIST:
 	clear();
 	vs_hdr2(" " BBSNAME " ", " ¦¨´N¾±³¹°Ó©±");
 	move(1,0);
-	vbarf(ANSI_REVERSE " ½s¸¹  ¦¨´N¦WºÙ\t»ù®æ \n");
-	vbarf("   1.  ¤j¨ß¤@¶g¦~¯¸¼y¬ö©À   \[1;31m­­®É³c°â\[m\t100 " MONEYNAME " \n");
-	vbarf("   2.  §V¤O¦a¼g\t³W¹º¤¤¡K \n");
-	vbarf("   3.  ¶W¯Å¼g¤â\t³W¹º¤¤¡K \n");
+	vbarf(ANSI_REVERSE " ½s¸¹  ¦¨´N¦WºÙ\t»ù®æ              \n");
+	vbarf("   1.  ¤j¨ß¤@¶g¦~¯¸¼y¬ö©À\t100 " MONEYNAME " ¤w°±°â \n");
 	outs("\n·q½Ð´Á«Ý§ó¦h¦¨´N¾±³¹¡K\n");
 	getdata(b_lines - 1, 0, "¿é¤J½s¸¹ÀËµø¸Ô²Ó»¡©ú©ÎÁÊ¶R¡A¿é¤J[Q]Â÷¶} ",genbuf, 3, LCECHO);
 	
 	if (genbuf[0] == '1') {
-		achieve_buy_1stanniv("1stanniv");
+		mvouts(b_lines - 2, 31, ANSI_COLOR(1;31)"¶W¹LÁÊ¶R´Á­­¤F¡I"ANSI_RESET);
+		pressanykey();
 		goto VIEWLIST;
 	}
 	

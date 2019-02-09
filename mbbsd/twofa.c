@@ -42,19 +42,18 @@ twoFA_Send(char *user, char *authcode)
 	thttp_init(&t);
 	snprintf(buf, sizeof(buf), "Bearer %s", IBUNNY_API_KEY);
 	ret = thttp_get(&t, IBUNNY_SERVER, uri, IBUNNY_SERVER, buf);
-	if (!ret)
-	code = thttp_code(&t);
+	if(!ret)
+		code = thttp_code(&t);
 	thttp_cleanup(&t);
 
-	if (ret)
+	if(ret)
 		return "系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-S-001)";
 
-    	if (code != 200){
-		snprintf(buf, sizeof(buf), "系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-S-%3d)", code);
-		return buf;
-	}
+    if(code == 200)
+		return NULL;
+	else
+		return code;
 
-	return NULL;
 }
 
 int twoFA_main(char *user)
@@ -106,29 +105,79 @@ int twoFA_main(char *user)
 #endif
     	if (msg){
 		move(1,0);
-		outs(msg);
-		outs("\n  (如果您有收到驗證碼，但系統誤報錯誤，輸入R即可進入驗證程序。)");
-		getdata(4, 0, "(R)使用復原碼 (T)重試發送 [C]取消登入 ",genbuf, 3, LCECHO);
-		if (genbuf[0] != 'r' && genbuf[0] != 't') {
-			unlink(buf);
-			return -1;
-		}
-		if (genbuf[0] == 't') {
-#ifdef BETA
-			msg = twoFA_Send(user,code);
-#else
-			msg = twoFA_Send(user,NULL);
-#endif
-		    	if (msg){
-				move(1,0); clrtobot();
-				outs(msg);
-				getdata(3, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+		if(msg == 400){
+			outs("您未登入iBunny，");
+			setuserfile(buf2, "2fa.recov");
+			if(!(fp = fopen(buf2, "r"))){
+				outs("也無設定復原碼。(Error code: 2FA-S-400-2)\n");
+				outs("請先登入iBunny後重新登入BBS。若您亦無法登入iBunny，請聯繫工程業務處協助。");
+				unlink(buf);
+				return -1;
+			}else{
+				outs("請先登入iBunny後重新登入BBS或使用復原碼。(Error code: 2FA-S-400-1)\n");
+				getdata(4, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
 				if (genbuf[0] != 'r') {
 					unlink(buf);
 					return -1;
 				}
 			}
+		}else if(msg == 403){
+			snprintf(buf, sizeof(buf), "API串接出錯，");
+			setuserfile(buf2, "2fa.recov");
+			if(!(fp = fopen(buf2, "r"))){
+				outs("也無設定復原碼。(Error code: 2FA-S-403-2)\n");
+				outs("請聯繫工程業務處協助。");
+				unlink(buf);
+				return -1;
+			}else{
+				outs("您只能使用復原碼。(Error code: 2FA-S-403-1)\n");
+				getdata(4, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+				if (genbuf[0] != 'r') {
+					unlink(buf);
+					return -1;
+				}
+			}
+		}else if(msg == 500){
+			snprintf(buf, sizeof(buf), "伺服器出錯，");
+			setuserfile(buf2, "2fa.recov");
+			if(!(fp = fopen(buf2, "r"))){
+				outs("也無設定復原碼。(Error code: 2FA-S-500-2)\n");
+				outs("請聯繫工程業務處協助。");
+				unlink(buf);
+				return -1;
+			}else{
+				outs("您只能使用復原碼。(Error code: 2FA-S-500-1)\n");
+				getdata(4, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+				if (genbuf[0] != 'r') {
+					unlink(buf);
+					return -1;
+				}
+			}
+		}else{
+			snprintf(buf, sizeof(buf), "系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-S-%3d)", msg);
+			outs("\n  (如果您有收到驗證碼，但系統誤報錯誤，輸入R即可進入驗證程序。)");
+			getdata(4, 0, "(R)使用復原碼 (T)重試發送 [C]取消登入 ",genbuf, 3, LCECHO);
+			if (genbuf[0] != 'r' && genbuf[0] != 't') {
+				unlink(buf);
+				return -1;
+			}
+			if (genbuf[0] == 't') {
+	#ifdef BETA
+				msg = twoFA_Send(user,code);
+	#else
+				msg = twoFA_Send(user,NULL);
+	#endif
+			    	if (msg){
+					move(1,0); clrtobot();
+					outs(msg);
+					getdata(3, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+					if (genbuf[0] != 'r') {
+						unlink(buf);
+						return -1;
+					}
+				}
 
+			}
 		}
 	}
 	unlink(buf);
