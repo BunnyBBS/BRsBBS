@@ -106,36 +106,37 @@ int achieve_user()
 		while (fgets(buf2, sizeof(buf2), fp)) {
 			if(buf2[strlen(buf2) - 1] == '\n')
 				buf2[strlen(buf2) - 1] = '\0';
-			move(1,0);clrtobot();
-			i = count + 1;
-			outs("成就名稱：");outs(getAchName(buf2,false));outs("\n");
-			outs("成就說明：");outs(getAchDesc(buf2));outs("\n");
-			outs("成就屬性：");outs(getAchAttr(buf2));outs("\n");
-			outs("\n狀態：");
-			if(strcmp(cuser.achieve, buf2) == 0)
-				outs(ANSI_COLOR(1;32)"使用中"ANSI_RESET);
-			else
-				outs("未使用");
-			outs("\n");
+			if(getAchName(buf2,true) != NULL){
+				move(1,0);clrtobot();
+				i = count + 1;
+				outs("成就名稱：");outs(getAchName(buf2,false));outs("\n");
+				outs("成就說明：");outs(getAchDesc(buf2));outs("\n");
+				outs("成就屬性：");outs(getAchAttr(buf2));outs("\n");
+				outs("\n狀態：");
+				if(strcmp(cuser.achieve, buf2) == 0)
+					outs(ANSI_COLOR(1;32)"使用中"ANSI_RESET);
+				else
+					outs("未使用");
+				outs("\n");
 
-			if(strcmp(cuser.achieve, buf2) == 0){
-				getdata(b_lines - 1, 0, "[ENTER] 下一個  (U) 拔掉勳章 ",genbuf, 3, LCECHO);
-				if(genbuf[0] == 'u'){
-					strlcpy(cuser.achieve, "", sizeof(cuser.achieve));
-					passwd_update(usernum, &cuser);
-					vmsg("拔掉囉！");
-					return 0;
-				}
-			}else{
-				getdata(b_lines - 1, 0, "[ENTER] 下一個  (W) 配戴勳章 ",genbuf, 3, LCECHO);
-				if(genbuf[0] == 'w'){
-					strlcpy(cuser.achieve, buf2, sizeof(cuser.achieve));
-					passwd_update(usernum, &cuser);
-					vmsg("戴上囉！");
-					return 0;
+				if(strcmp(cuser.achieve, buf2) == 0){
+					getdata(b_lines - 1, 0, "[ENTER] 下一個  (U) 拔掉勳章 ",genbuf, 3, LCECHO);
+					if(genbuf[0] == 'u'){
+						strlcpy(cuser.achieve, "", sizeof(cuser.achieve));
+						passwd_update(usernum, &cuser);
+						vmsg("拔掉囉！");
+						return 0;
+					}
+				}else{
+					getdata(b_lines - 1, 0, "[ENTER] 下一個  (W) 配戴勳章 ",genbuf, 3, LCECHO);
+					if(genbuf[0] == 'w'){
+						strlcpy(cuser.achieve, buf2, sizeof(cuser.achieve));
+						passwd_update(usernum, &cuser);
+						vmsg("戴上囉！");
+						return 0;
+					}
 				}
 			}
-
 			count++;
 		}
 		fclose(fp);
