@@ -121,16 +121,16 @@ int twoFA_main(char *user)
 					return -1;
 				}
 			}
-		}else if(msg == 403){
+		}else if(msg == 401){
 			snprintf(buf, sizeof(buf), "API串接出錯，");
 			setuserfile(buf2, "2fa.recov");
 			if(!(fp = fopen(buf2, "r"))){
-				outs("也無設定復原碼。(Error code: 2FA-S-403-2)\n");
+				outs("也無設定復原碼。(Error code: 2FA-S-401-2)\n");
 				outs("請聯繫工程業務處協助。");
 				unlink(buf);
 				return -1;
 			}else{
-				outs("您只能使用復原碼。(Error code: 2FA-S-403-1)\n");
+				outs("您只能使用復原碼。(Error code: 2FA-S-401-1)\n");
 				getdata(4, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
 				if (genbuf[0] != 'r') {
 					unlink(buf);
