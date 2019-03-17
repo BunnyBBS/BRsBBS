@@ -8,7 +8,7 @@ void keeplog(FILE *fin, char *board, char *title, char *owner) {
     
     sprintf(genbuf, BBSHOME "/boards/%c/%s", board[0], board);
     stampfile(genbuf, &fhdr);
-    
+
     if(!(fout = fopen(genbuf, "w"))) {
 	perror(genbuf);
 	return;
@@ -19,7 +19,7 @@ void keeplog(FILE *fin, char *board, char *title, char *owner) {
     
     fclose(fin);
     fclose(fout);
-    
+
     strncpy(fhdr.title, title, sizeof(fhdr.title) - 1);
     fhdr.title[sizeof(fhdr.title) - 1] = '\0';
     
@@ -30,11 +30,12 @@ void keeplog(FILE *fin, char *board, char *title, char *owner) {
     if((bid = getbnum(board)) > 0)
 	touchbtotal(bid);
 
+    printf("%s", fhdr.filename);
 }
 
 int main(int argc, char **argv)
 {
-    FILE *fp;
+    FILE *fp, *fp2;
 
     attach_SHM();
     resolve_boards();
@@ -52,6 +53,17 @@ int main(int argc, char **argv)
 	    return 1;
 	}
     }
-    keeplog(fp, argv[1], argv[2], argv[3]);
+
+    char *title, buf[200] = "";
+    if(fp2 = fopen(argv[2], "r+")){
+        fgets(buf, sizeof(buf), fp2);
+        fclose(fp2);
+        title = buf;
+    }else{
+        perror(argv[2]);
+        return 1;
+    }
+
+    keeplog(fp, argv[1], title, argv[3]);
     return 0;
 }
