@@ -17,7 +17,8 @@ payArtMoney(int uid, int money, const char *item GCC_UNUSED, ...)
 
     int oldm, newm;
     const char *userid;
-    time4_t     dtime = time(0);
+    time4_t dtime = time(0);
+    time4_t now = (++dtime);
 
     assert(money != 0);
     userid = getuserid(uid);
@@ -30,11 +31,17 @@ payArtMoney(int uid, int money, const char *item GCC_UNUSED, ...)
     oldm = moneyof(uid);
     newm = deumoney(uid, -money);
 
-    {
-        char buf[PATHLEN];
-        sethomefile(buf, userid, FN_RECENTPAY);
-        log_payment(buf, money, oldm, newm, reason, (int)(++dtime));
-    }
+    char buf[PATHLEN];
+    sethomefile(buf, userid, FN_RECENTPAY);
+    log_filef(buf,
+              LOG_CREAT,
+              "%s %s $%d ($%d => $%d) %s\n",
+              Cdatelite(&now),
+              money >= 0 ? "支出" : "收入",
+              money >= 0 ? money : -money,
+              oldm,
+              newm,
+              reason);
 
     return newm;
 }
