@@ -85,6 +85,59 @@ is_readonly_board(const char *bname)
  * 	2. set currbid, currBM, currmode, currdirect
  * 	3. utmp brc_id
  */
+
+/* 站務人員進入隱板警訊系統 */
+int sysop_into_hide(boardheader_t *bp)
+{
+	char genbuf[3];
+	clear();
+	vs_hdr2(" 隱板警訊系統 ", " 越權進入");
+	move(b_lines-3, 0); clrtobot();
+	outs("\n" ANSI_COLOR(1;31) "注意: "ANSI_COLOR(1)"您將使用站長權限進入隱板，若無合理理由請勿任意進入隱板。" ANSI_RESET);
+	getdata(b_lines - 1, 0, "您確定要繼續操作？[y/N] ",
+		genbuf, 3, LCECHO);
+	if(genbuf[0] != 'y'){
+		vmsg("下次請您看清楚再來。");
+		return -1;
+	}else{
+		FILE		   *fp, *fp2;
+		char			reason[100];
+		char bmStr[IDLEN * 3 + 10];
+		char * bmArr;
+		int i;
+		struct tm	 ptime;
+		char		   *myweek = "日一二三四五六";
+		localtime4_r(&now, &ptime);
+		i = ptime.tm_wday << 1;
+
+		clear();
+		vs_hdr2(" 隱板警訊系統 ", " 請輸入理由");
+		mvouts(2 ,0, "進入隱藏看板，請輸入正當理由。未輸入理由將視同誤按不予進入。");
+		getdata(3, 0, "理由: ", reason, 40, DOECHO);
+
+		if(reason[0] == NULL){
+			vmsg("未輸入理由將視同誤按，下次請您看清楚再來。");
+			return -1;
+		}else{
+			unlink("etc/intoHide.log");
+			fp2 = fopen("etc/intoHide.log", "w");
+			fprintf(fp2,"\n國家安全局通知\n站務人員 %s 進入您的隱藏看板：%s，\n時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，\n理由是 %s，\n如果您認為該站務人員的行為不當請立即至%s回報。\n若無其他異況可直接略過本通知。", cuser.userid, bp->brdname,ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason, BN_SYSOP);
+			fclose(fp2);
+			if(does_board_have_public_bm(bp)){
+				snprintf(bmStr, sizeof(bmStr), "%s", bp->BM);
+				bmArr = strtok(bmStr,"/");
+				while(bmArr != NULL){
+					mail_id(bmArr, "[通知] 有站務人員進入您的看版", "etc/intoHide.log", "[國家安全局]");
+					bmArr = strtok(NULL,"/");
+				}
+			}
+			post_file(BN_SECURITY, "[通知] 有站務人員進入隱藏看版", "etc/intoHide.log", "[國家安全局]");
+			outs("正在進入隱形看板…");
+		}
+	}
+	return 0;
+}
+
 int enter_board(const char *boardname)
 {
     boardheader_t  *bh;
@@ -102,6 +155,11 @@ int enter_board(const char *boardname)
 	return -2;
     if (IS_GROUP(bh))
 	return -1;
+
+	if (BoardPermNeedsSysopOverride(bh)){
+		if(sysop_into_hide(bh) != 0)
+			return -2;
+	}
 
     strlcpy(bname, bh->brdname, sizeof(bname));
     if (bname[0] == '\0')
@@ -391,17 +449,17 @@ b_config(void)
 
 	move(ytitle + 2, 0);
 
-	prints(" "ANSI_COLOR(1;36) "b" ANSI_RESET " - 中文敘述: %s\n", bp->title);
 	prints("     板主名單: %s\n", does_board_have_public_bm(bp) ? bp->BM : "(無)");
+	prints(" "ANSI_COLOR(1;36) "b" ANSI_RESET " - 中文敘述: %s\n", bp->title);
 	prints( " " ANSI_COLOR(1;36) "h" ANSI_RESET
-		" - 公開狀態(是否隱形): %s " ANSI_RESET "\n",
+		" - 公開狀態(是否隱形): %s " ANSI_RESET "\n\n",
 		(bp->brdattr & BRD_HIDE) ?
 		ANSI_COLOR(1;31)"隱形":"公開");
 
-	prints( " " ANSI_COLOR(1;36) "g" ANSI_RESET
+	/*prints( " " ANSI_COLOR(1;36) "g" ANSI_RESET
 		" - 隱板時 %s 進入十大排行榜" ANSI_RESET "\n",
 		(bp->brdattr & BRD_BMCOUNT) ?
-		ANSI_COLOR(1)"可以" ANSI_RESET: "不可");
+		ANSI_COLOR(1)"可以" ANSI_RESET: "不可");*/
 
 	prints( " " ANSI_COLOR(1;36) "e" ANSI_RESET
 		" - %s "ANSI_RESET "非看板會員發文\n",
@@ -453,7 +511,7 @@ b_config(void)
 		     ANSI_COLOR(1)"限制": "開放");
 	    if(d > 0)
 		prints(", 最低間隔時間: %d 秒", d);
-	    outs("\n");
+	    outs("\n\n");
 	}
 
 	prints( " " ANSI_COLOR(1;36) "i" ANSI_RESET
@@ -462,7 +520,7 @@ b_config(void)
 		ANSI_COLOR(1)"自動":"不會");
 
 	prints( " " ANSI_COLOR(1;36) "a" ANSI_RESET
-		" - 推文時 %s" ANSI_RESET " 開頭\n",
+		" - 推文時 %s" ANSI_RESET " 開頭\n\n",
 		(bp->brdattr & BRD_ALIGNEDCMT) ?
 		ANSI_COLOR(1)"對齊":"不用對齊");
 
@@ -491,10 +549,10 @@ b_config(void)
 #endif
 
 	// use '8' instead of '1', to prevent 'l'/'1' confusion
-	prints( " " ANSI_COLOR(1;36) "8" ANSI_RESET
+	/*prints( " " ANSI_COLOR(1;36) "8" ANSI_RESET
 		" - %s" ANSI_RESET "未滿十八歲進入\n",
 		(bp->brdattr & BRD_OVER18) ?
-		ANSI_COLOR(1) "禁止 " : "允許\ " );
+		ANSI_COLOR(1) "禁止 " : "允許\ " );*/
 
 	if (!canpost)
 	    outs(ANSI_COLOR(1;31)"  ★ 您在此看板無發文或推文權限，"
@@ -591,8 +649,12 @@ b_config(void)
 	    prints("%sc%s)文章類別 %sn%s)發文注意事項 ",
 		    aHot, aRst, aHot, aRst);
 	    move_ansi(ipostres++, COLPOSTRES);
-	    prints("%sp%s)進板畫面",
+	    prints("%sp%s)進板畫面 ",
 		    aHot, aRst);
+#ifdef USE_BBS2WEB
+	    prints("%sz%s)看板同步至Web ",
+		    aHot, aRst);
+#endif //USE_BBS2WEB
 	    outs(ANSI_RESET);
 
             if (GROUPOP()) {
@@ -888,6 +950,25 @@ b_config(void)
 		bp->brdattr ^= BRD_NOSELFDELPOST;
 		touched = 1;
 		break;
+
+#ifdef USE_BBS2WEB
+	    case 'z':
+	    {
+		    int bufint=0;
+			clear();
+			bufint = web_sync_board(currbid, bp, "SYNC");
+			if(bufint != 0){
+		        time4_t     dtime = time(0);
+		        LOG_IF(LOG_CONF_POST,
+		               log_filef("log/web_syncbrd", LOG_CREAT,
+		                         "time: %d, board: %s, error: WSB-Z-%3d, operator: %s \n",
+		                         (int)(++dtime), bp->brdname, bufint, cuser.userid));
+				vmsgf("發生錯誤，請聯繫工程業務處協助。(Error code: WSB-Z-%3d)", bufint);
+			}else
+				vmsg("看板設定同步完成。");
+		}
+		break;
+#endif //USE_BBS2WEB
 
 	    default:
 		finished = 1;

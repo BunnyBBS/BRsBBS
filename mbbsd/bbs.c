@@ -339,58 +339,6 @@ set_board(void)
 	exit(-1);
     }
 
-	/*站長進入隱板警訊系統*/
-    if (BoardPermNeedsSysopOverride(bp)){
-    	char            genbuf[3];
-    	clear();
-        vs_hdr2(" 隱板警訊系統 ", " 越權進入");
-    	move(b_lines-3, 0); clrtobot();
-    	outs("\n" ANSI_COLOR(1;31) "注意: "ANSI_COLOR(1)"您將使用站長權限進入隱板，若無合理理由請勿任意進入隱板。" ANSI_RESET);
-    	getdata(b_lines - 1, 0, "您確定要繼續操作？[y/N] ",
-    		genbuf, 3, LCECHO);
-    	if(genbuf[0] != 'y'){
-    		vmsg("顧及使用者的隱私，請您重新登入；下次請您看清楚再進入。");
-    		sleep(1);
-    		abort_bbs(0);
-    	}else{
-    		FILE           *fp, *fp2;
-    		char            reason[100];
-    		char bmStr[IDLEN * 3 + 10];
-    		char * bmArr;
-    		int i;
-    		struct tm      ptime;
-    		char           *myweek = "日一二三四五六";
-    		localtime4_r(&now, &ptime);
-    		i = ptime.tm_wday << 1;
-
-    		clear();
-            vs_hdr2(" 隱板警訊系統 ", " 請輸入理由");
-            mvouts(2 ,0, "進入隱藏看板，請輸入正當理由。未輸入理由將視同誤按不予進入。");
-    		getdata(3, 0, "理由: ", reason, 40, DOECHO);
-
-            if(reason[0] == NULL){
-                vmsg("未輸入理由將視同誤按；顧及使用者的隱私，請您重新登入。");
-                sleep(1);
-                abort_bbs(0);
-            }else{
-                unlink("etc/intoHide.log");
-                fp2 = fopen("etc/intoHide.log", "w");
-        		fprintf(fp2,"\n國家安全局通知\n站長 %s 進入您的隱藏看板：%s，\n時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，\n理由是 %s\n如果您認為該站長的行為不當請立即至%s提報。\n若無其他異況可直接略過本通知。", cuser.userid, bp->brdname,ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason, BN_SYSOP);
-        		fclose(fp2);
-        		if(does_board_have_public_bm(bp)){
-                    snprintf(bmStr, sizeof(bmStr), "%s", bp->BM);
-        			bmArr = strtok(bmStr,"/");
-        			while(bmArr != NULL){
-        				mail_id(bmArr, "[通知] 有站長進入您的看版", "etc/intoHide.log", "[國家安全局]");
-        				bmArr = strtok(NULL,"/");
-        			}
-        		}
-        		post_file(BN_SECURITY, "[通知] 有站長進入隱藏看版", "etc/intoHide.log", "[國家安全局]");
-                vmsg("正在進入隱形看板…");
-            }
-    	}
-	}
-
     board_note_time = &bp->bupdate;
 
     if (!does_board_have_public_bm(bp)) {

@@ -30,18 +30,20 @@ getAchName(char *achieve, bool noColor){
 
     if(noColor == false){
 		snprintf(buf, sizeof(buf), "achieve/%s.color", achieve);
-		if(fp = fopen(buf, "r+")){
+		if(fp = fopen(buf, "r")){
 			fgets(buf, sizeof(buf), fp);
 			fclose(fp);
 			if(buf[strlen(buf) - 1] == '\n')
 				buf[strlen(buf) - 1] = '\0';
 			color = buf;
-		}else
+		}else{
+			noColor = true;
 			color = "";
+		}
 	}
 
 	snprintf(buf2, sizeof(buf2), "achieve/%s.name", achieve);
-	if(fp = fopen(buf2, "r+")){
+	if(fp = fopen(buf2, "r")){
 		fgets(buf2, sizeof(buf2), fp);
 		fclose(fp);
 		if(buf2[strlen(buf2) - 1] == '\n')
@@ -64,7 +66,7 @@ getAchDesc(char *achieve){
     char buf[200] = "";
 
 	snprintf(buf, sizeof(buf), "achieve/%s.desc", achieve);
-	if(fp = fopen(buf, "r+")){
+	if(fp = fopen(buf, "r")){
 		fgets(buf, sizeof(buf), fp);
 		fclose(fp);
 		if(buf[strlen(buf) - 1] == '\n')
@@ -81,7 +83,7 @@ getAchAttr(char *achieve){
     char buf[200] = "";
 
 	snprintf(buf, sizeof(buf), "achieve/%s.attr", achieve);
-	if(fp = fopen(buf, "r+")){
+	if(fp = fopen(buf, "r")){
 		fgets(buf, sizeof(buf), fp);
 		fclose(fp);
 		if(buf[strlen(buf) - 1] == '\n')
@@ -92,7 +94,7 @@ getAchAttr(char *achieve){
 	}
 }
 
-int achieve_user()
+int achieve_user(void)
 {
 	int i=0, count=0;
     char genbuf[3];
@@ -106,7 +108,7 @@ int achieve_user()
 		while (fgets(buf2, sizeof(buf2), fp)) {
 			if(buf2[strlen(buf2) - 1] == '\n')
 				buf2[strlen(buf2) - 1] = '\0';
-			if(getAchName(buf2,true) != NULL){
+			if(buf2[0] != '\0'){
 				move(1,0);clrtobot();
 				i = count + 1;
 				outs("成就名稱：");outs(getAchName(buf2,false));outs("\n");
@@ -146,6 +148,7 @@ int achieve_user()
     return 0;
 }
 
+/* 已過期。
 int achieve_buy_1stanniv(char *achieve){
     FILE *fp;
     char buf[200], date[11], genbuf[3], genbuf2[3];
@@ -217,8 +220,102 @@ int achieve_buy_1stanniv(char *achieve){
 		}
 	}
 }
+*/
 
-int achieve_shop()
+int achieve_buy_500post(char *achieve){
+	FILE *fp;
+	char buf[200], date[11], genbuf[3], genbuf2[3];
+
+	clear();
+	vs_hdr2(" 成就勳章商店 ", " 購買成就");
+	move(2,0);
+	outs("成就名稱：");outs(getAchName(achieve,false));outs("\n");
+	outs("成就說明：");outs(getAchDesc(achieve));outs("\n");
+	outs("成就屬性：");outs(getAchAttr(achieve));outs("\n");
+	outs("取得條件：發文500篇\n\n");
+	outs("＊請不要惡意洗文章數，最重可處停權處分喔！\n");
+
+	if(doUserOwnAch(achieve) == 1){
+		mvouts(b_lines - 2, 35, ANSI_COLOR(1;32)"已擁有了！"ANSI_RESET);
+		pressanykey();
+		return 0;
+	}else{
+		getdata(b_lines - 2, 0, "(B) 取得  [Q] 返回 ",genbuf, 3, LCECHO);
+		if(genbuf[0] == 'b') {
+			if(cuser.numposts >= 500){
+				setuserfile(buf, "achieve");
+				if(fp = fopen(buf, "a")){
+					fprintf(fp,"%s\n", achieve);
+					fclose(fp);
+					mvouts(b_lines - 2, 0, "已取得！可以在個人設定區配戴成就勳章。");
+					getdata(b_lines - 1, 0, "還是你要現在配戴嗎？ (y/N)",genbuf2, 3, LCECHO);
+					if(genbuf2[0] == 'y'){
+						strlcpy(cuser.achieve, achieve, sizeof(cuser.achieve));
+						passwd_update(usernum, &cuser);
+						vmsg("戴上囉！");
+						return 0;
+					}
+					vmsg("已購買！");
+					return 0;
+				}else{
+					vmsg("程式錯誤…");
+					return 0;
+				}
+			}else{
+				vmsgf("文章篇數還缺%d篇喔，改天再來吧。", (500 - cuser.numposts));
+				return 0;
+			}
+		}
+	}
+}
+
+int achieve_buy_365login(char *achieve){
+	FILE *fp;
+	char buf[200], date[11], genbuf[3], genbuf2[3];
+
+	clear();
+	vs_hdr2(" 成就勳章商店 ", " 購買成就");
+	move(2,0);
+	outs("成就名稱：");outs(getAchName(achieve,false));outs("\n");
+	outs("成就說明：");outs(getAchDesc(achieve));outs("\n");
+	outs("成就屬性：");outs(getAchAttr(achieve));outs("\n");
+	outs("取得條件：登入365次\n\n");
+
+	if(doUserOwnAch(achieve) == 1){
+		mvouts(b_lines - 2, 35, ANSI_COLOR(1;32)"已擁有了！"ANSI_RESET);
+		pressanykey();
+		return 0;
+	}else{
+		getdata(b_lines - 2, 0, "(B) 取得  [Q] 返回 ",genbuf, 3, LCECHO);
+		if(genbuf[0] == 'b') {
+			if(cuser.numlogindays >= 365){
+				setuserfile(buf, "achieve");
+				if(fp = fopen(buf, "a")){
+					fprintf(fp,"%s\n", achieve);
+					fclose(fp);
+					mvouts(b_lines - 2, 0, "已取得！可以在個人設定區配戴成就勳章。");
+					getdata(b_lines - 1, 0, "還是你要現在配戴嗎？ (y/N)",genbuf2, 3, LCECHO);
+					if(genbuf2[0] == 'y'){
+						strlcpy(cuser.achieve, achieve, sizeof(cuser.achieve));
+						passwd_update(usernum, &cuser);
+						vmsg("戴上囉！");
+						return 0;
+					}
+					vmsg("已購買！");
+					return 0;
+				}else{
+					vmsg("程式錯誤…");
+					return 0;
+				}
+			}else{
+				vmsgf("登入次數還缺%d次喔，改天再來吧。", (365 - cuser.numlogindays));
+				return 0;
+			}
+		}
+	}
+}
+
+int achieve_shop(void)
 {
 	int i;
     char genbuf[3];
@@ -227,14 +324,25 @@ VIEWLIST:
 	clear();
 	vs_hdr2(" " BBSNAME " ", " 成就勳章商店");
 	move(1,0);
-	vbarf(ANSI_REVERSE " 編號  成就名稱\t價格              \n");
-	vbarf("   1.  大兔一週年站慶紀念\t100 " MONEYNAME " 已停售 \n");
+	vbarf(ANSI_REVERSE " 編號  成就名稱\t取得條件          \n");
+	vbarf("   1.  大兔一週年站慶紀念 [稀有]\t100 " MONEYNAME " 已停售 \n");
+	vbarf("   2.  努力的寫 [普通]\t發文500篇         \n");
+	vbarf("   3.  1歲小兔子 [普通]\t登入365次         \n");
 	outs("\n敬請期待更多成就勳章…\n");
 	getdata(b_lines - 1, 0, "輸入編號檢視詳細說明或購買，輸入[Q]離開 ",genbuf, 3, LCECHO);
 	
 	if (genbuf[0] == '1') {
+		move(b_lines - 3, 0); clrtobot();
 		mvouts(b_lines - 2, 31, ANSI_COLOR(1;31)"超過購買期限了！"ANSI_RESET);
 		pressanykey();
+		goto VIEWLIST;
+	}
+	if (genbuf[0] == '2') {
+		achieve_buy_500post("500post");
+		goto VIEWLIST;
+	}
+	if (genbuf[0] == '3') {
+		achieve_buy_365login("365login");
 		goto VIEWLIST;
 	}
 	

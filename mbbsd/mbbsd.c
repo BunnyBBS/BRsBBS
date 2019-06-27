@@ -1195,6 +1195,44 @@ inline static void foreign_warning(void){
 // XXX temporary...
 int query_adbanner_usong_pref_changed(const userec_t *u, char force_yn);
 
+#ifdef USE_MISSION
+/* 登入自動發獎勵系統 */
+void
+mission_dailylogin_auto(void){
+    FILE *fp;
+    char buf[200], buf2[200], date[11], genbuf[3];
+    int i;
+    struct tm      ptime;
+    localtime4_r(&now, &ptime);
+    i = ptime.tm_wday << 1;
+    snprintf(date, sizeof(date), "%03d-%02d-%02d", ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday);
+
+    setuserfile(buf, "mission.dailylogin");
+    if(isFileExist(buf) == false){
+        if(fp = fopen(buf, "w")){
+            fprintf(fp,"%s", date);
+            fclose(fp);
+            pay(-100, "完成任務：每日登入大兔。");
+            clear();mvouts(10, 23, ANSI_COLOR(1;33)"歡迎回來！今日登入獎勵：+100兔幣。"ANSI_RESET);
+            pressanykey();
+        }
+    }else{
+        if(fp = fopen(buf, "r")){
+            fgets(buf2, sizeof(buf2), fp);
+            fclose(fp);
+            if (strcmp(buf2, date)){
+                if (fp = fopen(buf, "w")){
+                    fprintf(fp,"%s", date);
+                    fclose(fp);
+                    pay(-100, "完成任務：每日登入大兔。");
+                    clear();mvouts(10, 23, ANSI_COLOR(1;33)"歡迎回來！今日登入獎勵：+100兔幣。"ANSI_RESET);
+                    pressanykey();
+                }
+            }
+        }
+    }
+}
+#endif
 static void
 user_login(void)
 {
@@ -1309,6 +1347,24 @@ user_login(void)
         }
 #endif
 
+#ifdef USE_2FALOGIN
+    setuserfile(buf, "2fa.recov");
+    if(HasUserFlag(UF_TWOFA_LOGIN) && isFileExist(buf) == false){
+        clear();
+        move(14,0);
+        outs("復原碼是當您無法使用兩步驟認證時，\n");
+        outs("可以在輸入驗證碼時輸入復原碼取回帳戶存取權。\n");
+        outs("您開啟了兩步驟認證，但尚未設定復原碼，\n");
+        outs("若無法使用兩步驟認證時您將無法存取您的帳戶。\n");
+        if (vans("要現在進行設定嗎？ [y/N]") == 'y') {
+            twoFA_genRecovCode();
+        }
+    }
+#endif
+
+#ifdef USE_MISSION
+        mission_dailylogin_auto();
+#endif //USE_MISSION
     } else if (strcmp(cuser.userid, STR_GUEST) == 0) { /* guest */
 
 	init_guest_info();
@@ -1354,21 +1410,6 @@ user_login(void)
 	    }
 	}
     }
-
-#ifdef USE_2FALOGIN
-	setuserfile(buf, "2fa.recov");
-	if(HasUserFlag(UF_TWOFA_LOGIN) && isFileExist(buf) == false){
-		clear();
-		move(14,0);
-		outs("復原碼是當您無法使用兩步驟認證時，\n");
-		outs("可以在輸入驗證碼時輸入復原碼取回帳戶存取權。\n");
-		outs("您開啟了兩步驟認證，但尚未設定復原碼，\n");
-		outs("若無法使用兩步驟認證時您將無法存取您的帳戶。\n");
-	    if (vans("要現在進行設定嗎？ [y/N]") == 'y') {
-			twoFA_genRecovCode();
-	    }
-	}
-#endif
 
     for (i = 0; i < NUMVIEWFILE; i++)
     {

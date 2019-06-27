@@ -6,18 +6,11 @@
 #define SONGBOOK  "etc/SONGBOOK"
 #define OSONGPATH "etc/SONGO"
 
-#ifndef ORDERSONG_MIN_NUMPOST
-#define ORDERSONG_MIN_NUMPOST   (3)
-#endif
-#ifndef ORDERSONG_MAX_BADPOST
-#define ORDERSONG_MAX_BADPOST   (1)
-#endif
-//#ifndef ORDERSONG_MIN_NUMLOGINDAYS
+//#define ORDERSONG_MIN_NUMPOST   (3)
+//#define ORDERSONG_MAX_BADPOST   (1)
 //#define ORDERSONG_MIN_NUMLOGINDAYS   (30)
-//#endif
-#ifndef ORDERSONG_PAYMONEY
 #define ORDERSONG_PAYMONEY   (100)
-#endif
+#define ORDERSONG_HOUR   (24)
 
 #define MAX_SONGS (MAX_ADBANNER-100) // (400) XXX MAX_SONGS should be fewer than MAX_ADBANNER.
 
@@ -48,6 +41,13 @@ do_order_song(void)
     if (cuser.numlogindays < ORDERSONG_MIN_NUMLOGINDAYS) {
         vmsgf("為避免濫用，留言前要先有%s %d %s",
                 STR_LOGINDAYS, ORDERSONG_MIN_NUMLOGINDAYS, STR_LOGINDAYS_QTY);
+        return 0;
+    }
+#endif
+
+#ifdef ORDERSONG_MIN_NUMPOST
+    if (cuser.numposts < ORDERSONG_MIN_NUMPOST) {
+        vmsgf("為避免濫用，留言前要先有%d篇發文", ORDERSONG_MIN_NUMPOST);
         return 0;
     }
 #endif
@@ -122,22 +122,33 @@ do_order_song(void)
     } while (1);
 
 #ifdef ORDERSONG_PAYMONEY
-	move(b_lines-2, 0);
-	prints("即將支付點播費用 %d %s", ORDERSONG_PAYMONEY, MONEYNAME);
-	getdata(b_lines - 1, 0, "確定要支付了嗎？ (y/N)",genbuf, 3, LCECHO);
-	if (genbuf[0] != 'y') {
-	    unlockutmpmode();
-	    return 0;
-	}
 
-	reload_money();
-	if (cuser.money < (int)ORDERSONG_PAYMONEY){
-		vmsg(MONEYNAME "不夠繳納點播費用...");
-		unlockutmpmode();
-		return 0;
-	}else{
-		pay((int)ORDERSONG_PAYMONEY, "繳納點播費用。");
-#endif
+#ifdef ORDERSONG_HOUR
+	time4_t dtime = time(0);
+	move(b_lines-2, 0);
+	if(cuser.lastsong < ((int)(++dtime) - (3600 * (int)ORDERSONG_HOUR)))
+		prints("上次點歌已超過%d小時，免支付點歌費用！", (int)ORDERSONG_HOUR);
+	else{
+#endif //ORDERSONG_HOUR
+		prints("即將支付點播費用 %d %s", ORDERSONG_PAYMONEY, MONEYNAME);
+		getdata(b_lines - 1, 0, "確定要支付了嗎？ (y/N)",genbuf, 3, LCECHO);
+		if (genbuf[0] != 'y') {
+		    unlockutmpmode();
+		    return 0;
+		}
+
+		reload_money();
+		if (cuser.money < (int)ORDERSONG_PAYMONEY){
+			vmsg(MONEYNAME "不夠繳納點播費用...");
+			unlockutmpmode();
+			return 0;
+		}else
+			pay((int)ORDERSONG_PAYMONEY, "繳納點播費用。");
+#ifdef ORDERSONG_HOUR
+	}
+#endif //ORDERSONG_HOUR
+
+#endif //ORDERSONG_PAYMONEY
 
     vmsg("接著要選範本囉...");
     a_menu("留言範本", SONGBOOK, 0, 0, trans_buffer, NULL);
@@ -258,9 +269,6 @@ do_order_song(void)
 
     unlockutmpmode();
     return 1;
-#ifdef ORDERSONG_PAYMONEY
-    }
-#endif
 }
 
 int

@@ -41,7 +41,7 @@ m_user(void)
 	move(2, 0);
 	if ((id = getuser(genbuf, &xuser))) {
 	    user_display(&xuser, 1);
-	    if( HasUserPerm(PERM_ACCOUNTS) )
+	    if( HasUserPerm(PERM_ACCOUNTS|PERM_SYSOP) )
 		uinfo_query(xuser.userid, 1, id);
 	    else
 		pressanykey();
@@ -903,6 +903,22 @@ m_mod_board(char *bname)
 		    "板主: %s => %s\n",
 		    bh.brdname, newbh.brdname, bh.BM, newbh.BM);
 	    post_msg(BN_SECURITY, buf, genbuf, "[系統安全局]");
+
+#ifdef USE_BBS2WEB
+      clear();
+      mvouts(1, 0, "請稍候，看板細節正在同步至網站中…");
+      int bufint=0;
+      bufint = web_sync_board(bid, &newbh, "SYNC");
+      if(bufint != 0){
+        time4_t     dtime = time(0);
+        LOG_IF(LOG_CONF_POST,
+               log_filef("log/web_syncbrd", LOG_CREAT,
+                         "time: %d, board: %s, error: WSB-E-%3d, operator: %s \n",
+                         (int)(++dtime), newbh.brdname, bufint, cuser.userid));
+        vmsgf("發生錯誤，請聯繫工程業務處協助。(Error code: WSB-E-%3d)", bufint);
+      }
+#endif //USE_BBS2WEB
+
 	}
     }
     return 0;
@@ -1082,11 +1098,27 @@ m_newbrd(int whatclass, int recover)
     }
 
     getbcache(whatclass)->childcount = 0;
-    pressanykey();
     setup_man(&newboard, NULL);
-    outs("\n新板成立");
     post_newboard(newboard.title, newboard.brdname, newboard.BM);
     log_usies("NewBoard", newboard.title);
+
+#ifdef USE_BBS2WEB
+    clear();
+    mvouts(1, 0, "請稍候，看板正在建立至網站中…");
+    int bufint=0, bid;
+    bid = getbnum(newboard.brdname);
+    bufint = web_sync_board(bid, &newboard, "NEW");
+    if(bufint != 0){
+      time4_t     dtime = time(0);
+      LOG_IF(LOG_CONF_POST,
+             log_filef("log/web_syncbrd", LOG_CREAT,
+                       "time: %d, board: %s, error: WNB-N-%3d, operator: %s \n",
+                       (int)(++dtime), newboard.brdname, bufint, cuser.userid));
+      vmsgf("發生錯誤，請聯繫工程業務處協助。(Error code: WNB-N-%3d)", bufint);
+    }
+#endif //USE_BBS2WEB
+
+    mvouts(b_lines - 1, 0, "新板成立");
     pressanykey();
     return 0;
 }

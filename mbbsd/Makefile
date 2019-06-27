@@ -8,7 +8,7 @@ SRCROOT=	..
 #######################################################################
 
 PROG=	mbbsd
-COREOBJS = bbs.o announce.o read.o board.o brc.o mail.o record.o fav.o
+COREOBJS = bbs.o announce.o read.o board.o brc.o mail.o record.o fav.o bbs2web.o
 ABUSEOBJS = captcha.o
 ACCOBJS  = user.o acl.o register.o passwd.o emaildb.o twofa.o
 NETOBJS  = mbbsd.o io.o term.o telnet.o nios.o

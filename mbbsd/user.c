@@ -162,6 +162,157 @@ int u_cancelbadpost(void)
    return 0;
 }
 
+/* 站務人員查詢使用者資料警訊系統 */
+static void gen_authCode(char *buf, size_t len)
+{
+	const char * const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+    for (int i = 0; i < len; i++)
+	buf[i] = chars[random() % strlen(chars)];
+    buf[len] = '\0';
+} //原本想直接引用兩步驟認證的，但後來發現，要是沒定義兩步驟，這裡就會出錯。 -大兔
+int
+user_display_advanced_auth(void)
+{
+	if(!HasUserPerm(PERM_SYSOP)){
+		vmsg("權限不足");
+		return 0;
+	}
+
+	clear();
+	vs_hdr2(" 民政事務局 ", " 授權認證設定");
+
+	char userid[IDLEN+1];
+	move(1,0);
+	usercomplete("請輸入要設定的帳號 ", userid);
+	if (!is_validuserid(userid)){
+		vmsg("查無ID");
+		return 0;
+	}
+
+	FILE *fp;
+	char buf[200], code[9];
+	sethomefile(buf, userid, "query_data.auth");
+	move(4, 0);
+	prints("設定帳號： %s\n\n", userid);
+	if(fp = fopen(buf, "r")){
+		outs( " " ANSI_COLOR(1;31) "注意: " ANSI_COLOR(1;37) "這個帳號已經有被設定一組授權碼尚未被使用，不可以設定第二組。" ANSI_RESET "\n\n");
+		fgets(code, sizeof(code), fp);
+		fclose(fp);
+		outs(" 授權認證碼：" ANSI_COLOR(1)); outs(code); outs(ANSI_RESET "\n");
+		outs(" 共計8碼，會出現英文字母I、L、O，不會出現數字0、1。\n");
+		pressanykey();
+	}else{
+		if(!(fp = fopen(buf, "w"))){
+			vmsg("系統錯誤，請稍後再試。(Error code: UDA-G-001)");
+			return 0;
+		}
+		gen_authCode(code, 8);
+		fprintf(fp,"%s", code);
+		fclose(fp);
+		outs(" 授權認證碼：" ANSI_COLOR(1)); outs(code); outs(ANSI_RESET "\n");
+		outs(" 共計8碼，會出現英文字母I、L、O，不會出現數字0、1。");
+		pressanykey();
+	}
+	return 0;
+}
+
+int
+user_display_advanced(const userec_t * u, int adminmode)
+{
+	if(!adminmode){
+		vmsg("權限錯誤");
+		return 0;
+	}
+	if(!HasUserPerm(PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD)){
+		vmsg("權限不足");
+		return 0;
+	}
+
+	clear();
+	vs_hdr2(" 民政事務局 ", " 使用者進階查詢");
+    prints("\n即將查詢 %s 的資料\n", u->userid);
+
+	if(!HasUserPerm(PERM_SYSOP)){
+		char code[9], code_input[9], buf[200];
+    	FILE *fp;
+    	sethomefile(buf, u->userid, "query_data.auth");
+		if (!(fp = fopen(buf, "r"))){
+			vmsg("總站長沒有設定授權碼，請先洽詢總站長。");
+			return 0;
+		}
+		fgets(code, sizeof(code), fp);
+		fclose(fp);
+		getdata(5, 0, "請輸入授權認證碼：", code_input, sizeof(code_input), DOECHO);
+
+		if (!strcmp(code, code_input)){
+			unlink(buf);
+		}else{
+			vmsg("認證失敗。");
+			return 0;
+		}
+	}
+
+	move(b_lines-3, 0); clrtobot();
+	outs("\n" ANSI_COLOR(1;31) "注意: "ANSI_COLOR(1)"您將使用站長權限查詢使用者資料，若無合理理由請勿任意進行操作。" ANSI_RESET);
+    char genbuf2[200];
+	getdata(b_lines - 1, 0, "您確定要繼續操作？[y/N] ", genbuf2, 3, LCECHO);
+	if(genbuf2[0] != 'y'){
+		vmsg("下次請您看清楚再來。");
+		return 0;
+	}else{
+		FILE           *fp;
+		char            reason[100];
+		char bmStr[IDLEN * 3 + 10];
+		char * bmArr;
+		int i;
+		struct tm      ptime;
+		char           *myweek = "日一二三四五六";
+		localtime4_r(&now, &ptime);
+		i = ptime.tm_wday << 1;
+
+		clear();
+		vs_hdr2(" 民政事務局 ", " 使用者進階查詢");
+        mvouts(2 ,0, "查詢使用者資料，請輸入正當理由。未輸入理由將視同誤按不予查詢。");
+		getdata(3, 0, "理由: ", reason, 40, DOECHO);
+
+        if(reason[0] == NULL){
+            vmsg("未輸入理由將視同誤按，下次請您看清楚再來。");
+			return 0;
+        }else{
+            unlink("etc/queryData.mail");
+			fp = fopen("etc/queryData.mail", "w+");
+    		fprintf(fp,"\n國家安全局通知\n站務人員 %s 查詢了您的個人資料，\n時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，\n理由是 %s，\n如果您認為該站務人員的行為不當請立即至%s提報。\n若無其他異況可直接略過本通知。", cuser.userid, ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason, BN_SYSOP);
+    		fclose(fp);
+    		mail_id(u->userid, "[通知] 有站務人員查詢您的個人資料", "etc/queryData.mail", "[國家安全局]");
+    		post_file(BN_SECURITY, "[通知] 有站務人員查詢使用者個人資料", "etc/queryData.mail", "[國家安全局]");
+            outs("正在查詢使用者資料…");
+        }
+	}
+
+	clear();
+    vs_hdr2(" 民政事務局 ", " 使用者進階查詢");
+    outs("\n");
+    prints("\t代號暱稱: %s (%s)\n\n", u->userid, u->nickname);
+	prints("\t真實姓名: %s", u->realname);
+#if FOREIGN_REG_DAY > 0
+    prints(" %s%s",
+	   u->uflag & UF_FOREIGN ? "(外籍: " : "",
+	   u->uflag & UF_FOREIGN ?
+		(u->uflag & UF_LIVERIGHT) ? "永久居留)" : "未取得居留權)"
+		: "");
+#elif defined(FOREIGN_REG)
+	prints(" %s", u->uflag & UF_FOREIGN ? "(外籍)" : "");
+#endif
+	outs("\n"); // end of realname
+		prints("\t職業學歷: %s\n", u->career);
+		prints("\t居住地址: %s\n", u->address);
+		prints("\t電子信箱: %s\n", u->email);
+
+    pressanykey();
+	return 0;
+}
+
 void
 user_display(const userec_t * u, int adminmode)
 {
@@ -171,98 +322,89 @@ user_display(const userec_t * u, int adminmode)
     // Many fields are available (and have sync issue) in user->query,
     // so let's minimize fields here.
 
-    clrtobot();
-    prints(
-	   "        " ANSI_COLOR(30;41) "┴┬┴┬┴┬" ANSI_RESET
-           "  " ANSI_COLOR(1;30;45) "    使 用 者" " 資 料        "
-	   "     " ANSI_RESET "  " ANSI_COLOR(30;41) "┴┬┴┬┴┬" ANSI_RESET
-           "\n");
+    clear();
+	vs_hdr2(" 民政事務局 ", " 使用者資料查詢");
+
     prints("\t代號暱稱: %s (%s)\n\n", u->userid, u->nickname);
-	
-	/* 以下資料本人及PERM_SYSOP、PERM_ACCOUNTS看得見 */
-	if(adminmode && HasUserPerm(PERM_SYSOP|PERM_ACCOUNTS) || !(adminmode) && strcmp(u->userid, cuser.userid) == 0){
-    prints("\t真實姓名: %s", u->realname);
+
+	if(strcmp(u->userid, cuser.userid) == 0){
+		prints("\t真實姓名: %s", u->realname);
 #if FOREIGN_REG_DAY > 0
-    prints(" %s%s",
-	   u->uflag & UF_FOREIGN ? "(外籍: " : "",
-	   u->uflag & UF_FOREIGN ?
-		(u->uflag & UF_LIVERIGHT) ? "永久居留)" : "未取得居留權)"
-		: "");
+	    prints(" %s%s",
+		   u->uflag & UF_FOREIGN ? "(外籍: " : "",
+		   u->uflag & UF_FOREIGN ?
+			(u->uflag & UF_LIVERIGHT) ? "永久居留)" : "未取得居留權)"
+			: "");
 #elif defined(FOREIGN_REG)
-    prints(" %s", u->uflag & UF_FOREIGN ? "(外籍)" : "");
+		prints(" %s", u->uflag & UF_FOREIGN ? "(外籍)" : "");
 #endif
-    outs("\n"); // end of realname
-    prints("\t職業學歷: %s\n", u->career);
-    prints("\t居住地址: %s\n", u->address);
-
-    prints("\t電子信箱: %s\n", u->email);
-    prints("\t%6s幣: %d " MONEYNAME "\n", BBSMNAME, u->money);
-    prints("\t是否成年: %s滿18歲\n", u->over_18 ? "已" : "未");
-
-    prints("\t註冊日期: %s (已滿 %d 天)\n",
-	    Cdate(&u->firstlogin), (int)((now - u->firstlogin)/DAY_SECONDS));
-
-    if (adminmode) {
-	strcpy(genbuf, "bTCPRp#@XWBA#VSM0123456789ABCDEF");
-	for (diff = 0; diff < 32; diff++)
-	    if (!(u->userlevel & (1 << diff)))
-		genbuf[diff] = '-';
-	prints("\t帳號權限: %s\n", genbuf);
-	prints("\t認證資料: %s\n", u->justify);
-	}
-
-    sethomedir(genbuf, u->userid);
-    prints("\t私人信箱: %d 封  (購買信箱: %d 封)\n",
-	   get_num_records(genbuf, sizeof(fileheader_t)),
-	   u->exmailbox);
-	outc('\n');
+		outs("\n"); // end of realname
+	    prints("\t職業學歷: %s\n", u->career);
+	    prints("\t居住地址: %s\n", u->address);
+	    prints("\t電子信箱: %s\n", u->email);
     }
-	/* 以上資料本人及PERM_SYSOP、PERM_BOARD看得見 */
-    if (u->userlevel >= PERM_BM && adminmode && HasUserPerm(PERM_SYSOP|PERM_BOARD) || u->userlevel >= PERM_BM && !(adminmode) && strcmp(u->userid, cuser.userid) == 0) {
-	int             i;
-	boardheader_t  *bhdr;
 
-	outs("\t擔任板主: ");
-
-	for (i = num_boards(), bhdr = bcache; i > 0; i--, bhdr++) {
-	    if ( is_uBM(bhdr->BM, u->userid)) {
-		outs(bhdr->brdname);
-		outc(' ');
-	    }
-	}
-	outc('\n');
-
-#ifdef USE_BOARDTAX
-	outs("\t納稅狀況: ");
-	tax = getBoardTax(u->userid);
-	if(tax == 0)
-		outs("不須繳納\n");
-	else{
-		char *paid = isBrdTaxPaid(u->userid);
-		if(paid == 0)
-			outs("本月尚未繳納\n");
-		else
-			prints("%s",paid);
-	}
-	outc('\n');
-#endif
-	}
-
+    prints("\t是否成年: %s滿18歲\n", u->over_18 ? "已" : "未");
+	prints("\t%6s幣: %d " MONEYNAME "\n", BBSMNAME, u->money);
     prints("\t文章數量: %d 篇", u->numposts);
 #ifdef ASSESS
     prints(" (退文: %u篇)", (unsigned int)u->badpost);
 #endif // ASSESS
 	prints("\n");
+    sethomedir(genbuf, u->userid);
+    prints("\t私人信箱: %d 封  (購買信箱: %d 封)\n",
+	   get_num_records(genbuf, sizeof(fileheader_t)),
+	   u->exmailbox);
 
+    if (adminmode && HasUserPerm(PERM_SYSOP|PERM_ACCOUNTS)) {
+		outc('\n');
+		strcpy(genbuf, "bTCPRp#@XWBA#VSM0123456789ABCDEF");
+		for (diff = 0; diff < 32; diff++)
+		    if (!(u->userlevel & (1 << diff)))
+			genbuf[diff] = '-';
+		prints("\t帳號權限: %s\n", genbuf);
+		prints("\t認證資料: %s\n", u->justify);
+		prints("\t註冊狀況: %s\n", (u->userlevel & PERM_LOGINOK) ? "已註冊" : "未註冊");
+	}
+
+    if (adminmode && HasUserPerm(PERM_SYSOP|PERM_BOARD)) {
+		int             i, count=0;
+		boardheader_t  *bhdr;
+		outs("\t擔任板主: ");
+		for (i = num_boards(), bhdr = bcache; i > 0; i--, bhdr++) {
+		    if ( is_uBM(bhdr->BM, u->userid)) {
+				count++;
+		    }
+		}
+		prints("%d 個看板\n",count);
+#ifdef USE_BOARDTAX
+		outs("\t納稅狀況: ");
+		tax = getBoardTax(u->userid);
+		if(tax == 0)
+			outs("不須繳納\n");
+		else{
+			char *paid = isBrdTaxPaid(u->userid);
+			if(paid == 0)
+				outs("本月尚未繳納\n");
+			else
+				prints("%s",paid);
+		}
+		outc('\n');
+#endif
+	}
+
+	outc('\n');
+    prints("\t註冊日期: %s （已滿 %d 天）\n",
+	    Cdate(&u->firstlogin), (int)((now - u->firstlogin)/DAY_SECONDS));
+    prints("\t" STR_LOGINDAYS ": %d" STR_LOGINDAYS_QTY "\n",u->numlogindays);
     if (adminmode) {
-        prints("\t最後上線: %s (掛站時每日增加) / %s\n",
-               Cdate(&u->lastlogin), u->lasthost);
+        prints("\t最後上線: %s（%d 天沒來了）/ %s\n",
+               Cdate(&u->lastlogin), (int)((now - u->lastlogin)/DAY_SECONDS), u->lasthost);
     } else {
 	diff = (now - login_start_time) / 60;
 	prints("\t停留期間: %d 小時 %2d 分\n",
 	       diff / 60, diff % 60);
     }
-    prints("\t" STR_LOGINDAYS ": %d" STR_LOGINDAYS_QTY "\n",u->numlogindays);
 
 #ifdef CHESSCOUNTRY
     {
@@ -288,8 +430,6 @@ user_display(const userec_t * u, int adminmode)
 		u->myangel[0] ? u->myangel : "無");
 #endif
 
-    outs("        " ANSI_COLOR(30;41) "┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴┬┴"
-	 "┬┴┬┴┬┴┬" ANSI_RESET);
     if (!adminmode)
     {
 	outs((u->userlevel & PERM_LOGINOK) ?
@@ -312,8 +452,6 @@ user_display(const userec_t * u, int adminmode)
 	};
 	char buf[PATHLEN];
 
-	prints("\n其它資訊: [%s]", (u->userlevel & PERM_LOGINOK) ?
-		"已註冊" : "未註冊");
 	sethomefile(buf, u->userid, FN_FORWARD);
 	if (dashs(buf) > 0)
 	    outs("[自動轉寄]");
@@ -345,13 +483,13 @@ list_user_board(void){
 	outs("擔任板主: ");
 	for (i = num_boards(), bhdr = bcache; i > 0; i--, bhdr++) {
 	    if ( is_uBM(bhdr->BM, userid)) {
-		outs(bhdr->brdname);
-		outc(' ');
-		j=1;
+			outs(bhdr->brdname);
+			outc(' ');
+			j++;
 	    }
 	}
 	outc('\n');
-	if(j == 0){
+	if(j < 1){
 		clear();
 		vmsg("所查的ID沒有擔任板主");
 		return 0;
@@ -830,9 +968,11 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 	return;
     }
 
-    ans = vans(adminmode ?
-    "(1)改資料(2)密碼(3)權限(4)砍帳(5)改ID(6)寵物(7)審判(8)退文(M)信箱 [0]結束 " :
-    "請選擇 (1)修改資料 (2)設定密碼 (C)個人化設定 (M)信箱 [0]結束 ");
+    if(adminmode)
+    	mvouts(b_lines-2, 0, "(1)修改資料 (2)設定密碼 (3)設定權限 (4)砍除帳號 (5)修改帳號\n(M)修改信箱 (A)進階查詢 (6)寵物 (7)罰單 (8)退文 [0]結束");
+    else
+    	mvouts(b_lines-1, 0, "請選擇 (1)修改資料 (2)設定密碼 (C)個人化設定 (M)修改信箱 [0]結束");
+    ans = vans("請輸入操作 ");
 
     if (ans > '2' && ans != 'c' && ans != 'm' && !adminmode)
 	ans = '0';
@@ -861,6 +1001,11 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 	// Customize can only apply to self.
 	if (!adminmode)
 	    Customize();
+	return;
+
+    case 'a':
+	if (adminmode)
+	    user_display_advanced(&x, 1);
 	return;
 
     case 'm':
@@ -1099,7 +1244,7 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 		if ((tmp = atoi(buf)) >= 0)
 		    x.vl_count = tmp;
 
-            set_chess("五子棋", y++, &x.five_win, &x.five_lose, &x.five_tie);
+        /*    set_chess("五子棋", y++, &x.five_win, &x.five_lose, &x.five_tie);
             set_chess("象棋", y++, &x.chc_win, &x.chc_lose, &x.chc_tie);
             set_chess("圍棋", y++, &x.go_win, &x.go_lose, &x.go_tie);
             set_chess("暗棋", y++, &x.dark_win, &x.dark_lose, &x.dark_tie);
@@ -1109,7 +1254,7 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 		    x.five_win, x.five_lose, x.five_tie,
 		    x.chc_win, x.chc_lose, x.chc_tie,
 		    x.go_win, x.go_lose, x.go_tie,
-		    x.dark_win, x.dark_lose, x.dark_tie);
+		    x.dark_win, x.dark_lose, x.dark_tie);*/
 #ifdef FOREIGN_REG
 	    if (getdata_str(y++, 0, "住在 1)台灣 2)其他：", buf, 2, DOECHO, x.uflag & UF_FOREIGN ? "2" : "1"))
 		if ((tmp = atoi(buf)) > 0){

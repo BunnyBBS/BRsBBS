@@ -529,16 +529,25 @@ my_query(const char *uident)
 	ENDSTAT(STAT_QUERY);
 
 	if(HasUserPerm(PERM_SYSOP|PERM_POLICE)){
-		char buf[3];
-		getdata(b_lines-1, 0, "(T)開立罰單 (A)查詢成就勳章詳情 ",buf, 3, LCECHO);
-		if(buf[0] == 'T')
-			violate_law(&muser, tuid);
-		else if(buf[0] == 'A')
-			achieve_view(muser.achieve);
+#ifdef USE_ACHIEVE
+		if(muser.achieve[0] != NULL){
+			char buf[3];
+			getdata(b_lines-1, 0, "(T)開立罰單 (A)查詢成就勳章詳情 [Q]離開 ",buf, 3, LCECHO);
+			if(buf[0] == 't')
+				violate_law(&muser, tuid);
+			else if(buf[0] == 'a')
+				achieve_view(muser.achieve);
+		}else{
+#endif //USE_ACHIEVE
+			if(vmsg("T: 開立罰單")=='t')
+				violate_law(&muser, tuid);
+#ifdef USE_ACHIEVE
+		}
+#endif //USE_ACHIEVE
 	}else{
 #ifdef USE_ACHIEVE
 		if(muser.achieve[0] != NULL){
-			if(vmsg("A: 查詢成就勳章詳情")=='A')
+			if(vmsg("A: 查詢成就勳章詳情")=='a')
 				achieve_view(muser.achieve);
 		}else
 #endif //USE_ACHIEVE
@@ -1673,7 +1682,7 @@ descript(int show_mode, const userinfo_t * uentp, int diff, char *description, i
     case 1:
 	return friend_descript(uentp, description, len);
     case 0:
-	return (((uentp->pager != PAGER_DISABLE && uentp->pager != PAGER_ANTIWB && diff) ||
+	return ((/*(uentp->pager != PAGER_DISABLE && uentp->pager != PAGER_ANTIWB && diff) ||*/
 		 HasUserPerm(PERM_SYSOP)) ?  uentp->from : "*");
     case 2:
 	snprintf(description, len, "%4d/%4d/%2d %c",

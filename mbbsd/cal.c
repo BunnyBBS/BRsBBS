@@ -187,7 +187,7 @@ mail_redenvelop(const char *from, const char *to, int money, char *fpath)
 	return -1;
 
     fprintf(fp, "作者: %s\n"
-	    "標題: 招財進寶\n"
+	    "標題: 送你一個紅包\n"
 	    "時間: %s\n"
 	    ANSI_COLOR(1;33) "親愛的 %s ：\n\n" ANSI_RESET
 	    ANSI_COLOR(1;31) "    我包給你一個 %d " MONEYNAME
@@ -211,11 +211,16 @@ mail_redenvelop(const char *from, const char *to, int money, char *fpath)
 }
 
 /* 給錢與贈與稅 */
-
+//#define GIVE_MONEY_TAX
+//#define GIVE_MONEY_TAX_RATE   (5)
 float
 calc_rate(int money)
 {
+#ifdef GIVE_MONEY_TAX
+    return (float)((int)GIVE_MONEY_TAX_RATE / 100);
+#else
 	return 0;
+#endif
 }
 
 int
@@ -229,11 +234,10 @@ give_tax(int money)
 int
 cal_before_givetax(int taxed_money)
 {
-    /*int m = taxed_money / 9.0f * 10 + 1;
+    int m = taxed_money / 9.0f * 10 + 1;
     if (m > 1 && taxed_money % 9 == 0)
 	m--;
-    return m;*/
-	return taxed_money;
+    return m;
 }
 
 int
@@ -246,21 +250,25 @@ static int
 give_money_vget_changecb(int key GCC_UNUSED, VGET_RUNTIME *prt, void *instance)
 {
     int  m1 = atoi(prt->buf), m2 = m1;
+    move(4, 0);
+#ifdef GIVE_MONEY_TAX
     char c1 = ' ', c2 = ' ';
     int is_before_tax = *(int*)instance;
 
     if (is_before_tax)
-	m2 = cal_after_givetax(m1),  c1 = '>';
+    m2 = cal_after_givetax(m1),  c1 = '>';
     else
-	m1 = cal_before_givetax(m2), c2 = '>';
+    m1 = cal_before_givetax(m2), c2 = '>';
 
     // adjust output
     if (m1 <= 0 || m2 <= 0)
-	m1 = m2 = 0;
+    m1 = m2 = 0;
 
-    move(4, 0);
-    prints(" %c 你要付出 (稅前): %d\n", c1, m1);
-    prints(" %c 對方收到 (稅後): %d\n", c2, m2);
+    prints(" %c 你要支出: %d (稅前)\n", c1, m1);
+    prints(" %c 對方收到: %d (稅後)\n", c2, m2);
+#else
+    prints(" > 您要支出: %d\n", m1);
+#endif
     return VGETCB_NONE;
 }
 
@@ -380,8 +388,13 @@ give_money_ui(const char *userid)
 
     m = 0;
     money_buf[0] = 0;
-    mvouts(2, 0, "要給他多少" MONEYNAME "呢? "
-           "(可按 TAB 切換輸入稅前/稅後金額, 稅率固定 10%)\n");
+    mvouts(1, 0, "要給他多少" MONEYNAME "呢? "
+#ifdef GIVE_MONEY_TAX
+           "(可按 TAB 切換輸入稅前/稅後金額)\n");
+    prints("轉帳稅率: %d \%。\n", (int)GIVE_MONEY_TAX_RATE);
+#else
+           "\n轉帳不徵稅。\n");
+#endif //GIVE_MONEY_TAX
     outs(" 請輸入金額: ");  // (3, 0)
     {
 	int is_before_tax = 1;

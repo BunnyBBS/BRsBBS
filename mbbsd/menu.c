@@ -746,6 +746,20 @@ int _debug_reportstruct()
 }
 #endif
 
+static int
+x_sysoplist(void)
+{
+	more("etc/sysop", YEA);
+	return 0;
+}
+
+static int
+x_govermentlist(void)
+{
+	more("etc/goverment", YEA);
+	return 0;
+}
+
 /* Password change in user.c */
 static int
 u_pass_change()
@@ -803,7 +817,8 @@ int main_menu(void) {
 	/* 大兔：權限劃分備註：有關使用者資料的項目只能讓SYSOP與ACCOUNT操作；BBSADM計畫作為輔助SYSOP之用，因此其他非敏感操作得讓BBSADM使用；BOARD可以直接在這裡設定看板。*/
 	static const commands_t adminlist[] = {
 		{x_admin_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Board Admin  〉 土地管理局 〈"},
-		{x_admin_usermenu,	PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD,"User Admin   〉 民政事務局 〈"},
+		{x_admin_usermenu,	PERM_SYSOP|PERM_BBSADM|PERM_ACCOUNTS|PERM_BOARD,
+							"User Admin   〉 民政事務局 〈"},
 		{x_admin_money,		PERM_SYSOP|PERM_BBSADM,				"FinancAdmin  〉 金融監管署 〈"},
 		{x_file,			PERM_SYSOP|PERM_BBSADM,				"SystemFile   〉  系統檔案  〈"},
 		{m_loginmsg,		PERM_SYSOP|PERM_BBSADM,				"LoginMsg     〉  進站水球  〈"},
@@ -862,6 +877,7 @@ int main_menu(void) {
 			return 0;
 		}
 		static const commands_t m_admin_usermenu[] = {
+			{user_display_advanced_auth,	PERM_SYSOP,				"Query Auth   〉進階查詢授權〈"},
 			{m_register,		PERM_SYSOP|PERM_ACCOUNTS,			"Register     〉 審核註冊單 〈"},
 			{m_user,			PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD,"User Data    〉 使用者資料 〈"},
 			{x_admin_user,		PERM_SYSOP|PERM_ACCOUNTS,			"LUser Log    〉 使用者記錄 〈"},
@@ -971,35 +987,46 @@ int main_menu(void) {
 		{u_pass_change,		PERM_BASIC,		"Password     〉  修改密碼  〈"},
 	#ifdef USE_2FALOGIN
 		{twoFA_genRecovCode,PERM_BASIC,		"RecoverCode  〉 產生復原碼 〈"},
-	#endif
+	#endif //USE_2FALOGIN
 	#if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
 		{twoFA_RemoveTrust	,PERM_BASIC,	"TRemoveTrust 〉撤銷信任裝置〈"},
-	#endif
+	#endif //defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
 		{NULL, 0, NULL}
 	};
 	static int u_security() {
 		domenu(M_UMENU, "密碼與安全", 'P', seculist);
 		return 0;
 	};
+	#ifdef USE_BBS2WEB
+	static const commands_t webservlist[] = {
+		{web_user_register,	PERM_LOGINOK,	"Register     〉  註冊帳號  〈"},
+		{web_user_lock,		PERM_LOGINOK,	"Lock Account 〉  鎖定帳號  〈"},
+		{NULL, 0, NULL}
+	};
+	static int u_webservice() {
+		domenu(M_UMENU, "網站服務", 'R', webservlist);
+		return 0;
+	};
+	#endif //USE_BBS2WEB
 	static const commands_t userlist[] = {
-		/*{u_loginview,		PERM_BASIC,     "VLogin View   選擇進站畫面"},
-		{u_myfiles,			PERM_LOGINOK,   "My Files      【個人檔案】 (名片,簽名檔...)"},
-		{u_mylogs,			PERM_LOGINOK,   "LMy Logs      【個人記錄】 (最近上線...)"},*/
 		{u_info,			PERM_BASIC,		"Info         〉個人資料設定〈"},
 		{u_security,		PERM_BASIC,		"Security     〉 密碼與安全 〈"},
 		{u_customize,		PERM_BASIC,		"Customize    〉 個人化設定 〈"},
+	#ifdef USE_BBS2WEB
+		{u_webservice,		PERM_LOGINOK,	"Web Service  〉  網站服務  〈"},
+	#endif //USE_BBS2WEB
 	#ifdef USE_ACHIEVE
 		{achieve_user,		PERM_LOGINOK,	"Achieve      〉個人成就勳章〈"},
-	#endif
+	#endif //USE_ACHIEVE
 		{u_editplan,		PERM_LOGINOK,   "QueryEdit    〉 編輯名片檔 〈"},
 		{u_editsig,			PERM_LOGINOK,   "NSignature   〉 編輯簽名檔 〈"},
 		{u_view_recentlogin,0,				"Login Log    〉  上站記錄  〈"},
 	#ifdef USE_RECENTPAY
 		{u_view_recentpay,	0,				"Pay Log      〉  交易記錄  〈"},
-	#endif
+	#endif //USE_RECENTPAY
 	#ifdef ASSESS
 		{u_cancelbadpost,	PERM_LOGINOK,	"Bye BadPost  〉  刪除退文  〈"},
-	#endif
+	#endif //ASSESS
 		{NULL, 0, NULL}
 	};
 	int
@@ -1010,8 +1037,6 @@ int main_menu(void) {
 	}
 	/* XYZ tool menu */
 	static const commands_t xyzlist[] = {
-		/*{x_hot,				0,	"THot Topics  〉  熱門看板  〈"},
-		{x_users,				0,	"Users        〉 使用者統計 〈"},*/
 	#ifndef DEBUG
 		/* All these are useless in debug mode. */
 	#ifdef HAVE_USERAGREEMENT
@@ -1024,7 +1049,7 @@ int main_menu(void) {
 		{x_program,				0,	"Program      〉  程式版本  〈"},
 	#endif
 		{x_history,				0,	"History      〉 我們的成長 〈"},
-		{x_login,				0,	"System       〉  重要公告  〈"},
+		{x_login,				0,	"NSystem      〉  重要公告  〈"},
 	#ifdef HAVE_SYSUPDATES
 		{x_sys_updates,			0,	"LUpdates     〉程式更新紀錄〈"},
 	#endif
@@ -1032,14 +1057,15 @@ int main_menu(void) {
 	#else // !DEBUG
 		{_debug_reportstruct,	0,	"Report       〉  結構報告  〈"},
 	#endif // !DEBUG
-
+		{x_sysoplist,			0,	"Sysop List   〉站務人員名單〈"},
+		{x_govermentlist,		0,	"Gover List   〉公務機關架構〈"},
 		{p_sysinfo,				0,	"Xinfo        〉  系統資訊  〈"},
 		{NULL, 0, NULL}
 	};
 	int
 	Xyz(void)
 	{
-		domenu(M_XMENU, "工具程式", 'X', xyzlist);
+		domenu(M_XMENU, "系統資訊", 'S', xyzlist);
 		return 0;
 	}
 

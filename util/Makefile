@@ -16,7 +16,7 @@ MBBSD_OBJS= 	var
 CPROG_WITH_UTIL= \
 	boardlist	post		poststat	\
 	account		deluserfile	mmail	boardtaxmail	\
-	expire		mandex		broadcast	\
+	expire		mandex		broadcast	board2web	\
 	openticket	topusr		\
 	toplazyBM	writemoney	\
 	reaper		buildAnnounce	mailangel	\

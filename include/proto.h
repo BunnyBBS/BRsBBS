@@ -107,6 +107,7 @@ int is_readonly_board(const char *bname);
 int enter_board(const char *boardname);
 int HasBoardPerm(boardheader_t *bptr);
 int BoardPermNeedsSysopOverride(boardheader_t *bptr);
+int sysop_into_hide(boardheader_t *bp);
 void save_brdbuf(void);
 void init_brdbuf(void);
 int b_config();
@@ -748,6 +749,8 @@ int  topsong(void);
 /* user */
 int kill_user(int num, const char *userid);
 int u_set_mind();
+int user_display_advanced_auth(void);
+int user_display_advanced(const userec_t * u, int adminmode);
 void user_display(const userec_t *u, int real);
 int isvalidemail(char *email);
 void uinfo_query(const char *uid, int real, int unum);
@@ -884,15 +887,15 @@ int list_unpay(void);
 #ifdef USE_2FALOGIN
 int twoFA_main(char *user);
 int twoFA_genRecovCode();
-#endif //USE_2FALOGIN
-
 #if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
 int twoFA_RemoveTrust();
 #endif //defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
+#endif //USE_2FALOGIN
 
 /* Mission */
 #ifdef USE_MISSION
-int mission_main();
+int mission_main(void);
+void mission_dailylogin_auto(void);
 #endif //USE_MISSION
 
 /* User Achievement */
@@ -900,9 +903,16 @@ int mission_main();
 const char *getAchName(char *achieve, bool noColor);
 const char *getAchDesc(char *achieve);
 const char *getAchAttr(char *achieve);
-int achieve_user();
-int achieve_shop();
+int achieve_user(void);
+int achieve_shop(void);
 int achieve_view(char *achieve);
 #endif //USE_ACHIEVE
+
+/* Function for BBS to Web */
+#ifdef USE_BBS2WEB
+int web_sync_board(int bid, const boardheader_t *board, char *type);
+int web_user_register(void);
+int web_user_lock(void);
+#endif //USE_BBS2WEB
 
 #endif
