@@ -11,11 +11,12 @@ int web_sync_board(int bid, const boardheader_t *board, char *type)
 		return 2;
 
 	/* 板標在這裡同步會出錯，暫時不設計在這裡同步 */
-	snprintf(uri, sizeof(uri), "/%s?type=%s&bid=%d&gid=%d&name=%s&mod=%s&hide=%d&no_post=%d&friend_post=%d&no_reply=%d&no_money=%d&no_push=%d&ip_rec=%d&align=%d"
+	snprintf(uri, sizeof(uri), "/%s?type=%s&bid=%d&gid=%d&is_board=%d&name=%s&mod=%s&hide=%d&no_post=%d&friend_post=%d&no_reply=%d&no_money=%d&no_push=%d&ip_rec=%d&align=%d"
 #ifdef BETA
 			 "&beta=true"
 #endif
-			 , WEB_SYNCBRD_URI, type, bid, board->gid, board->brdname, board->BM,
+			 , WEB_SYNCBRD_URI, type, bid, board->gid, ((board->brdattr & BRD_GROUPBOARD) ? 0 : 1),
+			 board->brdname, board->BM,
 			((board->brdattr & BRD_HIDE) ? 1 : 0), ((board->brdattr & BRD_NOPOST) ? 1 : 0),
 			((board->brdattr & BRD_RESTRICTEDPOST) ? 1 : 0), ((board->brdattr & BRD_NOREPLY) ? 1 : 0), 
 			((board->brdattr & BRD_NOCREDIT) ? 1 : 0), ((board->brdattr & BRD_NORECOMMEND) ? 1 : 0),
@@ -109,7 +110,7 @@ web_user_resetpass(void)
     char passbuf[PASSLEN], buf2[8];
     move(3, 0);
     prints("設定帳號：%s\n", cuser.userid);
-	outs("使用此功能會將重設你的網站帳號密碼。\n");
+	outs("使用此功\能會將重設你的網站帳號密碼。\n");
 	outs("以下操作需要先確認您的身份，請輸入BBS的密碼。\n");
 	getdata(6, 0, MSG_PASSWD, passbuf, PASS_INPUT_LEN + 1, PASSECHO);
 	snprintf(buf2, sizeof(buf2), "%s", passbuf);
@@ -127,7 +128,7 @@ web_user_resetpass(void)
 #ifdef BETA
 			 "&beta=true"
 #endif
-			 , WEB_USERREG_URI, cuser.userid, buf2);
+			 , WEB_RESETPASS_URI, cuser.userid, buf2);
 
 	THTTP t;
 	thttp_init(&t);
@@ -161,7 +162,7 @@ web_user_lock(void)
 	clear();
 	vs_hdr2(" 網站服務 ", " 鎖定帳號");
 
-    char passbuf[PASSLEN], buf2[8];
+    char passbuf[PASSLEN], buf2[8], genbuf[3];
     move(4, 0);
     prints("設定帳號：%s\n", cuser.userid);
 	outs("以下操作需要先確認您的身份。\n");
@@ -170,6 +171,13 @@ web_user_lock(void)
 	passbuf[8] = '\0';
 	if (!(checkpasswd(cuser.passwd, passbuf))){
 		vmsg("密碼錯誤！");
+		return 0;
+	}
+
+	mvouts(9, 0, "鎖定後你的帳號將不能再存取網站服務，解鎖需洽工程業務處。");
+	getdata(10, 0, "確定要鎖定網站帳號了嗎？ (y/N)",genbuf, 3, LCECHO);
+	if (genbuf[0] != 'y') {
+		vmsg("取消操作。");
 		return 0;
 	}
 
