@@ -1000,6 +1000,7 @@ int main_menu(void) {
 	#ifdef USE_BBS2WEB
 	static const commands_t webservlist[] = {
 		{web_user_register,	PERM_LOGINOK,	"Register     〉  註冊帳號  〈"},
+		{web_user_resetpass,PERM_LOGINOK,	"Pass Reset   〉  重設密碼  〈"},
 		{web_user_lock,		PERM_LOGINOK,	"Lock Account 〉  鎖定帳號  〈"},
 		{NULL, 0, NULL}
 	};

@@ -241,8 +241,8 @@ HasBoardPermNormally(boardheader_t *bptr)
 
     // TODO Change this to a query on demand.
     /* 十八禁看板 */
-    if( (brdattr & BRD_OVER18) && !cuser.over_18 )
-	return 0;
+    /*if( (brdattr & BRD_OVER18) && !cuser.over_18 )
+	return 0;*/
 
     /* 限制閱讀權限 */
     if (level && !(brdattr & BRD_POSTMASK) && !HasUserPerm(level))
@@ -456,10 +456,12 @@ b_config(void)
 		(bp->brdattr & BRD_HIDE) ?
 		ANSI_COLOR(1;31)"隱形":"公開");
 
-	/*prints( " " ANSI_COLOR(1;36) "g" ANSI_RESET
-		" - 隱板時 %s 進入十大排行榜" ANSI_RESET "\n",
-		(bp->brdattr & BRD_BMCOUNT) ?
-		ANSI_COLOR(1)"可以" ANSI_RESET: "不可");*/
+	prints( " " ANSI_COLOR(1;36) "t" ANSI_RESET
+		" - %s" ANSI_RESET
+		" 發布文章\n",
+		(bp->brdattr & BRD_NOPOST) ?
+		ANSI_COLOR(1)"不開放" : "開放"
+		);
 
 	prints( " " ANSI_COLOR(1;36) "e" ANSI_RESET
 		" - %s "ANSI_RESET "非看板會員發文\n",
@@ -511,7 +513,7 @@ b_config(void)
 		     ANSI_COLOR(1)"限制": "開放");
 	    if(d > 0)
 		prints(", 最低間隔時間: %d 秒", d);
-	    outs("\n\n");
+	    outs("\n");
 	}
 
 	prints( " " ANSI_COLOR(1;36) "i" ANSI_RESET
@@ -520,7 +522,7 @@ b_config(void)
 		ANSI_COLOR(1)"自動":"不會");
 
 	prints( " " ANSI_COLOR(1;36) "a" ANSI_RESET
-		" - 推文時 %s" ANSI_RESET " 開頭\n\n",
+		" - 推文時 %s" ANSI_RESET " 開頭\n",
 		(bp->brdattr & BRD_ALIGNEDCMT) ?
 		ANSI_COLOR(1)"對齊":"不用對齊");
 
@@ -724,14 +726,28 @@ b_config(void)
 		}
 		break;
 
-	    case 'e':
-		if(HasUserPerm(PERM_SYSOP))
+		case 't':
+#ifndef BMCHS //定義BMCHS讓板主有更多設定看板參數的權限
+		if (!HasUserPerm(PERM_SYSOP))
 		{
-		    bp->brdattr ^= BRD_RESTRICTEDPOST;
-		    touched = 1;
-		} else {
 		    vmsg("此項設定需要站長權限");
+		    break;
 		}
+#endif
+	    bp->brdattr ^= BRD_NOPOST;
+	    touched = 1;
+		break;
+
+	    case 'e':
+#ifndef BMCHS
+		if (!HasUserPerm(PERM_SYSOP))
+		{
+		    vmsg("此項設定需要站長權限");
+		    break;
+		}
+#endif
+	    bp->brdattr ^= BRD_RESTRICTEDPOST;
+	    touched = 1;
 		break;
 
 	    case 'h':
@@ -865,7 +881,7 @@ b_config(void)
 		    bp->brdattr &= ~BRD_NORECOMMEND;
 		break;
 #endif
-	    case '8':
+	    /*case '8':
 		if (!cuser.over_18)
 		{
 		    vmsg("板主本身未滿 18 歲。");
@@ -873,7 +889,7 @@ b_config(void)
 		    bp->brdattr ^= BRD_OVER18;
 		    touched = 1;
 		}
-		break;
+		break;*/
 
 	    case 'v':
 		clear();
@@ -923,10 +939,12 @@ b_config(void)
 		break;
 
 	    case 'y':
+#ifndef BMCHS
 		if (!(HasUserPerm(PERM_SYSOP) || (HasUserPerm(PERM_SYSSUPERSUBOP) && GROUPOP()) ) ) {
 		    vmsg("此項設定需要群組長或站長權限");
 		    break;
 		}
+#endif
 		bp->brdattr ^= BRD_NOREPLY;
 		touched = 1;
 		break;
@@ -941,7 +959,7 @@ b_config(void)
 		break;
 
 	    case 'd':
-#ifndef ALLOW_BM_SET_NOSELFDELPOST
+#ifndef BMCHS
 		if (!(HasUserPerm(PERM_SYSOP) || (HasUserPerm(PERM_SYSSUPERSUBOP) && GROUPOP()) ) ) {
 		    vmsg("此項設定需要群組長或站長權限");
 		    break;

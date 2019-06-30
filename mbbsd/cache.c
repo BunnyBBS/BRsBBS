@@ -247,12 +247,15 @@ postperm_msg(const char *bname)
 	return (PERM_POST == PERM_LOGINOK) ? "未完成認證" :
             "無發文權限";
 
+    if (bp->brdattr & BRD_NOPOST)
+    return "看板不開放發文";
+
     /* 秘密看板特別處理 */
     if (bp->brdattr & BRD_HIDE)
 	return NULL;
     else if (bp->brdattr & BRD_RESTRICTEDPOST &&
-	    !is_hidden_board_friend(i, usernum))
-	return "看板限制發文";
+        !is_hidden_board_friend(i, usernum))
+    return "看板限制發文";
 
     if (HasUserPerm(PERM_VIOLATELAW))
     {

@@ -913,6 +913,7 @@ int achieve_view(char *achieve);
 int web_sync_board(int bid, const boardheader_t *board, char *type);
 int web_user_register(void);
 int web_user_lock(void);
+int web_user_resetpass(void);
 #endif //USE_BBS2WEB
 
 #endif

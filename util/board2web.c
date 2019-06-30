@@ -1,7 +1,10 @@
 #include "bbs.h"
 
 #ifdef USE_BBS2WEB
-
+/* 這個程式是將所有的看板的設定全列出來，供網站串接同步看板設定
+ * 產生格式：
+ * bid, gid, isBrd, name, title, mod, hide, no_post, friend_post, no_reply, no_money, no_push, push_ip_rec, push_align
+ */
 void brdDetail(void)
 {
     int     i, k, bid;
@@ -25,13 +28,13 @@ void brdDetail(void)
 	smallbrdname[k] = 0;
 
 	bid = bptr - bcache + 1;
-	printf("%d,%d,%d,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d\n",
+	printf("%d,%d,%d,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d\n",
 			bid, bptr->gid, ((bptr->brdattr & BRD_GROUPBOARD) ? 0 : 1),
 			bptr->brdname, &bptr->title[7], bptr->BM,
-			((bptr->brdattr & BRD_HIDE) ? 1 : 0), ((bptr->brdattr & BRD_RESTRICTEDPOST) ? 1 : 0),
-			((bptr->brdattr & BRD_NOREPLY) ? 1 : 0), ((bptr->brdattr & BRD_NOCREDIT) ? 1 : 0),
-			((bptr->brdattr & BRD_NORECOMMEND) ? 1 : 0), ((bptr->brdattr & BRD_IPLOGRECMD) ? 1 : 0),
-			((bptr->brdattr & BRD_ALIGNEDCMT) ? 1 : 0));
+			((bptr->brdattr & BRD_HIDE) ? 1 : 0), ((bptr->brdattr & BRD_NOPOST) ? 1 : 0),
+			((bptr->brdattr & BRD_RESTRICTEDPOST) ? 1 : 0), ((bptr->brdattr & BRD_NOREPLY) ? 1 : 0), 
+			((bptr->brdattr & BRD_NOCREDIT) ? 1 : 0), ((bptr->brdattr & BRD_NORECOMMEND) ? 1 : 0),
+			((bptr->brdattr & BRD_IPLOGRECMD) ? 1 : 0), ((bptr->brdattr & BRD_ALIGNEDCMT) ? 1 : 0));
 	}
 }
 

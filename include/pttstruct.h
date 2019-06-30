@@ -226,7 +226,7 @@ typedef struct boardheader_t { /* 256 bytes */
 #define BRD_CPLOG       0x00200000  /* 自動留轉錄記錄 */
 #define BRD_NOFASTRECMD     0x00400000  /* 禁止快速推文 */
 #define BRD_IPLOGRECMD      0x00800000  /* 推文記錄 IP */
-#define BRD_OVER18      0x01000000  /* 十八禁 */
+#define BRD_NOPOST      0x01000000  /* 不可發文 */
 #define BRD_NOREPLY     0x02000000  /* 不可回文 */
 #define BRD_ALIGNEDCMT      0x04000000  /* 對齊式的推文 */
 #define BRD_NOSELFDELPOST       0x08000000      /* 不可自刪 */
