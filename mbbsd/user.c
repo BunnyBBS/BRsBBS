@@ -1684,7 +1684,7 @@ struct ListAllUsetCtx {
 static int
 u_list_CB(void *data, int num, userec_t * uentp)
 {
-    char            permstr[8], *ptr;
+    char            permstr[8];
     register int    level;
     struct ListAllUsetCtx *ctx = (struct ListAllUsetCtx*) data;
     (void)num;
@@ -1693,7 +1693,7 @@ u_list_CB(void *data, int num, userec_t * uentp)
 	move(2, 0);
 	clrtoeol();
 	prints(ANSI_REVERSE "  ㄏノ腹   %-25s     ゅ彻  %s  "
-	       "程羬ら戳     " ANSI_RESET "\n",
+	       "⊿ㄓ     " ANSI_RESET "\n",
 	       "猴腹际嘿",
 	       HasUserPerm(PERM_SEEULEVELS) ? "单" : "");
 	ctx->y = 3;
@@ -1741,9 +1741,8 @@ u_list_CB(void *data, int num, userec_t * uentp)
     if (level & (PERM_CLOAK | PERM_SEECLOAK))
 	permstr[3] = 'C';
 
-    ptr = (char *)Cdate(&uentp->lastlogin);
-    ptr[18] = '\0';
-    prints("%-14s %-27.27s%5d %5d  %s  %s\n",
+    int ptr = (int)((now - uentp->lastlogin)/DAY_SECONDS);
+    prints("%-14s %-27.27s%5d %5d  %s  %dぱ⊿ㄓ\n",
 	   uentp->userid,
 	   uentp->nickname,
 	   uentp->numlogindays, uentp->numposts,
@@ -1763,9 +1762,9 @@ u_list(void)
     ctx->u_list_special = ctx->usercounter = 0;
     ctx->totalusers = SHM->number;
     if (HasUserPerm(PERM_SEEULEVELS)) {
-	getdata(b_lines - 1, 0, "芠 [1]疭单 (2)场",
+	getdata(b_lines - 1, 0, "芠 (1)疭单 [2]场",
 		genbuf, 3, DOECHO);
-	if (genbuf[0] != '2')
+	if (genbuf[0] == '1')
 	    ctx->u_list_special = PERM_BASIC | PERM_CHAT | PERM_PAGE | PERM_POST | PERM_LOGINOK | PERM_BM;
     }
     u_list_CB(ctx, 0, NULL);

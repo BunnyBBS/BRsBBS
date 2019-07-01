@@ -44,5 +44,9 @@ int main(int argc, const char **argv)
 	brdDetail();
 	return 0;
 }
-
+#else
+int main(int argc, const char **argv)
+{
+	return 0;
+}
 #endif //USE_BBS2WEB
