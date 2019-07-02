@@ -15,7 +15,7 @@ void brdDetail(void)
 	bptr = &bcache[i];
 	
 	if( !bptr->brdname[0] ||
-	    (bptr->brdattr & (BRD_HIDE | BRD_TOP)) ||
+	    (bptr->brdattr & BRD_TOP) ||
 	    (bptr->level && !(bptr->brdattr & BRD_POSTMASK) &&
 	     (bptr->level & 
 	      ~(PERM_BASIC|PERM_CHAT|PERM_PAGE|PERM_POST|PERM_LOGINOK))) )

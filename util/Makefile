@@ -18,7 +18,7 @@ CPROG_WITH_UTIL= \
 	account		deluserfile	mmail	boardtaxmail	\
 	expire		mandex		broadcast	board2web	\
 	openticket	topusr		\
-	toplazyBM	writemoney	\
+	toplazyBM	writemoney	paymoney	\
 	reaper		buildAnnounce	mailangel	\
 	outmail		chkhbf		\
 	angel		gamblegive	\

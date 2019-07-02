@@ -1,38 +1,21 @@
 #include "bbs.h"
 
 static int
-payArtMoney(int uid, int money, const char *item GCC_UNUSED, ...)
+payMoney(const char *username, int money, const char *reason)
 {
-    va_list ap;
-    char reason[STRLEN*3] ="";
-
-    if (!money)
-        return 0;
-
-    if (item) {
-        va_start(ap, item);
-        vsnprintf(reason, sizeof(reason)-1, item, ap);
-        va_end(ap);
-    }
-
-    int oldm, newm;
-    const char *userid;
+    int oldm, newm, uid;
     time4_t dtime = time(0);
     time4_t now = (++dtime);
 
-    assert(money != 0);
-    userid = getuserid(uid);
-    assert(userid);
-    assert(reason);
-
-    if (!userid)
-        return -1;
+    uid = searchuser(username, NULL);
+    if(uid == 0)
+        return 0;
 
     oldm = moneyof(uid);
     newm = deumoney(uid, -money);
 
-    char buf[PATHLEN];
-    sethomefile(buf, userid, FN_RECENTPAY);
+    char *buf[PATHLEN];
+    snprintf(buf, PATHLEN, "/home/bbs/home/%c/%s/%s", username[0], username, FN_RECENTPAY);
     log_filef(buf,
               LOG_CREAT,
               "%s %s $%d ($%d => $%d) %s\n",
@@ -67,9 +50,6 @@ void keeplog(FILE *fin, char *board, char *title, char *owner, int money, char *
     fclose(fin);
     fclose(fout);
 
-    if (!is_validuserid(owner)){
-        money = 0;
-    }
 #ifdef MAX_POST_MONEY
     if (money > MAX_POST_MONEY)
     money = MAX_POST_MONEY;
@@ -93,9 +73,10 @@ void keeplog(FILE *fin, char *board, char *title, char *owner, int money, char *
               "※ " URL_DISPLAYNAME ": " URL_PREFIX "/%s\n", fhdr.filename);
 #endif
 
-    int uid;
-    if ((uid = searchuser(owner, owner)) != 0) {
-        payArtMoney(uid, -money, "%s 看板發文稿酬: %s", board, fhdr.title);
+    if (is_validuserid(owner)){
+        char buf2[200];
+        snprintf(buf2, sizeof(buf2), "%s 看板發文稿酬: %s", board, fhdr.title);
+        payMoney(owner, -money, buf2);
     }
 
     LOG_IF(LOG_CONF_POST,
