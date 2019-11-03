@@ -883,8 +883,9 @@ int set_tax_file(void);
 int list_unpay(void);
 #endif //USE_BOARDTAX
 
-/* Two Factor Auth */
+/* Two Factor Auth (should with iBunny) */
 #ifdef USE_2FALOGIN
+int twoFA_setting(void);
 int twoFA_main(char *user);
 int twoFA_genRecovCode();
 #if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
@@ -908,12 +909,18 @@ int achieve_shop(void);
 int achieve_view(char *achieve);
 #endif //USE_ACHIEVE
 
-/* Function for BBS to Web */
+/* Function for BBS to Web (should with BRsWEB) */
 #ifdef USE_BBS2WEB
 int web_sync_board(int bid, const boardheader_t *board, char *type);
 int web_user_register(void);
 int web_user_lock(void);
 int web_user_resetpass(void);
 #endif //USE_BBS2WEB
+
+/* Login Notify (should with iBunny) */
+#ifdef USE_2FALOGIN
+int notiLogin_setting(void);
+void notiLogin_main(char *user);
+#endif //USE_2FALOGIN
 
 #endif

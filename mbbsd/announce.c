@@ -320,7 +320,7 @@ a_showhelp(int level)
 	 "[←][q]         離開到上一層目錄\n"
 	 "[↑][k]         上一個選項\n"
 	 "[↓][j]         下一個選項\n"
-	 "[→][r][enter]  進入目錄／讀取文章\n"
+	 "[→][r][enter]  進入目錄∕讀取文章\n"
 	 "[^B][PgUp]      上頁選單\n"
 	 "[^F][PgDn][Spc] 下頁選單\n"
 	 "[##]            移到該選項\n"
@@ -1719,7 +1719,7 @@ Announce(void)
 {
     setutmpmode(ANNOUNCE);
     a_menu(BBSNAME "佈告欄", "man",
-	   ((HasUserPerm(PERM_SYSOP) ) ? SYSOP : NOBODY),
+	   ((HasUserPerm(PERM_SYSOP) ) ? SYSOP : ((HasUserPerm(PERM_ANNOUNCE)) ? MANAGER : NOBODY)),
 	   0,
 	   NULL, NULL);
     return 0;

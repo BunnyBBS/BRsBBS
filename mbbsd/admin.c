@@ -436,7 +436,7 @@ setperms(unsigned int pbits, const char * const pstring[])
     }
     clrtobot();
     while (
-       (i = vmsg("請按 [A-5] 切換設定，按 [Return] 結束："))!='\r')
+       (i = vmsg("請按 [A-5] 切換設定，按 [ENTER] 結束："))!='\r')
     {
 	if (isdigit(i))
 	    i = i - '0' + 26;
@@ -737,7 +737,7 @@ m_mod_board(char *bname)
     case 'e':
         y = 8;
 	move(y++, 0); clrtobot();
-	outs("直接按 [Return] 不修改該項設定");
+	outs("直接按 [ENTER] 不修改該項設定");
 	memcpy(&newbh, &bh, sizeof(bh));
 
 	while (getdata(y, 0, "新看板名稱：", genbuf, IDLEN + 1, DOECHO)) {

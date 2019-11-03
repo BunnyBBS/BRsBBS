@@ -14,7 +14,7 @@ const char * const str_permid[] = {
     "站長隱身術",		/* PERM_DENYPOST */
     "板主",			/* PERM_BM */
     "帳號總管",			/* PERM_ACCOUNTS */
-    "聊天室總管",		/* PERM_CHATCLOAK */
+    "佈告欄總管",		/* PERM_ANNOUNCE */
     "看板總管",			/* PERM_BOARD */
     "站長",			/* PERM_SYSOP */
     "BBSADM",			/* PERM_POSTMARK */

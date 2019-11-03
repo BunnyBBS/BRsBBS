@@ -22,7 +22,7 @@ CPROG_WITH_UTIL= \
 	reaper		buildAnnounce	mailangel	\
 	outmail		chkhbf		\
 	angel		gamblegive	\
-	chesscountry	tunepasswd	buildir		xchatd		\
+	chesscountry	tunepasswd	buildir		user2web	\
 	uhash_loader	timecap_buildref showuser	removebm \
 	redir		permreport	setrole 	update_online \
 	munin		useractive_munin	\

@@ -70,12 +70,16 @@ int convert(char *fname, char *newpath)
 		snprintf(buf, sizeof(buf), "%s/@/%s", path, ihdr.xname);
 	    else
 		snprintf(buf, sizeof(buf), "%s/%c/%s", path, ihdr.xname[7], ihdr.xname);
+		printf(buf);
 
 	    fhdr.modified = dasht(buf);
 	    if (ihdr.xmode & ITOC_POST_MARKED)
 		fhdr.filemode |= FILE_MARKED;
 
-	    copy_file(buf, newpath);
+	    //copy_file(buf, newpath);
+		char genbuf[200];
+	  	snprintf(genbuf, sizeof(genbuf),"cp %s %s\n", buf, newpath);
+		printf(genbuf);
 	}
 	else if (ihdr.xmode & ITOC_GEM_FOLDER) {
 	    /* folder */
@@ -117,7 +121,7 @@ int convert(char *fname, char *newpath)
 
 int main(int argc, char *argv[])
 {
-    char buf[PATHLEN];
+    char buf[PATHLEN], buf2[PATHLEN];
     char *board;
     int opt;
 
@@ -155,9 +159,11 @@ int main(int argc, char *argv[])
     }
 
     if (trans_man)
-	setapath(buf, board);
+	setapath(buf2, board);
     else
-	setbpath(buf, board);
+	setbpath(buf2, board);
+
+	snprintf(buf, sizeof(buf), "%s/%s", BBSHOME, buf2);
 
     if (!dashd(buf)) {
 	fprintf(stderr, "%s is not directory\n", buf);
@@ -166,7 +172,7 @@ int main(int argc, char *argv[])
 
     attach_SHM();
 
-    convert(".DIR", buf);
+    convert(".DIR", buf2);
 
     if (trans_man) {
 	strlcat(buf, "/.rebuild", sizeof(buf));

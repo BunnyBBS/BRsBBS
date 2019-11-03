@@ -17,7 +17,8 @@
 #define PERM_SYSOPHIDE    000000001000 /* 站長隱身術     */
 #define PERM_BM           000000002000 /* 板主           */
 #define PERM_ACCOUNTS     000000004000 /* 帳號總管       */
-#define PERM_CHATROOM     000000010000 /* 聊天室總管     */
+//#define PERM_CHATROOM     000000010000 /* 聊天室總管     */
+#define PERM_ANNOUNCE     000000010000 /* 佈告欄總管     */
 #define PERM_BOARD        000000020000 /* 看板總管       */
 #define PERM_SYSOP        000000040000 /* 站長           */
 #define PERM_BBSADM       000000100000 /* BBSADM         */

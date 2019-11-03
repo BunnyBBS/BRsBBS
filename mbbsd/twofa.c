@@ -56,6 +56,142 @@ twoFA_Send(char *user, char *authcode)
 
 }
 
+int twoFA_setting(void)
+{
+    FILE           *fp;
+    const char *msg = NULL;
+    char code[7], rev_code[9], code_input[7], buf[200], buf2[200], genbuf[3];
+    char *user = cuser.userid;
+    char passbuf[PASSLEN];
+
+	clear();
+	vs_hdr2(" 兩步驟認證 ", " 認證設定");
+
+	move(3,0);
+	prints("設定帳號：%s\n", user);
+	prints("您目前%s開啟兩步驟認證。\n", ((cuser.uflag & UF_TWOFA_LOGIN) ? ANSI_COLOR(1) "已" ANSI_RESET : ANSI_COLOR(1;33) "未" ANSI_RESET));
+
+	if(cuser.uflag & UF_TWOFA_LOGIN)
+		getdata(6, 0, "關閉(y) 取消操作[N] ",genbuf, 3, LCECHO);
+	else{
+        mvouts(6, 0, "本功\能需搭配使用iBunny，請先確定您有登入iBunny。");
+        getdata(7, 0, "開啟(y) 取消操作[N] ",genbuf, 3, LCECHO);
+    }
+	if (genbuf[0] != 'y') {
+		vmsg("取消操作。");
+		return 0;
+	}
+
+	move(6,0);clrtobot();
+	outs("以下操作需要先確認您的身份。\n");
+	getdata(7, 0, MSG_PASSWD, passbuf, PASS_INPUT_LEN + 1, PASSECHO);
+	passbuf[8] = '\0';
+	if (!(checkpasswd(cuser.passwd, passbuf))){
+		vmsg("密碼錯誤！");
+		return 0;
+	}
+
+	if(cuser.uflag & UF_TWOFA_LOGIN){
+		pwcuToggleUserFlag(UF_TWOFA_LOGIN);
+		vmsg("已關閉兩步驟認證。");
+		return 0;
+	}
+
+	move(4, 0);clrtobot();
+	mvouts(6, 0, "我們將發送一則驗證碼至您的iBunny作為測試。\n");
+
+	twoFA_GenCode(code, 6);
+
+	setuserfile(buf, "2fa.code");
+	if (!(fp = fopen(buf, "w"))){
+		mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
+		vmsg("系統錯誤，請稍後再試。(Error code: 2FA-S-001)");
+		return 0;
+	}
+	fprintf(fp,"%s", code);
+	fclose(fp);
+
+#ifdef BETA
+	msg = twoFA_Send(user,code);
+#else
+	msg = twoFA_Send(user,NULL);
+#endif
+
+    if (msg){
+		if(msg == 400){
+			mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
+			vmsg("您未登入iBunny！請先登入再來設定。(Error code: 2FA-S-400)");
+			return 0;
+		}else if(msg == 401){
+			mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
+			vmsg("API串接出錯，請聯繫工程業務處協助。(Error code: 2FA-S-401)");
+			return 0;
+		}else if(msg == 500){
+			mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
+			vmsg("伺服器出錯，請聯繫工程業務處協助。(Error code: 2FA-S-500)");
+			return 0;
+		}else{
+			mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
+			vmsgf("系統錯誤，請稍後再試。(Error code: 2FA-S-%3d)", msg);
+			return 0;
+		}
+	}
+	unlink(buf);
+
+    outs("驗證碼將直接被發送到iBunny，驗證碼為6位數字。\n");
+
+    for (int i = 3; i > 0; i--) {
+		if (i < 3) {
+			char buf[80];
+			move(10, 0);
+			snprintf(buf, sizeof(buf), ANSI_COLOR(1;31) "驗證碼錯誤，您還有 %d 次機會。" ANSI_RESET, i);
+			outs(buf);
+		}
+		code_input[0] = '\0';
+		getdata(9, 0, "請輸入驗證碼：", code_input,
+			sizeof(code_input), DOECHO);
+
+		size_t length = strlen(code_input);
+		if(length == 6){
+			if (!strcmp(code, code_input)){
+				pwcuToggleUserFlag(UF_TWOFA_LOGIN);
+				setuserfile(buf, "2fa.recov");
+
+			    if(isFileExist(buf) == true){
+					vmsg("已開啟兩步驟認證！");
+					return 0;
+				}
+
+				clear();
+				vs_hdr2(" 兩步驟認證 ", " 產生復原碼");
+			    outs("已開啟兩步驟認證，現在系統正在為您產生一組復原碼。\n\n");
+			    outs("復原碼是當您無法使用兩步驟認證時，\n");
+			    outs("可以在輸入驗證碼時輸入復原碼取回帳戶存取權。\n");
+			    outs("另外，另外每一組復原碼只能使用一次，使用後就會失效。\n\n");
+
+				twoFA_GenRevCode(rev_code, 8);
+				if (!(fp = fopen(buf, "w"))){
+					vmsg("系統錯誤，請稍後再試。(Error code: 2FA-S-002)");
+					return 0;
+				}
+				fprintf(fp,"%s", rev_code);
+				fclose(fp);
+
+				move(10,0);
+				outs("您的復原碼是：" ANSI_COLOR(1));outs(rev_code);outs(ANSI_RESET "\n\n");
+				outs("復原碼共計8碼，會出現英文字母I、L、O，不會出現數字0、1。");
+				mvouts(b_lines - 2, 12, ANSI_COLOR(1;33) "請您記下復原碼並妥善保管，離開本視窗後就不能再重新查詢。" ANSI_RESET);
+
+				pressanykey();
+				return 0;
+			}
+		}
+    }
+
+    vmsg("未成功\開啟兩步驟認證。");
+    return 0;
+}
+
 int twoFA_main(char *user)
 {
     FILE           *fp;
@@ -85,7 +221,7 @@ int twoFA_main(char *user)
 	vs_hdr2(" 兩步驟認證 ", " 輸入驗證碼");
 
 	twoFA_GenCode(code, 6);
-	
+
 	setuserfile(buf, "2fa.code");
 	if (!(fp = fopen(buf, "w"))){
 		move(1,0);
@@ -181,7 +317,7 @@ int twoFA_main(char *user)
 		}
 	}
 	unlink(buf);
-	
+
 	move(1,0); clrtobot();
     mvouts(2, 0, "驗證碼將直接被發送到iBunny\n");
     outs("驗證碼為6位數字、復原碼為8位英數混合。\n");
@@ -222,7 +358,7 @@ int twoFA_main(char *user)
 			}
 			fgets(rev_code, sizeof(rev_code), fp);
 			fclose(fp);
-			
+
 			if (!strcmp(rev_code, code_input)){
 				unlink(buf);
 				move(6, 0);
@@ -230,7 +366,7 @@ int twoFA_main(char *user)
 				return NULL; //Success
 			}
 		}
-		
+
 		now = time(NULL);
 		setuserfile(buf, "2fa.bad");
 		log_filef(buf, LOG_CREAT,"%s 第%d次兩步驟驗證失敗，IP位置：%s。\n",Cdate(&now), 4 - i , fromhost);
@@ -246,12 +382,12 @@ int twoFA_genRecovCode()
 	char *user = cuser.userid;
     char passbuf[PASSLEN];
 
-	vs_hdr("兩步驟認證復原碼");
+	vs_hdr2(" 兩步驟認證 ", " 產生復原碼");
 	if(!(HasUserFlag(UF_TWOFA_LOGIN))){
-		vmsg("請先在個人設定開啟兩步驟認證。");
+		vmsg("請先開啟兩步驟認證。");
 		return 0;
 	}
-	
+
 	setuserfile(buf, "2fa.recov");
 	move(1, 0);
 
@@ -269,7 +405,7 @@ int twoFA_genRecovCode()
     outs("復原碼是當您無法使用兩步驟認證時，\n");
     outs("可以在輸入驗證碼時輸入復原碼取回帳戶存取權。\n");
     outs("另外，另外每一組復原碼只能使用一次，使用後就會失效。\n\n");
-	
+
 	outs("以下操作需要先確認您的身份。\n");
 	getdata(6, 0, MSG_PASSWD, passbuf, PASS_INPUT_LEN + 1, PASSECHO);
 	passbuf[8] = '\0';
@@ -277,7 +413,7 @@ int twoFA_genRecovCode()
 		vmsg("密碼錯誤！");
 		return 0;
 	}
-	
+
 	twoFA_GenRevCode(rev_code, 8);
 	if (!(fp = fopen(buf, "w"))){
 		vmsg("系統錯誤，請稍後再試。(Error code: 2FA-F-003)");
@@ -285,19 +421,17 @@ int twoFA_genRecovCode()
 	}
 	fprintf(fp,"%s", rev_code);
 	fclose(fp);
-	
+
 	move(10,0);
 	outs("您的復原碼是：" ANSI_COLOR(1));
 	outs(rev_code);
 	outs(ANSI_RESET "\n\n");
 	outs("復原碼共計8碼，會出現英文字母I、L、O，不會出現數字0、1。");
 	mvouts(b_lines - 2,12,ANSI_COLOR(1;33) "請您記下復原碼並妥善保管，離開本視窗後就不能再重新查詢。" ANSI_RESET);
-	
+
 	pressanykey();
 	return 0;
 }
-
-#endif //USE_2FALOGIN
 
 #if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
 
@@ -307,7 +441,7 @@ int twoFA_RemoveTrust()
     char rev_code[9], buf[200], genbuf[3];
 	char *user = cuser.userid;
     char passbuf[PASSLEN];
-	
+
 	setuserfile(buf, "trust.device");
     if(isFileExist(buf) == false){
 		vmsg("沒有在任何裝置上設定為信任。");
@@ -316,7 +450,7 @@ int twoFA_RemoveTrust()
 
 	clear();
 	vs_hdr("撤銷信任裝置");
-	
+
 	move(2, 0);
 	outs("設定為信任的裝置在登入時不需要驗證。\n");
 	outs("要撤銷掉所有目前設定為信任的裝置嗎？\n");
@@ -332,3 +466,5 @@ int twoFA_RemoveTrust()
 }
 
 #endif //defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
+
+#endif //USE_2FALOGIN

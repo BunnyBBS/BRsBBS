@@ -73,7 +73,7 @@ u_loginview(void)
         }
 
         in = i; // max i
-        i = vmsgf("請按 [A-%c] 切換設定，按 [Return] 結束：", 'A'+in-1);
+        i = vmsgf("請按 [A-%c] 切換設定，按 [ENTER] 結束：", 'A'+in-1);
         if (i == '\r')
             break;
 
@@ -620,7 +620,7 @@ void Customize(void)
 	UF_REJ_OUTTAMAIL,
 	UF_DEFBACKUP,
     UF_SECURE_LOGIN,
-#ifdef USE_IBUNNY_NOTILOGIN
+#ifdef USE_NOTILOGIN
 	UF_NOTIFY_LOGIN,
 #endif
 #ifdef USE_2FALOGIN
@@ -651,13 +651,13 @@ void Customize(void)
 	"MAIL       拒收站外信",
 	"BACKUP     預設備份信件與其它記錄", //"與聊天記錄",
     "LOGIN      只允許\使用安全連線(ex, ssh)登入",
-#ifdef USE_IBUNNY_NOTILOGIN
+#ifdef USE_NOTILOGIN
     "NOTI_LOGIN 帳號被登入時發送通知 (需搭配iBunny)",
 #endif
 #ifdef USE_2FALOGIN
     "2FA_LOGIN  使用兩步驟驗證登入 (需搭配iBunny)",
 #endif
-	"MYFAV      新板自動進我的最愛",
+	"MYFAV      新板自動進我的最愛 (停用功\能)",
 	"MYFAV      單色顯示我的最愛",
 	"MODMARK    隱藏文章修改符號(推文/修文) (~)",
 	"MODMARK    使用色彩代替修改符號 (+)",
@@ -747,6 +747,24 @@ void Customize(void)
 
             if (masks1[key] == UF_SECURE_LOGIN && !mbbsd_is_secure_connection()) {
                 vmsg("您必須使用安全連線才能修改此設定");
+                continue;
+            }
+#ifdef USE_NOTILOGIN
+            if (masks1[key] == UF_NOTIFY_LOGIN) {
+                vmsg("請至「主選單→個人設定區→密碼與安全」設定。");
+                continue;
+            }
+#endif
+#ifdef USE_2FALOGIN
+            if (masks1[key] == UF_TWOFA_LOGIN) {
+                vmsg("請至「主選單→個人設定區→密碼與安全」設定。");
+                continue;
+            }
+#endif
+
+        	//大兔：打算拔掉這功能。所以不再開放設定這個選項。
+            if (masks1[key] == UF_FAV_ADDNEW) {
+                vmsg("此設定已停用。");
                 continue;
             }
 

@@ -6,11 +6,7 @@
 int mission_dailylogin(){
     FILE *fp;
     char buf[200], buf2[200], date[11], genbuf[3];
-    int i;
-    struct tm      ptime;
-    localtime4_r(&now, &ptime);
-    i = ptime.tm_wday << 1;
-	snprintf(date, sizeof(date), "%03d-%02d-%02d", ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday);
+    snprintf(date, sizeof(date), "%s", Cdatedate(&now));
 	
 	clear();
 	vs_hdr2(" 任務中心 ", " 每日登入大兔");
@@ -62,11 +58,7 @@ int mission_dailylogin(){
 int mission_dailypost(){
     FILE *fp;
     char buf[200], buf2[200], buf3[200], buf4[200], date[11], genbuf[3];
-    int i;
-    struct tm      ptime;
-    localtime4_r(&now, &ptime);
-    i = ptime.tm_wday << 1;
-	snprintf(date, sizeof(date), "%03d-%02d-%02d", ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday);
+    snprintf(date, sizeof(date), "%s", Cdatedate(&now));
 	
 	clear();
 	vs_hdr2(" 任務中心 ", " 每日發篇文章");
@@ -161,10 +153,8 @@ int mission_dailypost(){
 int mission_monthlyos(){
     FILE *fp;
     char buf[200], buf2[200], buf3[200], buf4[200], date[11], genbuf[3];
-    int i;
     struct tm      ptime;
     localtime4_r(&now, &ptime);
-    i = ptime.tm_wday << 1;
 	snprintf(date, sizeof(date), "%03d-%02d", ptime.tm_year - 11, ptime.tm_mon + 1);
 	
 	clear();

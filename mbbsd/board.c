@@ -352,14 +352,20 @@ b_posttype()
        if (genbuf[0] == 'y')
            posttype_f |= 1 << i;
        else if (genbuf[0] == 'n') {
+       		char buf[100];
+        	setbnfile(filepath, bp->brdname, "postsample", i);
+	   		snprintf(buf, sizeof(buf),"rm %s", filepath);
+       		system(buf);
            posttype_f &= ~(1 << i);
            continue;
        }
-       getdata(18, 0, "要編輯範本檔案嗎? [y/N]: ", genbuf, 2, LCECHO);
-       if (genbuf[0] == 'y') {
-           setbnfile(filepath, bp->brdname, "postsample", i);
-           veditfile(filepath);
-       }
+       if(posttype_f & (1 << i)){
+	       getdata(18, 0, "要編輯範本檔案嗎? [y/N]: ", genbuf, 2, LCECHO);
+	       if (genbuf[0] == 'y') {
+	           setbnfile(filepath, bp->brdname, "postsample", i);
+	           veditfile(filepath);
+	       }
+	   }
    } while (1);
 
    // TODO last chance to confirm.

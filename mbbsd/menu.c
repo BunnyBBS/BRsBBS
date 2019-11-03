@@ -224,13 +224,13 @@ ZA_Select(void)
     // TODO refresh status bar?
 	move(b_lines-2, 0); clrtobot();
     vbarf(ANSI_COLOR(1;33;42)"\n  快速選單 "ANSI_COLOR(0;30;42)"|"ANSI_COLOR(1;37;42)" %02d"ANSI_COLOR(1;5;37;42)":"ANSI_COLOR(0;1;37;42)"%02d \t "ANSI_COLOR(1;37;42)"呼叫器["ANSI_COLOR(1;33;42)"%s"ANSI_COLOR(1;37;42)"] ",ptime.tm_hour, ptime.tm_min,str_pager_modes[currutmp->pager % PAGER_MODES]);
-	vbarf(ANSI_COLOR(0;31;47)"\n  (b)"ANSI_COLOR(0;30;47)"文章列表" ANSI_COLOR(0;31;47)" (c)"ANSI_COLOR(0;30;47)"分類 " ANSI_COLOR(0;31;47)"(f)"ANSI_COLOR(0;30;47)"我的最愛 " ANSI_COLOR(0;31;47)"(m)"ANSI_COLOR(0;30;47)"信箱 " ANSI_COLOR(0;31;47)"(u)"ANSI_COLOR(0;30;47)"使用者名單 \t" ANSI_COLOR(0;31;47)"(x)"ANSI_COLOR(0;30;47)"關閉選單  "ANSI_RESET);
+	vbarf(ANSI_COLOR(0;31;47)"\n  (b)"ANSI_COLOR(0;30;47)"文章列表" ANSI_COLOR(0;31;47)" (c)"ANSI_COLOR(0;30;47)"分類 " ANSI_COLOR(0;31;47)"(f)"ANSI_COLOR(0;30;47)"我的最愛 " ANSI_COLOR(0;31;47)"(m)"ANSI_COLOR(0;30;47)"信箱 " ANSI_COLOR(0;31;47)"(u)"ANSI_COLOR(0;30;47)"使用者名單 " ANSI_COLOR(0;31;47)"(q)"ANSI_COLOR(0;30;47)"出境 \t" ANSI_COLOR(0;31;47)"(x)"ANSI_COLOR(0;30;47)"關閉選單  "ANSI_RESET);
     k = vkey();
 
     if (k < ' ' || k >= 'z') return 0;
     k = tolower(k);
 
-    if(strchr("bcfmut", k) == NULL)
+    if(strchr("bcfmuq", k) == NULL)
 	return 0;
 
     zacmd = k;
@@ -267,6 +267,9 @@ ZA_Enter(void)
 		if (HasUserPerm(PERM_LOGINOK)){
 			t_users();
 		}
+		break;
+	    case 'q':
+		Goodbye();
 		break;
 	}
 	// if user exit with new ZA assignment,
@@ -772,12 +775,6 @@ u_pass_change()
 // 注意每個 menu 最多不能同時顯示超過 11 項 (80x24 標準大小的限制)
 // 107.08.03 整理程式碼架構
 
-static int x_admin_board(void);
-static int x_admin_brdtax(void);
-static int x_admin_money(void);
-static int x_admin_user(void);
-static int x_admin_usermenu(void);
-
 static const commands_t      cmdlist[] = {
     {admin,				PERM_SYSOP|PERM_BBSADM|PERM_ACCOUNTS|PERM_BOARD,
 										"0Admin       〉 系統維護區 〈"},
@@ -815,6 +812,73 @@ int main_menu(void) {
 }
 	/* 0Admin Menu */
 	/* 大兔：權限劃分備註：有關使用者資料的項目只能讓SYSOP與ACCOUNT操作；BBSADM計畫作為輔助SYSOP之用，因此其他非敏感操作得讓BBSADM使用；BOARD可以直接在這裡設定看板。*/
+	#ifdef USE_BOARDTAX
+	static const commands_t m_admin_brdtax[] = {
+		{board_tax_calc,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"CTax Calc    〉  試算稅額  〈"},
+		{set_board_tax,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"STax Set     〉 查詢與增刪 〈"},
+		{set_tax_file,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"FTax File    〉  稅額檔案  〈"},
+		{board_tax_log,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"LTax PayLog  〉  繳納紀錄  〈"},
+		{list_unpay,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"UnPay List   〉 未繳納名單 〈"},
+		{NULL, 0, NULL}
+	};
+	static int x_admin_brdtax(void)
+	{
+		char init = 'S';
+		domenu(M_XMENU, "看板稅管理", init, m_admin_brdtax);
+		return 0;
+	};
+	#endif
+	static const commands_t m_admin_board[] = {
+		{m_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Set Board    〉  設定看板  〈"},
+	#ifdef USE_BOARDTAX
+		{x_admin_brdtax,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"TBoard Tax   〉 看板稅管理 〈"},
+	#endif
+		{list_user_board,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"ListUserMod  〉 查擔任板主 〈"},
+		{NULL, 0, NULL}
+	};
+	static int x_admin_board(void)
+	{
+		char init = 'S';
+		domenu(M_XMENU, "土地管理局", init, m_admin_board);
+		return 0;
+	};
+	static const commands_t m_admin_money[] = {
+		{view_user_money_log,	PERM_SYSOP|PERM_BBSADM,	"View Log     〉  交易記錄  〈"},
+		{give_money,			PERM_SYSOP|PERM_BBSADM,"Givemoney    〉  發放"MONEYNAME"  〈"},
+		{NULL, 0, NULL}
+	};
+	static int x_admin_money(void)
+	{
+		char init = 'V';
+		domenu(M_XMENU, "金融監管署", init, m_admin_money);
+		return 0;
+	};
+	static const commands_t m_admin_user[] = {
+		{view_user_money_log,	PERM_SYSOP|PERM_ACCOUNTS,	"Money Log    〉  交易記錄  〈"},
+		{view_user_login_log,	PERM_SYSOP|PERM_ACCOUNTS,	"Login Log    〉  上線記錄  〈"},
+		{u_list,				PERM_SYSOP|PERM_ACCOUNTS,	"Users List   〉  註冊名冊  〈"},
+		{search_user_bybakpwd,	PERM_SYSOP|PERM_ACCOUNTS,	"Old Data     〉 查備份資料 〈"},
+		{NULL, 0, NULL}
+	};
+	static int x_admin_user(void)
+	{
+		domenu(M_XMENU, "使用者記錄", 'L', m_admin_user);
+		return 0;
+	};
+	static const commands_t m_admin_usermenu[] = {
+		{user_display_advanced_auth,	PERM_SYSOP,				"Query Auth   〉進階查詢授權〈"},
+		{m_register,		PERM_SYSOP|PERM_ACCOUNTS,			"Register     〉 審核註冊單 〈"},
+		{m_user,			PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD,"User Data    〉 使用者資料 〈"},
+		{x_admin_user,		PERM_SYSOP|PERM_ACCOUNTS,			"LUser Log    〉 使用者記錄 〈"},
+		{search_user_bypwd,	PERM_SYSOP|PERM_ACCOUNTS,			"Search User  〉 搜尋使用者 〈"},
+		{NULL, 0, NULL}
+	};
+	static int x_admin_usermenu(void)
+	{
+		char init = 'U';
+		domenu(M_XMENU, "民政事務局", init, m_admin_usermenu);
+		return 0;
+	};
 	static const commands_t adminlist[] = {
 		{x_admin_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Board Admin  〉 土地管理局 〈"},
 		{x_admin_usermenu,	PERM_SYSOP|PERM_BBSADM|PERM_ACCOUNTS|PERM_BOARD,
@@ -834,74 +898,7 @@ int main_menu(void) {
 
 		domenu(M_ADMIN, "站長維護系統", init, adminlist);
 		return 0;
-	}
-		static const commands_t m_admin_board[] = {
-			{m_board,		PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"Set Board    〉  設定看板  〈"},
-		#ifdef USE_BOARDTAX
-			{x_admin_brdtax,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"TBoard Tax   〉 看板稅管理 〈"},
-		#endif
-			{list_user_board,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"ListUserMod  〉 查擔任板主 〈"},
-			{NULL, 0, NULL}
-		};
-		static int x_admin_board(void)
-		{
-			char init = 'S';
-			domenu(M_XMENU, "土地管理局", init, m_admin_board);
-			return 0;
-		}
-		#ifdef USE_BOARDTAX
-		static const commands_t m_admin_brdtax[] = {
-			{board_tax_calc,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"CTax Calc    〉  試算稅額  〈"},
-			{set_board_tax,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"STax Set     〉 查詢與增刪 〈"},
-			{set_tax_file,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"FTax File    〉  稅額檔案  〈"},
-			{board_tax_log,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"LTax PayLog  〉  繳納紀錄  〈"},
-			{list_unpay,	PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"UnPay List   〉 未繳納名單 〈"},
-			{NULL, 0, NULL}
-		};
-		static int x_admin_brdtax(void)
-		{
-			char init = 'S';
-			domenu(M_XMENU, "看板稅管理", init, m_admin_brdtax);
-			return 0;
-		}
-		#endif
-		static const commands_t m_admin_money[] = {
-			{view_user_money_log,	PERM_SYSOP|PERM_BBSADM,	"View Log     〉  交易記錄  〈"},
-			{give_money,			PERM_SYSOP|PERM_BBSADM,"Givemoney    〉  發放"MONEYNAME"  〈"},
-			{NULL, 0, NULL}
-		};
-		static int x_admin_money(void)
-		{
-			char init = 'V';
-			domenu(M_XMENU, "金融監管署", init, m_admin_money);
-			return 0;
-		}
-		static const commands_t m_admin_usermenu[] = {
-			{user_display_advanced_auth,	PERM_SYSOP,				"Query Auth   〉進階查詢授權〈"},
-			{m_register,		PERM_SYSOP|PERM_ACCOUNTS,			"Register     〉 審核註冊單 〈"},
-			{m_user,			PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD,"User Data    〉 使用者資料 〈"},
-			{x_admin_user,		PERM_SYSOP|PERM_ACCOUNTS,			"LUser Log    〉 使用者記錄 〈"},
-			{search_user_bypwd,	PERM_SYSOP|PERM_ACCOUNTS,			"Search User  〉 搜尋使用者 〈"},
-			{NULL, 0, NULL}
-		};
-		static int x_admin_usermenu(void)
-		{
-			char init = 'U';
-			domenu(M_XMENU, "民政事務局", init, m_admin_usermenu);
-			return 0;
-		}
-		static const commands_t m_admin_user[] = {
-			{view_user_money_log,	PERM_SYSOP|PERM_ACCOUNTS,	"Money Log    〉  交易記錄  〈"},
-			{view_user_login_log,	PERM_SYSOP|PERM_ACCOUNTS,	"Login Log    〉  上線記錄  〈"},
-			{u_list,				PERM_SYSOP|PERM_ACCOUNTS,	"Users List   〉  註冊名冊  〈"},
-			{search_user_bybakpwd,	PERM_SYSOP|PERM_ACCOUNTS,	"Old Data     〉 查備份資料 〈"},
-			{NULL, 0, NULL}
-		};
-		static int x_admin_user(void)
-		{
-			domenu(M_XMENU, "使用者記錄", 'L', m_admin_user);
-			return 0;
-		}
+	};
 	/* Mail Menu */
 	static const commands_t maillist[] = {
 		{m_read,			PERM_LOGINOK,			"Read         〉  我的信箱  〈"},
@@ -985,11 +982,15 @@ int main_menu(void) {
 	/* User menu */
 	static const commands_t seculist[] = {
 		{u_pass_change,		PERM_BASIC,		"Password     〉  修改密碼  〈"},
+	#ifdef USE_NOTILOGIN
+		{notiLogin_setting,	PERM_BASIC,		"NotifyLogin  〉  登入通知  〈"},
+	#endif //USE_NOTILOGIN
 	#ifdef USE_2FALOGIN
+		{twoFA_setting,		PERM_BASIC,		"TwoFactor    〉 兩步驟認證 〈"},
 		{twoFA_genRecovCode,PERM_BASIC,		"RecoverCode  〉 產生復原碼 〈"},
 	#endif //USE_2FALOGIN
 	#if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
-		{twoFA_RemoveTrust	,PERM_BASIC,	"TRemoveTrust 〉撤銷信任裝置〈"},
+		{twoFA_RemoveTrust	,PERM_BASIC,	"ERemoveTrust 〉撤銷信任裝置〈"},
 	#endif //defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
 		{NULL, 0, NULL}
 	};

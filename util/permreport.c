@@ -25,14 +25,16 @@ int main(void) {
         PERMCHECK(PERM_BBSADM),
         PERMCHECK(PERM_SYSOP),
         PERMCHECK(PERM_ACCOUNTS),
-        PERMCHECK(PERM_CHATROOM),
+        PERMCHECK(PERM_ANNOUNCE),
         PERMCHECK(PERM_BOARD),
         PERMCHECK(PERM_PRG),
         PERMCHECK(PERM_VIEWSYSOP),
         PERMCHECK(PERM_POLICE_MAN),
-        PERMCHECK(PERM_SYSSUPERSUBOP),
+        PERMCHECK(PERM_POLICE),
         PERMCHECK(PERM_ACCTREG),
+        PERMCHECK(PERM_VIOLATELAW),
 #if 0
+        PERMCHECK(PERM_SYSSUPERSUBOP),
         PERMCHECK(PERM_SYSSUBOP),
         PERMCHECK(PERM_ACTION),
         PERMCHECK(PERM_PAINT),
@@ -41,8 +43,8 @@ int main(void) {
         PERMCHECK(ROLE_ANGEL_CIA),
         PERMCHECK(ROLE_ANGEL_ACTIVITY),
         PERMCHECK(ROLE_ANGEL_ARCHANGEL),
-#endif
         PERMCHECK(ROLE_POLICE_ANONYMOUS),
+#endif
         {0, NULL},
     };
 
@@ -90,17 +92,16 @@ int main(void) {
             checks[i].count++;
             list = checks[i].list;
             list += strlen(list);
-            sprintf(list, " %-*s %s\n", IDLEN, usr.userid,
-                    usr.realname);
+            sprintf(list, "%s,", usr.userid);
         }
     }
 
     // Now, iterate through all permissions and print out list.
     for (i = 0; checks[i].mask; i++) {
-        printf("%s %s\n%stotal %d users\n\n",
+        printf("%s %s:%s\n",
                checks[i].desc, checks[i].caption,
-               checks[i].list ? checks[i].list : "",
-               checks[i].count);
+               checks[i].list ? checks[i].list : "[NULL]"/*,
+               checks[i].count*/);
     }
     close(fd);
     return 0;

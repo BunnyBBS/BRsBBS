@@ -736,7 +736,7 @@ load_current_user(const char *uid)
 
         if (is_admin_only) {
             if (!HasUserPerm(PERM_SYSOP | PERM_BBSADM | PERM_BOARD |
-                             PERM_ACCOUNTS | PERM_CHATROOM |
+                             PERM_ACCOUNTS | PERM_ANNOUNCE |
                              PERM_VIEWSYSOP | PERM_PRG)) {
                 puts("\r\n權限不足，請換其它 port 連線。\r\n");
                 exit(0);
@@ -775,11 +775,6 @@ bool isFileExist(char *filedir){
 	return false;
 }
 
-#ifdef USE_2FALOGIN
-/* Two Factor Auth in twofa.c */
-int twoFA_main();
-#endif
-
 static void
 login_query(char *ruid)
 {
@@ -808,17 +803,26 @@ login_query(char *ruid)
 #else
     	show_file("etc/Welcome", 1, -1, SHOWFILE_ALLOW_ALL);
 #endif
-		
+
+        FILE *fp;
+        if(fp = fopen("etc/systemNotice", "r")){
+            char string[200];
+            fgets(string, sizeof(string), fp);
+            fclose(fp);
+            move(1, 0);
+            prints(ANSI_COLOR(1) "系統快訊｜" ANSI_RESET "%s", string);
+        }
+
 #ifdef BETA
 	/*大兔：當系統運用於測試機時，編譯時加上BETA=1的參數，並且在適當處加上可識別的文字，避免不小心在測試操作時誤動到正式系統*/
 	move(1, 69);
 	outs(ANSI_COLOR(1;31) "測試" ANSI_RESET);
 #endif
 		if(is_secure_connection){
-			move(1, 75);
-			outs(ANSI_COLOR(1;32) "安全" ANSI_RESET);
+			move(1, 76);
+			outs(ANSI_COLOR(1;32) "SSH" ANSI_RESET);
 		}
-		
+
 		attempts = 0;
 		while (1) {
 		if (attempts++ >= LOGINATTEMPTS) {
@@ -933,21 +937,29 @@ login_query(char *ruid)
 						exit(1);
 					}else{
 						outs("驗證完成，開始登入系統...");
+#ifdef USE_NOTILOGIN
+                        if(HasUserFlag(UF_NOTIFY_LOGIN))
+                            notiLogin_main(cuser.userid);
+#endif //USE_NOTILOGIN
 						move(22, 0); refresh();
 						strlcpy(ruid, cuser.userid, IDLEN+1);
 						clrtoeol();
 						break;
 					}
 				}else{
-#endif
+#endif //USE_2FALOGIN
+                    outs("開始登入系統...");
+#ifdef USE_NOTILOGIN
+                    if(HasUserFlag(UF_NOTIFY_LOGIN))
+                        notiLogin_main(cuser.userid);
+#endif //USE_NOTILOGIN
 					strlcpy(ruid, cuser.userid, IDLEN+1);
-					outs("開始登入系統...");
 					move(22, 0); refresh();
 					clrtoeol();
 					break;
 #ifdef USE_2FALOGIN
 				}
-#endif
+#endif //USE_2FALOGIN
 			}
 		}
 		}
@@ -1201,11 +1213,7 @@ void
 mission_dailylogin_auto(void){
     FILE *fp;
     char buf[200], buf2[200], date[11], genbuf[3];
-    int i;
-    struct tm      ptime;
-    localtime4_r(&now, &ptime);
-    i = ptime.tm_wday << 1;
-    snprintf(date, sizeof(date), "%03d-%02d-%02d", ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday);
+    snprintf(date, sizeof(date), "%s", Cdatedate(&now));
 
     setuserfile(buf, "mission.dailylogin");
     if(isFileExist(buf) == false){
@@ -1229,6 +1237,38 @@ mission_dailylogin_auto(void){
                     pressanykey();
                 }
             }
+        }
+    }
+}
+/* 每次登入自動接受發文任務 */
+void
+mission_dailypost_auto(void){
+    FILE *fp;
+    char buf[200], buf2[200], buf3[200], date[11];
+    snprintf(date, sizeof(date), "%s", Cdatedate(&now));
+
+    setuserfile(buf, "mission.dailypost.date");
+    setuserfile(buf2, "mission.dailypost.num");
+    if(isFileExist(buf) == false || isFileExist(buf2) == false){
+        fp = fopen(buf, "w");
+        fprintf(fp,"%s", date);
+        fclose(fp);
+
+        fp = fopen(buf2, "w");
+        fprintf(fp,"%d", cuser.numposts);
+        fclose(fp);
+    }else{
+        fp = fopen(buf, "r");
+        fgets(buf3, sizeof(buf3), fp);
+        fclose(fp);
+        if (strcmp(buf3, date)){
+            fp = fopen(buf, "w");
+            fprintf(fp,"%s", date);
+            fclose(fp);
+
+            fp = fopen(buf2, "w");
+            fprintf(fp,"%d", cuser.numposts);
+            fclose(fp);
         }
     }
 }
@@ -1351,6 +1391,7 @@ user_login(void)
     setuserfile(buf, "2fa.recov");
     if(HasUserFlag(UF_TWOFA_LOGIN) && isFileExist(buf) == false){
         clear();
+        vs_hdr2(" 兩步驟認證 ", " 產生復原碼");
         move(14,0);
         outs("復原碼是當您無法使用兩步驟認證時，\n");
         outs("可以在輸入驗證碼時輸入復原碼取回帳戶存取權。\n");
@@ -1364,6 +1405,7 @@ user_login(void)
 
 #ifdef USE_MISSION
         mission_dailylogin_auto();
+        mission_dailypost_auto();
 #endif //USE_MISSION
     } else if (strcmp(cuser.userid, STR_GUEST) == 0) { /* guest */
 
@@ -1399,7 +1441,9 @@ user_login(void)
 #endif
 
     if(HasUserFlag(UF_FAV_ADDNEW) && HasUserPerm(PERM_LOGINOK)){
-	fav_load();
+        //大兔：打算拔掉這功能。所以有開啟的使用者登入時就自動關掉。
+        pwcuToggleUserFlag(UF_FAV_ADDNEW);
+	/*fav_load();
 	if (get_fav_root() != NULL) {
 	    int num;
 	    num = updatenewfav(1);
@@ -1408,7 +1452,7 @@ user_login(void)
 		fav_free();
 		fav_load();
 	    }
-	}
+	}*/
     }
 
     for (i = 0; i < NUMVIEWFILE; i++)
