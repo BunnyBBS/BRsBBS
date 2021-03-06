@@ -46,14 +46,58 @@ twoFA_Send(char *user, char *authcode)
 		code = thttp_code(&t);
 	thttp_cleanup(&t);
 
-	if(ret)
-		return "系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-S-001)";
-
-    if(code == 200)
+	if(code == 200)
 		return NULL;
-	else
-		return code;
 
+	if(code == 400)
+		return "帳號細節有誤，無法發送驗證碼。(2FA-BS400)";
+	if(code == 401)
+		return "API串接出錯，請聯繫工程業務處協助。(2FA-BS401)";
+	if(code == 410)
+		return "帳號限額已滿，無法發送驗證碼。(2FA-BS410)";
+	if(code == 500)
+		return "伺服器出錯，請聯繫工程業務處協助。(2FA-BS500)";
+	if(ret)
+		return "系統錯誤，請聯繫工程業務處協助。(2FA-BS001)";
+}
+
+static const char *
+twoFA_sms_Send(char *user, char *authcode, char *cellphone)
+{
+	int ret, code = 0;
+	char uri[320] = "",buf[200];
+
+	snprintf(uri, sizeof(uri), "/%s?user=%s&cellphone=%s"
+#ifdef BETA
+			 "&beta=true&code=%s"
+#endif
+			 , SMS_TWOFA_URI, user, cellphone
+#ifdef BETA
+			 , authcode
+#endif
+			);
+
+	THTTP t;
+	thttp_init(&t);
+	snprintf(buf, sizeof(buf), "Bearer %s", IBUNNY_API_KEY);
+	ret = thttp_get(&t, IBUNNY_SERVER, uri, IBUNNY_SERVER, buf);
+	if(!ret)
+		code = thttp_code(&t);
+	thttp_cleanup(&t);
+
+	if(code == 200)
+		return NULL;
+
+	if(code == 400)
+		return "帳號細節有誤，無法發送驗證碼。(2FA-MS400)";
+	if(code == 401)
+		return "API串接出錯，請聯繫工程業務處協助。(2FA-MS401)";
+	if(code == 410)
+		return "帳號限額已滿，無法發送驗證碼。(2FA-MS410)";
+	if(code == 500)
+		return "伺服器出錯，請聯繫工程業務處協助。(2FA-MS500)";
+	if(ret)
+		return "系統錯誤，請聯繫工程業務處協助。(2FA-MS001)";
 }
 
 int twoFA_setting(void)
@@ -74,15 +118,20 @@ int twoFA_setting(void)
 	if(cuser.uflag & UF_TWOFA_LOGIN)
 		getdata(6, 0, "關閉(y) 取消操作[N] ",genbuf, 3, LCECHO);
 	else{
-        mvouts(6, 0, "本功\能需搭配使用iBunny，請先確定您有登入iBunny。");
-        getdata(7, 0, "開啟(y) 取消操作[N] ",genbuf, 3, LCECHO);
+        move(4, 0);
+        outs("本功\能需透過您已登入的iBunny或您註冊的手機號碼傳送驗證碼。\n");
+        outs("請注意：如透過手機號碼傳送驗證碼，每個帳號24小時內只允\許\發送3則簡訊，\n");
+        outs("        當超過限額時您將無法收到簡訊驗證碼，只能透過iBunny接收或使用復原碼。\n");
+        outs("        建議您也登入iBunny以避免超過簡訊限額而無法正確驗證登入。\n");
+        outs("        當您有登入iBunny同時也有註冊手機號碼時，系統會優先發送驗證碼至iBunny。\n");
+        getdata(10, 0, "開啟(y) 取消操作[N] ",genbuf, 3, LCECHO);
     }
 	if (genbuf[0] != 'y') {
 		vmsg("取消操作。");
 		return 0;
 	}
 
-	move(6,0);clrtobot();
+	clear();move(6,0);
 	outs("以下操作需要先確認您的身份。\n");
 	getdata(7, 0, MSG_PASSWD, passbuf, PASS_INPUT_LEN + 1, PASSECHO);
 	passbuf[8] = '\0';
@@ -111,34 +160,24 @@ int twoFA_setting(void)
 	fprintf(fp,"%s", code);
 	fclose(fp);
 
-#ifdef BETA
 	msg = twoFA_Send(user,code);
-#else
-	msg = twoFA_Send(user,NULL);
-#endif
 
-    if (msg){
-		if(msg == 400){
-			mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
-			vmsg("您未登入iBunny！請先登入再來設定。(Error code: 2FA-S-400)");
-			return 0;
-		}else if(msg == 401){
-			mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
-			vmsg("API串接出錯，請聯繫工程業務處協助。(Error code: 2FA-S-401)");
-			return 0;
-		}else if(msg == 500){
-			mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
-			vmsg("伺服器出錯，請聯繫工程業務處協助。(Error code: 2FA-S-500)");
-			return 0;
-		}else{
-			mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
-			vmsgf("系統錯誤，請稍後再試。(Error code: 2FA-S-%3d)", msg);
-			return 0;
-		}
+	if (msg != NULL && strcmp(cuser.cellphone, "")){
+		msg = NULL;
+		move(7, 0);
+        outs("您沒有登入iBunny，系統即將發送驗證碼至您註冊的手機號碼。\n");
+        pressanykey();
+		msg = twoFA_sms_Send(user,code,cuser.cellphone);
+	}
+
+    if (msg != NULL){
+		mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
+		vmsgf("%s", msg);
+		return 0;
 	}
 	unlink(buf);
 
-    outs("驗證碼將直接被發送到iBunny，驗證碼為6位數字。\n");
+    move(8, 0);outs("驗證碼已經發送完畢，驗證碼為6位數字。\n");
 
     for (int i = 3; i > 0; i--) {
 		if (i < 3) {
@@ -192,11 +231,16 @@ int twoFA_setting(void)
     return 0;
 }
 
-int twoFA_main(char *user)
+int twoFA_main(const userec_t *u)
 {
     FILE           *fp;
     const char *msg = NULL;
     char code[7], rev_code[9], code_input[9], buf[200], buf2[200], genbuf[3];
+    char *user = u->userid;
+
+    int use_sms = 0;
+    if(!strcmp(cuser.cellphone, ""))
+    	use_sms = 2;
 
 #if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
     extern Fnv32_t  client_code;
@@ -230,99 +274,104 @@ int twoFA_main(char *user)
 		if (genbuf[0] != 'y') {
 			return -1;
 		}
+		int i = 3;
+	    for (i = 3; i > 0; i--) {
+			if (i < 3) {
+				char buf[80];
+				snprintf(buf, sizeof(buf), ANSI_COLOR(1;31) "復原碼錯誤，您還有 %d 次機會。" ANSI_RESET, i);
+				move(6, 0);
+				outs(buf);
+			}
+			code_input[0] = '\0';
+			getdata(5, 0, "請輸入復原碼：", code_input, sizeof(code_input), DOECHO);
+			setuserfile(buf, "2fa.recov");
+			if (!(fp = fopen(buf, "r"))){
+				outs("系統錯誤，無法使用復原碼，請稍後再試。(Error code: 2FA-F-002)");
+				return -1;
+			}
+			fgets(rev_code, sizeof(rev_code), fp);
+			fclose(fp);
+			if (!strcmp(rev_code, code_input)){
+				unlink(buf);
+				move(6, 0);
+				outs(ANSI_COLOR(1;33) "使用了復原碼認證，故復原碼已失效。" ANSI_RESET);
+				return NULL; //Success
+			}
+		}
+
+		now = time(NULL);
+		setuserfile(buf, "2fa.bad");
+		log_filef(buf, LOG_CREAT,"%s 第%d次兩步驟驗證失敗，IP位置：%s。\n",Cdate(&now), 4 - i , fromhost);
+		log_filef("2fa.bad", LOG_CREAT,"%s %s %s (%d/3)\n",Cdate(&now), cuser.userid, fromhost, 4 - i);
+		return -1;
 	}
 	fprintf(fp,"%s", code);
 	fclose(fp);
 
-#ifdef BETA
 	msg = twoFA_Send(user,code);
-#else
-	msg = twoFA_Send(user,NULL);
-#endif
-    	if (msg){
-		move(1,0);
-		if(msg == 400){
-			outs("您未登入iBunny，");
-			setuserfile(buf2, "2fa.recov");
-			if(!(fp = fopen(buf2, "r"))){
-				outs("也無設定復原碼。(Error code: 2FA-S-400-2)\n");
-				outs("請先登入iBunny後重新登入BBS。若您亦無法登入iBunny，請聯繫工程業務處協助。");
-				unlink(buf);
-				return -1;
-			}else{
-				outs("請先登入iBunny後重新登入BBS或使用復原碼。(Error code: 2FA-S-400-1)\n");
-				getdata(4, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
-				if (genbuf[0] != 'r') {
-					unlink(buf);
-					return -1;
-				}
-			}
-		}else if(msg == 401){
-			snprintf(buf, sizeof(buf), "API串接出錯，");
-			setuserfile(buf2, "2fa.recov");
-			if(!(fp = fopen(buf2, "r"))){
-				outs("也無設定復原碼。(Error code: 2FA-S-401-2)\n");
-				outs("請聯繫工程業務處協助。");
-				unlink(buf);
-				return -1;
-			}else{
-				outs("您只能使用復原碼。(Error code: 2FA-S-401-1)\n");
-				getdata(4, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
-				if (genbuf[0] != 'r') {
-					unlink(buf);
-					return -1;
-				}
-			}
-		}else if(msg == 500){
-			snprintf(buf, sizeof(buf), "伺服器出錯，");
-			setuserfile(buf2, "2fa.recov");
-			if(!(fp = fopen(buf2, "r"))){
-				outs("也無設定復原碼。(Error code: 2FA-S-500-2)\n");
-				outs("請聯繫工程業務處協助。");
-				unlink(buf);
-				return -1;
-			}else{
-				outs("您只能使用復原碼。(Error code: 2FA-S-500-1)\n");
-				getdata(4, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
-				if (genbuf[0] != 'r') {
-					unlink(buf);
-					return -1;
-				}
-			}
-		}else{
-			snprintf(buf, sizeof(buf), "系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-S-%3d)", msg);
-			outs("\n  (如果您有收到驗證碼，但系統誤報錯誤，輸入R即可進入驗證程序。)");
-			getdata(4, 0, "(R)使用復原碼 (T)重試發送 [C]取消登入 ",genbuf, 3, LCECHO);
-			if (genbuf[0] != 'r' && genbuf[0] != 't') {
-				unlink(buf);
-				return -1;
-			}
-			if (genbuf[0] == 't') {
-	#ifdef BETA
-				msg = twoFA_Send(user,code);
-	#else
-				msg = twoFA_Send(user,NULL);
-	#endif
-			    	if (msg){
-					move(1,0); clrtobot();
-					outs(msg);
-					getdata(3, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
-					if (genbuf[0] != 'r') {
-						unlink(buf);
-						return -1;
-					}
-				}
 
+	if(msg != NULL && use_sms == 0){
+		use_sms = 1;
+		msg = NULL;
+		msg = twoFA_sms_Send(user,code,u->cellphone);
+	}
+   	if(msg != NULL){
+		move(1, 0);
+		prints("錯誤：%s",msg);
+		outs("\n  (如果您有收到驗證碼，但系統誤報錯誤，輸入R即可進入驗證程序。)");
+		if(use_sms == 0)
+			getdata(4, 0, "(T)再試一次 (R)使用復原碼 (S)改用手機簡訊 [C]取消登入 ",genbuf, 3, LCECHO);
+		else
+			getdata(4, 0, "(T)再試一次 (R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+		if (genbuf[0] != 'r' && genbuf[0] != 't') {
+			unlink(buf);
+			return -1;
+		}
+		if (use_sms != 0 && genbuf[0] == 's') {
+			unlink(buf);
+			return -1;
+		}
+		if (genbuf[0] == 's') {
+			msg = twoFA_sms_Send(user,code,u->cellphone);
+		    if (msg != NULL){
+				move(1,0); clrtobot();
+				prints("錯誤：%s",msg);
+				getdata(3, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+				if (genbuf[0] != 'r') {
+					unlink(buf);
+					return -1;
+				}
 			}
+		}
+		if (genbuf[0] == 't') {
+			msg = twoFA_Send(user,code);
+		    if (msg != NULL){
+				move(1,0); clrtobot();
+				prints("錯誤：%s",msg);
+				getdata(3, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+				if (genbuf[0] != 'r') {
+					unlink(buf);
+					return -1;
+				}
+			}
+
 		}
 	}
 	unlink(buf);
 
 	move(1,0); clrtobot();
-    mvouts(2, 0, "驗證碼將直接被發送到iBunny\n");
-    outs("驗證碼為6位數字、復原碼為8位英數混合。\n");
+    mvouts(2, 0, "驗證碼將直接被發送到");
+    if(use_sms == 1)
+    	outs("您註冊的手機號碼");
+    else
+    	outs("您綁定的iBunny");
+    outs("\n驗證碼為6位數字、復原碼為8位英數混合。\n");
+
+    if(use_sms == 0)
+    	outs("如要改用簡訊驗證，請輸入s\n");
 
     for (int i = 3; i > 0; i--) {
+    	int skip_log = 0;
 		if (i < 3) {
 			char buf[80];
 			snprintf(buf, sizeof(buf), ANSI_COLOR(1;31) "驗證碼錯誤，您還有 %d 次機會。" ANSI_RESET, i);
@@ -334,7 +383,33 @@ int twoFA_main(char *user)
 			sizeof(code_input), DOECHO);
 
 		size_t length = strlen(code_input);
-		if(length == 6){
+		if(length == 1 && !strcmp("s", code_input)){
+			msg = NULL;
+			if(use_sms == 0){
+				setuserfile(buf, "2fa.code");
+				fp = fopen(buf, "w+");
+				fprintf(fp,"%s", code);
+				fclose(fp);
+				use_sms = 1;
+				msg = twoFA_sms_Send(user,code,u->cellphone);
+				unlink(buf);
+				i++;
+			}
+			move(1,0); clrtobot();
+		    mvouts(2, 0, "驗證碼將直接被發送到");
+		    if(use_sms == 1 && msg == NULL)
+		    	outs("您註冊的手機號碼");
+		    else
+		    	outs("您綁定的iBunny");
+		    outs("\n驗證碼為6位數字、復原碼為8位英數混合。\n");
+		    if(use_sms == 0)
+		    	outs("如要改用簡訊驗證，請輸入s\n");
+		    if (msg != NULL){
+				move(6,0);
+				prints("錯誤：%s",msg);
+			}
+			skip_log = 1;
+		}else if(length == 6){
 			if (!strcmp(code, code_input)){
 #if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
 				clear();
@@ -367,10 +442,12 @@ int twoFA_main(char *user)
 			}
 		}
 
-		now = time(NULL);
-		setuserfile(buf, "2fa.bad");
-		log_filef(buf, LOG_CREAT,"%s 第%d次兩步驟驗證失敗，IP位置：%s。\n",Cdate(&now), 4 - i , fromhost);
-		log_filef("2fa.bad", LOG_CREAT,"%s %s %s (%d/3)\n",Cdate(&now), cuser.userid, fromhost, 4 - i);
+		if(skip_log = 1){
+			now = time(NULL);
+			setuserfile(buf, "2fa.bad");
+			log_filef(buf, LOG_CREAT,"%s 第%d次兩步驟驗證失敗，IP位置：%s。\n",Cdate(&now), 4 - i , fromhost);
+			log_filef("2fa.bad", LOG_CREAT,"%s %s %s (%d/3)\n",Cdate(&now), cuser.userid, fromhost, 4 - i);
+		}
     }
     return -1;
 }

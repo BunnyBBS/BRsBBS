@@ -4,10 +4,10 @@
 #define QCAST   int (*)(const void *, const void *)
 
 static char    * const sig_des[] = {
-    "", "交談", "",/* "五子棋", "象棋", "暗棋", "圍棋", "黑白棋", "六子旗",*/
+    "", "交談", "",
 };
 static char    * const withme_str[] = {
-  "談天"/*, "五子棋", "", "象棋", "暗棋", "圍棋", "黑白棋", "六子旗"*/, NULL
+  "談天", NULL
 };
 
 #define MAX_SHOW_MODE 7
@@ -161,9 +161,7 @@ modestring(const userinfo_t * uentp, int simple)
 	else
 	    snprintf(modestr, sizeof(modestr),
 		     "%s %s", word, getuserid(uentp->destuid));
-    } /*else if (mode == CHESSWATCHING) {
-	snprintf(modestr, sizeof(modestr), "觀棋");
-    }*/ else if (mode != PAGE && mode != TQUERY)
+    } else if (mode != PAGE && mode != TQUERY)
 	return word;
     else
 	snprintf(modestr, sizeof(modestr),
@@ -518,11 +516,6 @@ my_query(const char *uident)
         }
 
 	// ------------------------------------------------------------
-
-	/*prints("《 五子棋 》%5d 勝 %5d 敗 %5d 和  "
-	       "《象棋戰績》%5d 勝 %5d 敗 %5d 和\n",
-	       muser.five_win, muser.five_lose, muser.five_tie,
-	       muser.chc_win, muser.chc_lose, muser.chc_tie);*/
 
 	showplans_userec(&muser);
 
@@ -1332,28 +1325,6 @@ my_talk(userinfo_t * uin, int fri_stat, char defact)
 		}
 		close(sock);
 		strlcpy(currutmp->mateid, uin->userid, sizeof(currutmp->mateid));
-
-		switch (uin->sig) {
-		    case SIG_CHC:
-			chc(msgsock, CHESS_MODE_WATCH);
-			break;
-
-		    case SIG_GOMO:
-			gomoku(msgsock, CHESS_MODE_WATCH);
-			break;
-
-		    case SIG_GO:
-			gochess(msgsock, CHESS_MODE_WATCH);
-			break;
-
-		    case SIG_REVERSI:
-			reversi(msgsock, CHESS_MODE_WATCH);
-			break;
-
-		    case SIG_CONN6:
-			connect6(msgsock, CHESS_MODE_WATCH);
-			break;
-		}
 	    }
 	}
 	else
@@ -1403,27 +1374,6 @@ my_talk(userinfo_t * uin, int fri_stat, char defact)
 	case 't':
 	    uin->sig = SIG_TALK;
 	    break;
-	/*case 'f':
-	    lockreturn(M_FIVE, LOCK_THIS);
-	    uin->sig = SIG_GOMO;
-	    break;
-	case 'c':
-	    lockreturn(CHC, LOCK_THIS);
-	    uin->sig = SIG_CHC;
-	    break;
-	case '6':
-	    lockreturn(M_CONN6, LOCK_THIS);
-	    uin->sig = SIG_CONN6;
-	    break;
-	case 'd':
-	    uin->sig = SIG_DARK;
-	    break;
-	case 'g':
-	    uin->sig = SIG_GO;
-	    break;
-	case 'r':
-	    uin->sig = SIG_REVERSI;
-	    break;*/
 	default:
 	    return;
 	}
@@ -1450,11 +1400,6 @@ my_talk(userinfo_t * uin, int fri_stat, char defact)
 	close(sock);
 	currutmp->sockactive = NA;
 
-	/*if (uin->sig == SIG_CHC || uin->sig == SIG_GOMO ||
-	    uin->sig == SIG_GO || uin->sig == SIG_REVERSI ||
-	    uin->sig == SIG_CONN6)
-	    ChessEstablishRequest(msgsock);*/
-
 	vkey_attach(msgsock);
 	while ((ch = vkey()) != I_OTHERDATA) {
 	    if (ch == Ctrl('D')) {
@@ -1473,24 +1418,6 @@ my_talk(userinfo_t * uin, int fri_stat, char defact)
 
 	if (c == 'y') {
 	    switch (uin->sig) {
-	    /*case SIG_DARK:
-		main_dark(msgsock, uin);
-		break;
-	    case SIG_GOMO:
-		gomoku(msgsock, CHESS_MODE_VERSUS);
-		break;
-	    case SIG_CHC:
-		chc(msgsock, CHESS_MODE_VERSUS);
-		break;
-	    case SIG_GO:
-		gochess(msgsock, CHESS_MODE_VERSUS);
-		break;
-	    case SIG_REVERSI:
-		reversi(msgsock, CHESS_MODE_VERSUS);
-		break;
-	    case SIG_CONN6:
-		connect6(msgsock, CHESS_MODE_VERSUS);
-		break;*/
 	    case SIG_TALK:
 	    default:
 		ccw_talk(msgsock, currutmp->destuid);
@@ -1963,11 +1890,9 @@ draw_pickup(int drawall, pickup_t * pickup, int pickup_way,
 {
     char           *msg_pickup_way[PICKUP_WAYS] = {
         "嗨! 朋友", "網友代號", "網友動態", "發呆時間", "來自何方",
-        /*" 五子棋 ", "  象棋  ", "  圍棋  ",*/
     };
     char           *MODE_STRING[MAX_SHOW_MODE] = {
-	"故鄉", "好友描述",/* "五子棋戰績", "象棋戰績", "象棋等級分", "圍棋戰績",
-        "暗棋戰績",*/
+	"故鄉", "好友描述",
     };
     char            pagerchar[6] = "* -Wf";
 
@@ -2535,23 +2460,6 @@ userlist(void)
 		break;
 
 	    case 'S':		/* 顯示好友描述 */
-#ifdef HAVE_DARK_CHESS_LOG
-		//show_mode = (show_mode+1) % MAX_SHOW_MODE;
-#else
-		//show_mode = (show_mode+1) % (MAX_SHOW_MODE - 1);
-#endif
-#ifdef CHESSCOUNTRY
-		/*if (show_mode == 2)
-		    user_query_mode = 1;
-		else if (show_mode == 3 || show_mode == 4)
-		    user_query_mode = 2;
-		else if (show_mode == 5)
-		    user_query_mode = 3;
-		else if (show_mode == 6)
-		    user_query_mode = 4;
-		else
-		    user_query_mode = 0;*/
-#endif /* defined(CHESSCOUNTRY) */
 		//redrawall = redraw = 1;
 		break;
 
@@ -2966,8 +2874,6 @@ talkreply(void)
 	currstat = currstat0;
 	return;
     }
-    if (is_chess)
-	ChessAcceptingRequest(a);
 
     clear();
 
@@ -2995,12 +2901,8 @@ talkreply(void)
     prints("對方來自 [%s]，" STR_LOGINDAYS " %d " STR_LOGINDAYS_QTY "，文章共 %d 篇\n",
 	    uip->from, xuser.numlogindays, xuser.numposts);
 
-    if (is_chess)
-	ChessShowRequest();
-    else {
 	showplans(uip->userid);
 	show_call_in(0, 0);
-    }
 
     snprintf(genbuf, sizeof(genbuf),
 	    "你想跟 %s (%s) %s嗎？請選擇[N]: ",
@@ -3032,24 +2934,6 @@ talkreply(void)
     uip->destuip = currutmp - &SHM->uinfo[0];
     if (buf[0] == 'y')
 	switch (sig) {
-	/*case SIG_DARK:
-	    main_dark(a, uip);
-	    break;
-	case SIG_GOMO:
-	    gomoku(a, CHESS_MODE_VERSUS);
-	    break;
-	case SIG_CHC:
-	    chc(a, CHESS_MODE_VERSUS);
-	    break;
-	case SIG_GO:
-	    gochess(a, CHESS_MODE_VERSUS);
-	    break;
-	case SIG_REVERSI:
-	    reversi(a, CHESS_MODE_VERSUS);
-	    break;
-	case SIG_CONN6:
-	    connect6(a, CHESS_MODE_VERSUS);
-	    break;*/
 	case SIG_TALK:
 	default:
 	    ccw_talk(a, currutmp->destuid);
@@ -3061,58 +2945,3 @@ talkreply(void)
     clear();
     currstat = currstat0;
 }
-
-/*int
-t_chat(void)
-{
-    static time4_t lastEnter = 0;
-    int    fd;
-
-    if (!HasBasicUserPerm(PERM_CHAT)) {
-	vmsg("權限不足，無法進入聊天室。");
-	return -1;
-    }
-
-    if(HasUserPerm(PERM_VIOLATELAW))
-    {
-       vmsg("請先繳罰單才能使用聊天室!");
-       return -1;
-    }
-
-#ifdef CHAT_GAPMINS
-    if ((now - lastEnter)/60 < CHAT_GAPMINS)
-    {
-       vmsg("您才剛離開聊天室，裡面正在整理中。請稍後再試。");
-       return 0;
-    }
-#endif
-
-#ifdef CHAT_REGDAYS
-    if (cuser.numlogindays < CHAT_REGDAYS) {
-	vmsgf("您尚未達到進入條件限制 (" STR_LOGINDAYS ": %d, 需要: %d)",
-              cuser.numlogindays, CHAT_REGDAYS);
-	return 0;
-    }
-#endif
-
-    // start to create connection.
-    syncnow();
-    move(b_lines, 0); clrtoeol();
-    outs(" 正在與聊天室連線... ");
-    refresh();
-    fd = toconnect(XCHATD_ADDR);
-    move(b_lines-1, 0); clrtobot();
-    if (fd < 0) {
-	outs(" 聊天室正在整理中，請稍候再試。");
-	system("bin/xchatd");
-	pressanykey();
-	return -1;
-    }
-
-    // mark for entering
-    syncnow();
-    lastEnter = now;
-
-    return (fd);
-}*/
-

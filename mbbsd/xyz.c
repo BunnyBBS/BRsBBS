@@ -61,7 +61,9 @@ Goodbye(void)
 {
     char            genbuf[STRLEN];
 
-    getdata(b_lines - 1, 0, "您確定要離開【 " BBSNAME " 】嗎(Y/N)？[N] ",
+    clear();
+    vs_hdr(" 出境大廳 ");
+    getdata(b_lines - 3, 0, "您確定要離開【 " BBSNAME " 】嗎(Y/N)？[N] ",
 	    genbuf, 3, LCECHO);
 
     if (*genbuf != 'y')

@@ -17,7 +17,7 @@ UTILOBJS = stuff.o kaede.o convert.o name.o syspost.o cache.o cal.o boardtax.o
 UIOBJS   = menu.o vtuikit.o psb.o
 PAGEROBJS= more.o pmore.o
 PLUGOBJS = ordersong.o angel.o timecap.o
-CHESSOBJS= chess.o chc.o chc_tab.o ch_go.o ch_gomo.o ch_dark.o ch_reversi.o ch_conn6.o
+#CHESSOBJS= chess.o chc.o chc_tab.o ch_go.o ch_gomo.o ch_dark.o ch_reversi.o ch_conn6.o
 GAMEOBJS = chicken.o gamble.o mission.o achieve.o
 OBJS:=	admin.o assess.o edit.o xyz.o var.o vote.o voteboard.o comments.o \
 	$(COREOBJS) $(ABUSEOBJS) $(ACCOBJS) $(NETOBJS) $(TALKOBJS) $(UTILOBJS) \
@@ -51,7 +51,7 @@ LDLIBS:= -lcmbbs -lcmsys -losdep $(LDLIBS)
 # conditional configurations and optional modules
 #######################################################################
 
-BBSCONF:=	$(SRCROOT)/pttbbs.conf
+BBSCONF:=	$(SRCROOT)/main.conf
 DEF_PATTERN:=	^[ \t]*\#[ \t]*define[ \t]*
 DEF_CMD:=	grep -Ewq "${DEF_PATTERN}"
 DEF_YES:=	&& echo "YES" || echo ""
@@ -103,7 +103,7 @@ $(PROG): testsz $(OBJS)
 	@printf "\033[m"
 	$(CC) vers.c -o $(PROG) $(OBJS) $(LDFLAGS) $(LDLIBS)
 
-testsz:	$(SRCROOT)/pttbbs.conf $(SRCROOT)/include/*.h testsz.c
+testsz:	$(SRCROOT)/main.conf $(SRCROOT)/include/*.h testsz.c
 	$(CC) $(CFLAGS) testsz.c -o testsz
 	@printf "\033[0;1;33mChecking configuration data sizes...\033[m\n"
 	@./testsz

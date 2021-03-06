@@ -2,14 +2,37 @@
 #include "bbs.h"
 
 /* 當資料欄位有異動 例如用了舊的欄位 可用這個程式清除舊值 */
-int clean_unused_var(userec_t *rec)
+int
+OpenCreate(const char *path, int flags)
 {
-    rec->goodpost = 0;
-    rec->badpost = 0;
-    rec->goodsale = 0;
-    rec->badsale = 0;
-    memset(rec->pad, 0, sizeof(rec->pad));
-    return 0;
+    return open(path, flags | O_CREAT, DEFAULT_FILE_CREATE_PERM);
+}
+size_t strlcpy(dst, src, siz)
+    char *dst;
+    const char *src;
+    size_t siz;
+{
+    char *d = dst;
+    const char *s = src;
+    size_t n = siz;
+
+    /* Copy as many bytes as will fit */
+    if (n != 0 && --n != 0) {
+    do {
+        if ((*d++ = *s++) == 0)
+        break;
+    } while (--n != 0);
+    }
+
+    /* Not enough room in dst, add NUL and traverse rest of src */
+    if (n == 0) {
+    if (siz != 0)
+        *d = '\0';      /* NUL-terminate dst */
+    while (*s++)
+        ;
+    }
+
+    return(s - src - 1);    /* count does not include NUL */
 }
 
 int main(int argc, char *argv[])
@@ -34,8 +57,8 @@ int main(int argc, char *argv[])
     for(i = 0; i < MAX_USERS; i++){
 	if (read(fd, &user, sizeof(user)) != sizeof(user))
 	    break;
-	clean_unused_var(&user);
-	write(fdw, &user, sizeof(user));
+        strlcpy(&user.cellphone, "", sizeof(&user.cellphone));
+    	write(fdw, &user, sizeof(user));
     }
     close(fd);
     close(fdw);

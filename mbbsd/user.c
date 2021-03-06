@@ -163,14 +163,6 @@ int u_cancelbadpost(void)
 }
 
 /* 站務人員查詢使用者資料警訊系統 */
-static void gen_authCode(char *buf, size_t len)
-{
-	const char * const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-
-    for (int i = 0; i < len; i++)
-	buf[i] = chars[random() % strlen(chars)];
-    buf[len] = '\0';
-} //原本想直接引用兩步驟認證的，但後來發現，要是沒定義兩步驟，這裡就會出錯。 -大兔
 int
 user_display_advanced_auth(void)
 {
@@ -207,7 +199,10 @@ user_display_advanced_auth(void)
 			vmsg("系統錯誤，請稍後再試。(Error code: UDA-G-001)");
 			return 0;
 		}
-		gen_authCode(code, 8);
+		const char * const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+	    for (int i = 0; i < 8; i++)
+		code[i] = chars[random() % strlen(chars)];
+	    code[8] = '\0';
 		fprintf(fp,"%s", code);
 		fclose(fp);
 		outs(" 授權認證碼：" ANSI_COLOR(1)); outs(code); outs(ANSI_RESET "\n");
@@ -224,8 +219,12 @@ user_display_advanced(const userec_t * u, int adminmode)
 		vmsg("權限錯誤");
 		return 0;
 	}
-	if(!HasUserPerm(PERM_SYSOP|PERM_ACCOUNTS|PERM_BOARD)){
+	if(!HasUserPerm(PERM_SYSOP|PERM_ACCOUNTS|PERM_BBSADM)){
 		vmsg("權限不足");
+		return 0;
+	}
+	if(strcmp(u->userid, cuser.userid) == 0){
+		vmsg("你不認識你自己的資料嗎？");
 		return 0;
 	}
 
@@ -236,14 +235,14 @@ user_display_advanced(const userec_t * u, int adminmode)
 	if(!HasUserPerm(PERM_SYSOP)){
 		char code[9], code_input[9], buf[200];
     	FILE *fp;
-    	sethomefile(buf, u->userid, "query_data.auth");
+    	sethomefile(buf, cuser.userid, "query_data.auth");
 		if (!(fp = fopen(buf, "r"))){
 			vmsg("總站長沒有設定授權碼，請先洽詢總站長。");
 			return 0;
 		}
 		fgets(code, sizeof(code), fp);
 		fclose(fp);
-		getdata(5, 0, "請輸入授權認證碼：", code_input, sizeof(code_input), DOECHO);
+		getdata(5, 0, "請輸入您的授權碼：", code_input, sizeof(code_input), DOECHO);
 
 		if (!strcmp(code, code_input)){
 			unlink(buf);
@@ -253,14 +252,37 @@ user_display_advanced(const userec_t * u, int adminmode)
 		}
 	}
 
-	move(b_lines-3, 0); clrtobot();
-	outs("\n" ANSI_COLOR(1;31) "注意: "ANSI_COLOR(1)"您將使用站長權限查詢使用者資料，若無合理理由請勿任意進行操作。" ANSI_RESET);
+	move(5, 0); clrtobot();
+	outs(ANSI_COLOR(1;31) "注意: "ANSI_COLOR(37)"您將使用站長權限查詢使用者資料，若無合理理由請勿任意進行操作。" ANSI_RESET);
     char genbuf2[200];
-	getdata(b_lines - 1, 0, "您確定要繼續操作？[y/N] ", genbuf2, 3, LCECHO);
+	getdata(b_lines - 3, 0, "您確定要繼續操作？[y/N] ", genbuf2, 3, LCECHO);
 	if(genbuf2[0] != 'y'){
 		vmsg("下次請您看清楚再來。");
 		return 0;
 	}else{
+		int inform_user = 1;
+		userec_t        atuser;
+		if(HasUserPerm(PERM_SYSOP)){
+			getdata(b_lines - 2, 0, "通知被查詢的國民？[Y/n] ", genbuf2, 3, LCECHO);
+			if(genbuf2[0] == 'n'){
+				move(7, 0); clrtobot();
+				outs(ANSI_COLOR(1;31) "注意："ANSI_COLOR(37)"如不通知國民，您需要一位具公務權限的國民證明您的操作，"ANSI_RESET"\n");
+				outs("      "ANSI_COLOR(1)"您完成查詢後系統會通知該名公務人員，且您的操作仍然會被紀錄於國家安全局。"ANSI_RESET"\n");
+				outs(ANSI_COLOR(1;33) "提醒："ANSI_COLOR(37)"請您遵照現有作業程序規定進行操作，避免違反大兔個資保護政策。"ANSI_RESET"\n\n");
+				char  *witness[IDLEN+1]; int uid;
+				usercomplete("請輸入協助證明之公務人員：", witness);
+				if (!(uid = searchuser(witness, NULL))){
+					vmsg("查無這個帳號！");
+					return 0;
+				}
+			    passwd_sync_query(uid, &atuser);
+                if (!(atuser.userlevel & PERM_ADMIN)) {
+					vmsg("這個帳號不具有公務身份！");
+					return 0;
+                }
+	            inform_user = 0;
+			}
+		}
 		FILE           *fp;
 		char            reason[100];
 		char bmStr[IDLEN * 3 + 10];
@@ -282,10 +304,15 @@ user_display_advanced(const userec_t * u, int adminmode)
         }else{
             unlink("etc/queryData.mail");
 			fp = fopen("etc/queryData.mail", "w+");
-    		fprintf(fp,"\n國家安全局通知\n站務人員 %s 查詢了您的個人資料，\n時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，\n理由是 %s，\n如果您認為該站務人員的行為不當請立即至%s提報。\n若無其他異況可直接略過本通知。", cuser.userid, ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason, BN_SYSOP);
+    		fprintf(fp,"\n國家安全局通知\n站務人員 %s 查詢了 %s 的個人資料，\n時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，\n理由是 %s，\n如果您認為該站務人員的行為不當請立即至%s提報。\n若無其他異況可直接略過本通知。", cuser.userid, u->userid, ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason, BN_SYSOP);
+    		if(inform_user == 0)
+    			fprintf(fp,"\n\n[此次操作未直接通知國民]\n本信已同時知會以下人員：%s", atuser.userid);
     		fclose(fp);
-    		mail_id(u->userid, "[通知] 有站務人員查詢您的個人資料", "etc/queryData.mail", "[國家安全局]");
-    		post_file(BN_SECURITY, "[通知] 有站務人員查詢使用者個人資料", "etc/queryData.mail", "[國家安全局]");
+    		if(inform_user == 0)
+    			mail_id(atuser.userid, "[通知] 有站務人員查詢 他人 個人資料", "etc/queryData.mail", "[國家安全局]");
+    		else
+    			mail_id(u->userid, "[通知] 有站務人員查詢 您的 個人資料", "etc/queryData.mail", "[國家安全局]");
+    		post_file(BN_SECURITY, "[通知] 有站務人員查詢個人敏感資料", "etc/queryData.mail", "[國家安全局]");
             outs("正在查詢使用者資料…");
         }
 	}
@@ -308,6 +335,7 @@ user_display_advanced(const userec_t * u, int adminmode)
 		prints("\t職業學歷: %s\n", u->career);
 		prints("\t居住地址: %s\n", u->address);
 		prints("\t電子信箱: %s\n", u->email);
+		prints("\t手機號碼: %s\n", u->cellphone);
 
     pressanykey();
 	return 0;
@@ -342,6 +370,7 @@ user_display(const userec_t * u, int adminmode)
 	    prints("\t職業學歷: %s\n", u->career);
 	    prints("\t居住地址: %s\n", u->address);
 	    prints("\t電子信箱: %s\n", u->email);
+		prints("\t手機號碼: %s\n", u->cellphone);
     }
 
     prints("\t是否成年: %s滿18歲\n", u->over_18 ? "已" : "未");
@@ -393,7 +422,6 @@ user_display(const userec_t * u, int adminmode)
 #endif
 	}
 
-	outc('\n');
     prints("\t註冊日期: %s （已滿 %d 天）\n",
 	    Cdate(&u->firstlogin), (int)((now - u->firstlogin)/DAY_SECONDS));
     prints("\t" STR_LOGINDAYS ": %d" STR_LOGINDAYS_QTY "\n",u->numlogindays);
@@ -405,30 +433,6 @@ user_display(const userec_t * u, int adminmode)
 	prints("\t停留期間: %d 小時 %2d 分\n",
 	       diff / 60, diff % 60);
     }
-
-#ifdef CHESSCOUNTRY
-    {
-	int i, j;
-	FILE* fp;
-	for(i = 0; i < 2; ++i){
-	    sethomefile(genbuf, u->userid, chess_photo_name[i]);
-	    fp = fopen(genbuf, "r");
-	    if(fp != NULL){
-		for(j = 0; j < 11; ++j)
-		    fgets(genbuf, 200, fp);
-		fgets(genbuf, 200, fp);
-		prints("%12s棋國自我描述: %s", chess_type[i], genbuf + 11);
-		fclose(fp);
-	    }
-	}
-    }
-#endif
-
-#ifdef PLAY_ANGEL
-    if (adminmode)
-	prints("\t小 天 使: %s\n",
-		u->myangel[0] ? u->myangel : "無");
-#endif
 
     if (!adminmode)
     {
@@ -620,12 +624,6 @@ void Customize(void)
 	UF_REJ_OUTTAMAIL,
 	UF_DEFBACKUP,
     UF_SECURE_LOGIN,
-#ifdef USE_NOTILOGIN
-	UF_NOTIFY_LOGIN,
-#endif
-#ifdef USE_2FALOGIN
-    UF_TWOFA_LOGIN,
-#endif
 	UF_FAV_ADDNEW,
 	UF_FAV_NOHILIGHT,
 	UF_NO_MODMARK,
@@ -651,12 +649,6 @@ void Customize(void)
 	"MAIL       拒收站外信",
 	"BACKUP     預設備份信件與其它記錄", //"與聊天記錄",
     "LOGIN      只允許\使用安全連線(ex, ssh)登入",
-#ifdef USE_NOTILOGIN
-    "NOTI_LOGIN 帳號被登入時發送通知 (需搭配iBunny)",
-#endif
-#ifdef USE_2FALOGIN
-    "2FA_LOGIN  使用兩步驟驗證登入 (需搭配iBunny)",
-#endif
 	"MYFAV      新板自動進我的最愛 (停用功\能)",
 	"MYFAV      單色顯示我的最愛",
 	"MODMARK    隱藏文章修改符號(推文/修文) (~)",
@@ -942,6 +934,77 @@ userPass_change(userec_t x, int adminmode, int unum)
 	return 0;
 }
 
+static const char *
+sms_verify_send(char *user, char *authcode, char *cellphone)
+{
+	int ret, code = 0;
+	char uri[320] = "",buf[200];
+
+	snprintf(uri, sizeof(uri), "/%s?user=%s&cellphone=%s&code=%s"
+#ifdef BETA
+			 "&beta=true"
+#endif
+			 , SMS_VERIFY_URI, user, cellphone , authcode
+			);
+
+	THTTP t;
+	thttp_init(&t);
+	snprintf(buf, sizeof(buf), "Bearer %s", IBUNNY_API_KEY);
+	ret = thttp_get(&t, IBUNNY_SERVER, uri, IBUNNY_SERVER, buf);
+	if(!ret)
+		code = thttp_code(&t);
+	thttp_cleanup(&t);
+
+	if(code == 200)
+		return NULL;
+
+	if(code == 400)
+		return "帳號細節有誤，無法發送驗證碼。(SMS-V400)";
+	if(code == 401)
+		return "API串接出錯，請聯繫工程業務處協助。(SMS-V401)";
+	if(code == 410)
+		return "帳號限額已滿，無法發送驗證碼。(SMS-V410)";
+	if(code == 500)
+		return "伺服器出錯，請聯繫工程業務處協助。(SMS-V500)";
+	if(ret)
+		return "系統錯誤，請聯繫工程業務處協助。(SMS-V001)";
+}
+int cellphone_verify(char *user, char *cellphone)
+{
+	mvouts(6,0,"即將驗證您的手機號碼…");clrtobot();pressanykey();
+	char code[7], code_input[7];
+	const char *msg = NULL;
+	const char * const chars = "1234567890";
+    for (int i = 0; i < 6; i++)
+		code[i] = chars[random() % strlen(chars)];
+    code[6] = '\0';
+	msg = sms_verify_send(user, code, cellphone);
+	if (msg != NULL){
+		move(10,0);
+		prints("錯誤：%s",msg);
+		return -1;
+	}
+	for (int i = 3; i > 0; i--) {
+		if (i < 3) {
+			char buf2[80];
+			move(10, 0);
+			snprintf(buf2, sizeof(buf2), ANSI_COLOR(1;31) "驗證碼錯誤，您還有 %d 次機會。" ANSI_RESET, i);
+			outs(buf2);
+		}
+		code_input[0] = '\0';
+		getdata(9, 0, "請輸入驗證碼：", code_input,
+			sizeof(code_input), DOECHO);
+
+		size_t length = strlen(code_input);
+		if(length == 6){
+			if (!strcmp(code, code_input)){
+				return 0;
+			}
+		}
+    }
+    return -1;
+}
+
 void
 uinfo_query(const char *orig_uid, int adminmode, int unum)
 {
@@ -987,15 +1050,15 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
     }
 
     if(adminmode)
-    	mvouts(b_lines-2, 0, "(1)修改資料 (2)設定密碼 (3)設定權限 (4)砍除帳號 (5)修改帳號\n(M)修改信箱 (A)進階查詢 (6)寵物 (7)罰單 (8)退文 [0]結束");
+    	mvouts(b_lines-2, 0, "(1)修改資料 (2)設定密碼 (3)設定權限 (5)修改帳號 (7)罰單 (8)退文\n(M)修改信箱 (P)修改手機號碼 (A)進階查詢 (6)寵物 (4)砍除帳號 [0]結束");
     else
-    	mvouts(b_lines-1, 0, "請選擇 (1)修改資料 (2)設定密碼 (C)個人化設定 (M)修改信箱 [0]結束");
+    	mvouts(b_lines-1, 0, "(1)修改資料 (2)設定密碼 (C)個人化設定 (M)修改信箱 (P)修改手機號碼 [0]結束");
     ans = vans("請輸入操作 ");
 
-    if (ans > '2' && ans != 'c' && ans != 'm' && !adminmode)
+    if (ans > '2' && ans != 'c' && ans != 'm' && ans != 'p' && !adminmode)
 	ans = '0';
 
-    if (ans == '1' || ans == '3' || ans == 'm') {
+    if (ans == '1' || ans == '3' || ans == 'm' || ans == 'p') {
 	clear();
 	y = 1;
 	move(y++, 0);
@@ -1028,7 +1091,10 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 
     case 'm':
 	while (1) {
-	    getdata_str(y, 0,"電子信箱：", buf, sizeof(x.email), DOECHO, x.email);
+		if(!strcmp(x.userid, cuser.userid))
+	    	getdata_str(y, 0,"電子信箱：", buf, sizeof(x.email), DOECHO, x.email);
+		else
+	    	getdata_str(y, 0,"電子信箱：", buf, sizeof(x.email), DOECHO, "");
 
 	    strip_blank(buf, buf);
 
@@ -1076,6 +1142,27 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 	}
 	break;
 
+    case 'p':
+	if(!strcmp(x.userid, cuser.userid))
+    	getdata_str(y, 0,"手機號碼：", buf, sizeof(x.cellphone), DOECHO, x.cellphone);
+	else
+    	getdata_str(y, 0,"手機號碼：", buf, sizeof(x.cellphone), DOECHO, "");
+
+    if(!strcmp(x.cellphone, buf))
+    	return;
+
+	int msg = 0;
+	if (!adminmode){
+		msg = cellphone_verify(x.userid, buf);
+	}
+
+	if(msg != 0){
+		vmsg("未修改。");
+		return;
+	}else
+		strlcpy(x.cellphone, buf, sizeof(x.cellphone));
+	break;
+
     case '1':
 	move(0, 0);
 	outs("請逐項修改。");
@@ -1091,7 +1178,7 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 		    sizeof(x.career), DOECHO);
 	}
 
-        do {
+        /*do {
             snprintf(buf, sizeof(buf), x.over_18 ? "y" : "n");
             mvouts(y, 0, "本站部份看板可能有限制級內容只適合成年人士閱\讀。");
             getdata_buf(y+1, 0,"您是否年滿十八歲並同意觀看此類看板"
@@ -1099,7 +1186,7 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
         } while (buf[0] != 'y' && buf[0] != 'n');
         x.over_18 = buf[0] == 'y' ? 1 : 0;
         mvprints(y, 0, "是否年滿十八歲: %s\n\n", x.over_18 ? "是" : "否");
-        y++;
+        y++;*/
 
 #ifdef PLAY_ANGEL
 	if (adminmode) {
@@ -1136,50 +1223,6 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 		prompt = "小 天 使：";
 	    }
             ++y;
-	}
-#endif
-
-#ifdef CHESSCOUNTRY
-	{
-	    int j, k;
-	    FILE* fp;
-	    for(j = 0; j < 2; ++j){
-		sethomefile(genbuf, x.userid, chess_photo_name[j]);
-		fp = fopen(genbuf, "r");
-		if(fp != NULL){
-		    FILE* newfp;
-		    char mybuf[200];
-		    for(k = 0; k < 11; ++k)
-			fgets(genbuf, 200, fp);
-		    fgets(genbuf, 200, fp);
-		    chomp(genbuf);
-
-		    snprintf(mybuf, 200, "%s棋國自我描述：", chess_type[j]);
-		    getdata_buf(y, 0, mybuf, genbuf + 11, 80 - 11, DOECHO);
-		    ++y;
-
-		    sethomefile(mybuf, x.userid, chess_photo_name[j]);
-		    strcat(mybuf, ".new");
-		    if((newfp = fopen(mybuf, "w")) != NULL){
-			rewind(fp);
-			for(k = 0; k < 11; ++k){
-			    fgets(mybuf, 200, fp);
-			    fputs(mybuf, newfp);
-			}
-			fputs(genbuf, newfp);
-			fputc('\n', newfp);
-
-			fclose(newfp);
-
-			sethomefile(genbuf, x.userid, chess_photo_name[j]);
-			sethomefile(mybuf, x.userid, chess_photo_name[j]);
-			strcat(mybuf, ".new");
-
-			Rename(mybuf, genbuf);
-		    }
-		    fclose(fp);
-		}
-	    }
 	}
 #endif
 
@@ -1262,17 +1305,6 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 		if ((tmp = atoi(buf)) >= 0)
 		    x.vl_count = tmp;
 
-        /*    set_chess("五子棋", y++, &x.five_win, &x.five_lose, &x.five_tie);
-            set_chess("象棋", y++, &x.chc_win, &x.chc_lose, &x.chc_tie);
-            set_chess("圍棋", y++, &x.go_win, &x.go_lose, &x.go_tie);
-            set_chess("暗棋", y++, &x.dark_win, &x.dark_lose, &x.dark_tie);
-	    y -= 4; // rollback games set to get more space
-	    move(y++, 0); clrtobot();
-	    prints("棋類: 五子:%d/%d/%d 象:%d/%d/%d 圍:%d/%d/%d 暗:%d/%d/%d\n",
-		    x.five_win, x.five_lose, x.five_tie,
-		    x.chc_win, x.chc_lose, x.chc_tie,
-		    x.go_win, x.go_lose, x.go_tie,
-		    x.dark_win, x.dark_lose, x.dark_tie);*/
 #ifdef FOREIGN_REG
 	    if (getdata_str(y++, 0, "住在 1)台灣 2)其他：", buf, 2, DOECHO, x.uflag & UF_FOREIGN ? "2" : "1"))
 		if ((tmp = atoi(buf)) > 0){
@@ -1504,52 +1536,6 @@ showplans_userec(userec_t *user)
             prints(" (已累計 %d 次)", user->vl_count);
 	return;
     }
-
-#ifdef CHESSCOUNTRY
-    if (user_query_mode) {
-	int    i = 0;
-	FILE  *fp;
-
-       sethomefile(genbuf, user->userid, chess_photo_name[user_query_mode - 1]);
-	if ((fp = fopen(genbuf, "r")) != NULL)
-	{
-	    char   photo[6][ANSILINELEN];
-	    int    kingdom_bid = 0;
-	    int    win = 0, lost = 0;
-
-	    move(7, 0);
-	    while (i < 12 && fgets(genbuf, sizeof(genbuf), fp))
-	    {
-		chomp(genbuf);
-		if (i < 6)  /* 讀照片檔 */
-		    strlcpy(photo[i], genbuf, sizeof(photo[i]));
-		else if (i == 6)
-		    kingdom_bid = atoi(genbuf);
-		else
-		    prints("%s %s\n", photo[i - 7], genbuf);
-
-		i++;
-	    }
-	    fclose(fp);
-
-	    if (user_query_mode == 1) {
-		win = user->five_win;
-		lost = user->five_lose;
-	    } else if(user_query_mode == 2) {
-		win = user->chc_win;
-		lost = user->chc_lose;
-	    }
-	    prints("%s <總共戰績> %d 勝 %d 敗\n", photo[5], win, lost);
-
-
-	    /* 棋國國徽 */
-	    setapath(genbuf, bcache[kingdom_bid - 1].brdname);
-	    strlcat(genbuf, "/chess_ensign", sizeof(genbuf));
-	    show_file(genbuf, 13, 10, SHOWFILE_ALLOW_COLOR);
-	    return;
-	}
-    }
-#endif /* defined(CHESSCOUNTRY) */
 
     sethomefile(genbuf, user->userid, fn_plans);
     if (!show_file(genbuf, 7, MAX_QUERYLINES, SHOWFILE_ALLOW_COLOR))

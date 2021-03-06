@@ -3,7 +3,7 @@
 #define INCLUDE_CONFIG_H
 
 #include <syslog.h>
-#include "../pttbbs.conf"
+#include "../main.conf"
 
 #define BBSPROG         BBSHOME "/bin/mbbsd"         /* 主程式 */
 #define BAN_FILE        "BAN"                        /* 關站通告檔 */
@@ -12,17 +12,17 @@
 /////////////////////////////////////////////////////////////////////////////
 // System Name Configuration 系統名稱設定
 
-/* 系統名(郵件用)，建議別超過 3 個字元。 詳見 sample/pttbbs.conf */
+/* 系統名(郵件用)，建議別超過 3 個字元。 詳見 sample/main.conf */
 #ifndef BBSMNAME
 #define BBSMNAME        "Ptt"
 #endif
 
-/* 系統名(選單用)，建議剛好 4 個字元。 詳見 sample/pttbbs.conf */
+/* 系統名(選單用)，建議剛好 4 個字元。 詳見 sample/main.conf */
 #ifndef BBSMNAME2
 #define BBSMNAME2       "Ｐtt"
 #endif
 
-/* 錢幣名，建議剛好 3 個字元。 詳見 sample/pttbbs.conf */
+/* 錢幣名，建議剛好 3 個字元。 詳見 sample/main.conf */
 #ifndef MONEYNAME
 #define MONEYNAME       BBSMNAME "幣"
 #endif
@@ -469,7 +469,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // Default Configurations 預設參數
 
-// 若想停用下列參數請在 pttbbs.conf 定義 NO_XXX (ex, NO_LOGINASNEW)
+// 若想停用下列參數請在 main.conf 定義 NO_XXX (ex, NO_LOGINASNEW)
 #ifndef NO_LOGINASNEW
 #define    LOGINASNEW           /* 採用上站申請帳號制度 */
 #endif

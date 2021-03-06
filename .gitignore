@@ -11,5 +11,5 @@ mbbsd/mbbsd
 mbbsd/testmbbsd
 mbbsd/testsz
 mbbsd/vers.c
-pttbbs.conf
+/main.conf
 *.sh

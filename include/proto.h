@@ -886,7 +886,7 @@ int list_unpay(void);
 /* Two Factor Auth (should with iBunny) */
 #ifdef USE_2FALOGIN
 int twoFA_setting(void);
-int twoFA_main(char *user);
+int twoFA_main(const userec_t *u);
 int twoFA_genRecovCode();
 #if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
 int twoFA_RemoveTrust();

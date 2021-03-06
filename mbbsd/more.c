@@ -177,11 +177,11 @@ common_pager_exit_handler(int r, const char *fpath)
 		r = Select();
 	    break;
 
-	case RET_DOCHESSREPLAY:
+	/*case RET_DOCHESSREPLAY:
 	    r = FULLUPDATE;
 	    if (HasUserPerm(PERM_BASIC))
 		ChessReplayGame(fpath);
-	    break;
+	    break;*/
 
 #if defined(USE_BBSLUA) && !defined(DISABLE_BBSLUA_IN_PAGER)
 	case RET_DOBBSLUA:

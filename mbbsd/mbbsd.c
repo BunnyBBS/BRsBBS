@@ -775,6 +775,78 @@ bool isFileExist(char *filedir){
 	return false;
 }
 
+void
+support_request(void) {
+    int i, y;
+    char src[PATHLEN], dest[PATHLEN], buf[STRLEN];
+    FILE *fp;
+
+    strlcpy(dest, src, sizeof(dest));
+    strlcat(dest, ".reply", sizeof(dest));
+    if (dashf(dest))
+    return;
+
+    clear();
+    vs_hdr2(" 支援中心 ", " 帳號登入協助");
+    move(2, 0);
+    outs("看來您嘗試登入多次卻無法正常登入，您是否忘記帳號或是忘記密碼呢？\n");
+    outs("請您憑最後使用的印象填妥以下資訊，帳號支援小組將協助您取回帳號。\n");
+    outs("請盡可能詳細提供以下資料，以使我們更容易辨別您是否有帳號存取權。\n");
+
+    y=6;move(y,0);clrtobot();
+    mvouts(y++,0,"【帳號基本資料】\n");
+    getdata(y++, 0, "您印象中使用的帳號：", buf, IDLEN+1, DOECHO);
+    snprintf(src, sizeof(src), "support/%s", buf);
+    fp = fopen(src, "w+");
+    fprintf(fp,"userid: %s\n", buf);
+    fclose(fp);
+
+    getdata(y++, 0, "您印象中使用的密碼：", buf, PASS_INPUT_LEN+1, DOECHO);
+    log_filef(src, LOG_CREAT, "passwd: %s\n", buf);
+
+    y=6;move(y,0);clrtobot();
+    mvouts(y++,0,"【個人基本資料】\n");
+    getdata(y++, 0, "您註冊的真實姓名：", buf, DISP_TTLEN, DOECHO);
+    log_filef(src, LOG_CREAT, "name: %s\n", buf);
+    getdata(y++, 0, "您註冊的居住地址：", buf, DISP_TTLEN, DOECHO);
+    log_filef(src, LOG_CREAT, "address: %s\n", buf);
+    getdata(y++, 0, "您註冊的學歷職業：", buf, DISP_TTLEN, DOECHO);
+    log_filef(src, LOG_CREAT, "career: %s\n", buf);
+    getdata(y++, 0, "您註冊的電子信箱：", buf, DISP_TTLEN, DOECHO);
+    log_filef(src, LOG_CREAT, "email: %s\n", buf);
+    getdata(y++, 0, "您註冊的手機號碼：", buf, DISP_TTLEN, DOECHO);
+    log_filef(src, LOG_CREAT, "cellphone: %s\n", buf);
+
+    y=6;move(y,0);clrtobot();
+    mvouts(y++,0,"【帳號時間歷程】\n");
+    mvouts(y++,0,"填寫格式：YYYYMMDD-HHMMSS，請至少填寫日期\n");
+    getdata(y++, 0, "您印象中最初註冊日期：", buf, DISP_TTLEN, DOECHO);
+    log_filef(src, LOG_CREAT, "reg-date: %s\n", buf);
+    getdata(y++, 0, "您印象中最後登入日期：", buf, DISP_TTLEN, DOECHO);
+    log_filef(src, LOG_CREAT, "last-date: %s\n", buf);
+
+    y=6;move(y,0);clrtobot();
+    mvouts(y++,0,"【聯絡資料】\n");
+    mvouts(y++,0,"我們該如何回覆您或跟您聯繫呢？\n");
+    getdata(y++, 0, "電子信箱：", buf, DISP_TTLEN, DOECHO);
+    log_filef(src, LOG_CREAT, "reply-email: %s\n", buf);
+    getdata(y++, 0, "手機號碼：", buf, DISP_TTLEN, DOECHO);
+    log_filef(src, LOG_CREAT, "reply-cellphone: %s\n", buf);
+
+    mvouts(b_lines - 4, 0 ,"您的支援請求已經送出！\n");
+    outs("我們將在收到您的支援請求後審視您的資料。\n");
+    outs("如有進一步的消息，我們將會再通知您。");
+
+    struct          Vector namelist;
+    Vector_init(&namelist, IDLEN+1);
+    if(get_account_sysop(&namelist) != -1 && Vector_length(&namelist) != 0){
+        for (i = 0; i < Vector_length(&namelist); i++) {
+            const char *userid = Vector_get(&namelist, i);
+            mail_id(userid, "使用者支援請求表單（忘記密碼）", src, "[支援中心]");
+        }
+    }
+}
+
 static void
 login_query(char *ruid)
 {
@@ -826,8 +898,14 @@ login_query(char *ruid)
 		attempts = 0;
 		while (1) {
 		if (attempts++ >= LOGINATTEMPTS) {
+            char genbuf[3];
+            clear();
 			more("etc/goodbye", NA);
-			pressanykey();
+            getdata(20, 0, "您是否忘記密碼需要協助呢？ (y/N)",genbuf, 3, LCECHO);
+            if (genbuf[0] == 'y') {
+                support_request();
+            }
+            pressanykey();
 			sleep(3);
 			exit(1);
 		}
@@ -927,7 +1005,7 @@ login_query(char *ruid)
 				if(HasUserFlag(UF_TWOFA_LOGIN)){
 					outs("請稍候...");
 					move(22, 0); refresh();
-					twofa = twoFA_main(cuser.userid);
+					twofa = twoFA_main(&cuser);
 					move (22, 0); clrtoeol();
 					if(twofa != NULL){
 						outs("兩步驟認證失敗。");
@@ -1008,19 +1086,6 @@ setup_utmp(int mode)
     strlcpy(uinfo.nickname, cuser.nickname, sizeof(uinfo.nickname));
     strlcpy(uinfo.from,	    fromhost,	    sizeof(uinfo.from));
 
-    uinfo.five_win  = cuser.five_win;
-    uinfo.five_lose = cuser.five_lose;
-    uinfo.five_tie  = cuser.five_tie;
-    uinfo.chc_win   = cuser.chc_win;
-    uinfo.chc_lose  = cuser.chc_lose;
-    uinfo.chc_tie   = cuser.chc_tie;
-    uinfo.chess_elo_rating = cuser.chess_elo_rating;
-    uinfo.go_win    = cuser.go_win;
-    uinfo.go_lose   = cuser.go_lose;
-    uinfo.go_tie    = cuser.go_tie;
-    uinfo.dark_win    = cuser.dark_win;
-    uinfo.dark_lose   = cuser.dark_lose;
-    uinfo.dark_tie    = cuser.dark_tie;
     uinfo.invisible = (cuser.invisible % 2) && (!HasUserPerm(PERM_VIOLATELAW));
     uinfo.pager	    = cuser.pager % PAGER_MODES;
     uinfo.withme    = cuser.withme & ~WITHME_ALLFLAG;

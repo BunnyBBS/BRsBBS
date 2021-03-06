@@ -1,11 +1,12 @@
-程式是以PTT（批踢踢實業坊 telnet://ptt.cc）所開發釋出的PttBBS（https://github.com/ptt/pttbbs）為基礎，由BunnyBBS（大兔的神密世界 telnet://bunnybbs.tk）工程局長my1938進行程式調校、修改及新增功能後，重新以BRsBBS編列版本後公開釋出並運用於BunnyBBS。
-使用時請遵守PTT（批踢踢實業坊）的規定。
+BRsBBS是以PTT（批踢踢實業坊 telnet://ptt.cc）所開發釋出的PttBBS（https://github.com/ptt/pttbbs）為程式基礎，由BunnyBBS（大兔的神密世界 telnet://bunnybbs.tw）工程業務處進行程式調校與修改、新增功能及刪減部份功能後，重新編列版本後公開釋出於git並運用於BunnyBBS。
+使用時，請遵守PttBBS及BRsBBS等相關使用規範。
 
-若有任何問題，歡迎與我聯繫。
-通訊地址：70099 台南水交社郵局第70號信箱
-Address：P.O.BOX 70 Tainan Shueijiaoshe, Tainan City 70099, Taiwan (R.O.C.)
-E-mail：my1938.tw@gmail.com
-PTT.cc ID：my1938
+若有任何BRsBBS之相關技術問題，歡迎與我聯繫。
+＃Address：
+  100900 臺北北門郵局第1245號信箱
+  P.O.BOX 1245 Taipei Beimen, Taipei City 100900, Taiwan (R.O.C.)
+＃E-mail：
+  sysop@bunnybbs.tw
+  bunnybbs@protonmail.com
 
-快速安裝請參考 docs/INSTALL 以及 docs/FAQ
-詳細文件請見 docs/ 或是 http://github.com/ptt/pttbbs/wiki
+詳細說明文件請參見 http://github.com/ptt/pttbbs/wiki

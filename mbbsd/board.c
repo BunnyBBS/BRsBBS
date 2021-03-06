@@ -92,14 +92,36 @@ int sysop_into_hide(boardheader_t *bp)
 	char genbuf[3];
 	clear();
 	vs_hdr2(" 隱板警訊系統 ", " 越權進入");
-	move(b_lines-3, 0); clrtobot();
-	outs("\n" ANSI_COLOR(1;31) "注意: "ANSI_COLOR(1)"您將使用站長權限進入隱板，若無合理理由請勿任意進入隱板。" ANSI_RESET);
-	getdata(b_lines - 1, 0, "您確定要繼續操作？[y/N] ",
-		genbuf, 3, LCECHO);
+	move(5, 0); clrtobot();
+	outs("\n" ANSI_COLOR(1;31) "注意: "ANSI_COLOR(37)"您將使用站長權限進入隱板，若無合理理由請勿任意進入隱板。" ANSI_RESET);
+	getdata(b_lines - 3, 0, "您確定要繼續操作？[y/N] ", genbuf, 3, LCECHO);
 	if(genbuf[0] != 'y'){
 		vmsg("下次請您看清楚再來。");
 		return -1;
 	}else{
+		int inform_user = 1;
+		userec_t        atuser;
+		if(HasUserPerm(PERM_SYSOP)){
+			getdata(b_lines - 2, 0, "通知被查詢的板主？[Y/n] ", genbuf, 3, LCECHO);
+			if(genbuf[0] == 'n'){
+				move(7, 0); clrtobot();
+				outs(ANSI_COLOR(1;31) "注意："ANSI_COLOR(37)"如不通知板主，您需要一位具公務權限的國民證明您的操作，"ANSI_RESET"\n");
+				outs("      "ANSI_COLOR(1)"您完成查詢後系統會通知該名公務人員，且您的操作仍然會被紀錄於國家安全局。"ANSI_RESET"\n");
+				outs(ANSI_COLOR(1;33) "提醒："ANSI_COLOR(37)"請您遵照現有作業程序規定進行操作，避免違反大兔個資保護政策。"ANSI_RESET"\n\n");
+				char  *witness[IDLEN+1]; int uid;
+				usercomplete("請輸入協助證明之公務人員：", witness);
+				if (!(uid = searchuser(witness, NULL))){
+					vmsg("查無這個帳號！");
+					return -1;
+				}
+			    passwd_sync_query(uid, &atuser);
+                if (!(atuser.userlevel & PERM_ADMIN)) {
+					vmsg("這個帳號不具有公務身份！");
+					return -1;
+                }
+	            inform_user = 0;
+			}
+		}
 		FILE		   *fp, *fp2;
 		char			reason[100];
 		char bmStr[IDLEN * 3 + 10];
@@ -121,15 +143,21 @@ int sysop_into_hide(boardheader_t *bp)
 		}else{
 			unlink("etc/intoHide.log");
 			fp2 = fopen("etc/intoHide.log", "w");
-			fprintf(fp2,"\n國家安全局通知\n站務人員 %s 進入您的隱藏看板：%s，\n時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，\n理由是 %s，\n如果您認為該站務人員的行為不當請立即至%s回報。\n若無其他異況可直接略過本通知。", cuser.userid, bp->brdname,ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason, BN_SYSOP);
+			fprintf(fp2,"\n國家安全局通知\n站務人員 %s 進入 %s 的隱藏看板：%s，\n時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，\n理由是 %s，\n如果您認為該站務人員的行為不當請立即至%s回報。\n若無其他異況可直接略過本通知。", cuser.userid, bp->BM, bp->brdname,ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason, BN_SYSOP);
+			if(inform_user == 0)
+    			fprintf(fp2,"\n\n[此次操作未直接通知國民]\n本信已同時知會以下人員：%s", atuser.userid);
 			fclose(fp2);
-			if(does_board_have_public_bm(bp)){
-				snprintf(bmStr, sizeof(bmStr), "%s", bp->BM);
-				bmArr = strtok(bmStr,"/");
-				while(bmArr != NULL){
-					mail_id(bmArr, "[通知] 有站務人員進入您的看版", "etc/intoHide.log", "[國家安全局]");
-					bmArr = strtok(NULL,"/");
+			if(inform_user == 1){
+				if(does_board_have_public_bm(bp)){
+					snprintf(bmStr, sizeof(bmStr), "%s", bp->BM);
+					bmArr = strtok(bmStr,"/");
+					while(bmArr != NULL){
+						mail_id(bmArr, "[通知] 有站務人員進入您的看版", "etc/intoHide.log", "[國家安全局]");
+						bmArr = strtok(NULL,"/");
+					}
 				}
+			}else{
+				mail_id(atuser.userid, "[通知] 有站務人員進入隱藏看版", "etc/intoHide.log", "[國家安全局]");
 			}
 			post_file(BN_SECURITY, "[通知] 有站務人員進入隱藏看版", "etc/intoHide.log", "[國家安全局]");
 			outs("正在進入隱形看板…");

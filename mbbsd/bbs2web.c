@@ -47,10 +47,13 @@ web_user_register(void)
 	vs_hdr2(" 網站服務 ", " 註冊帳號");
 
     char passbuf[PASSLEN], buf2[8];
-    move(4, 0);
+    move(3, 0);
     prints("設定帳號：%s\n", cuser.userid);
+	outs("請注意，本功\能僅限您不曾開通網站帳號時使用。\n");
+	outs("如果您曾經開通網站帳號（含108年7月前舊註冊程序），請不要再使用本功\能。\n");
+	outs("如果您忘記網站密碼，可使用重設密碼功\能將網站密碼重新設定為BBS登入密碼。\n");
 	outs("以下操作需要先確認您的身份。\n");
-	getdata(6, 0, MSG_PASSWD, passbuf, PASS_INPUT_LEN + 1, PASSECHO);
+	getdata(9, 0, MSG_PASSWD, passbuf, PASS_INPUT_LEN + 1, PASSECHO);
 	snprintf(buf2, sizeof(buf2), "%s", passbuf);
 	passbuf[8] = '\0';
 	if (!(checkpasswd(cuser.passwd, passbuf))){
@@ -90,7 +93,7 @@ web_user_register(void)
 
     if(code == 200){
 		move(1,0); clrtobot();
-		mvouts(10, 0, "註冊成\功\！快到https://bunnybbs.tk/login登入吧！\n（帳號及密碼與BBS相同）");
+		mvouts(10, 0, "註冊成\功\！快到https://www.bunnybbs.tw/login登入吧！\n（帳號及密碼與BBS相同）");
 		pressanykey();
 		return 0;
     }else{

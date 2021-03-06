@@ -783,8 +783,6 @@ static const commands_t      cmdlist[] = {
     {Class,				0,				"Class        〉 分組討論區 〈"},
 
     {Mail,				PERM_LOGINOK,	"Mail         〉 私人信件區 〈"},
-    /*大兔：這個目錄的功能用ctrl-u都能辦到，至於多人聊天室效益不大，也沒有啟用天使功能，因此這個選單整個停用*/
-    //{Talk,			PERM_LOGINOK,	"Talk         〉 休閒聊天區 〈"},
     {Play_Play, 		PERM_LOGINOK,	"Play         〉 娛樂與休閒 〈"},
     {Name_Menu, 		PERM_LOGINOK,	"Namelist     〉 編特別名單 〈"},
 
@@ -812,6 +810,7 @@ int main_menu(void) {
 }
 	/* 0Admin Menu */
 	/* 大兔：權限劃分備註：有關使用者資料的項目只能讓SYSOP與ACCOUNT操作；BBSADM計畫作為輔助SYSOP之用，因此其他非敏感操作得讓BBSADM使用；BOARD可以直接在這裡設定看板。*/
+	/* 大兔：補充說明，現在查詢個人資料已經將敏感資料分離，需要額外授權，也會通知使用者。（110.01）*/
 	#ifdef USE_BOARDTAX
 	static const commands_t m_admin_brdtax[] = {
 		{board_tax_calc,PERM_SYSOP|PERM_BBSADM|PERM_BOARD,	"CTax Calc    〉  試算稅額  〈"},
@@ -1010,31 +1009,47 @@ int main_menu(void) {
 		return 0;
 	};
 	#endif //USE_BBS2WEB
+	/* #ifdef USE_BBS2IBUNNY
+	static const commands_t ibunnylist[] = {
+		//{ibunny_status,	PERM_LOGINOK,	"Status       〉  查詢狀態  〈"},
+		{ibunny_login,		PERM_LOGINOK,	"Login        〉  登入綁定  〈"},
+		{ibunny_logout,		PERM_LOGINOK,	"Delete       〉  刪除綁定  〈"},
+		//{ibunny_setting,	PERM_LOGINOK,	"TSetting     〉  其他設定  〈"},
+		{NULL, 0, NULL}
+	};
+	static int u_ibunnyservice() {
+		domenu(M_UMENU, "iBunny 設定", 'L', ibunnylist);
+		return 0;
+	};
+	#endif //USE_BBS2IBUNNY */
 	static const commands_t userlist[] = {
-		{u_info,			PERM_BASIC,		"Info         〉個人資料設定〈"},
+		{u_info,			PERM_BASIC,		"Personal     〉個人資料設定〈"},
 		{u_security,		PERM_BASIC,		"Security     〉 密碼與安全 〈"},
-		{u_customize,		PERM_BASIC,		"Customize    〉 個人化設定 〈"},
 	#ifdef USE_BBS2WEB
-		{u_webservice,		PERM_LOGINOK,	"Web Service  〉  網站服務  〈"},
+		{u_webservice,		PERM_LOGINOK,	"Website      〉  網站服務  〈"},
 	#endif //USE_BBS2WEB
+	/* #ifdef USE_BBS2IBUNNY
+		{u_ibunnyservice,	PERM_LOGINOK,	"IBunny       〉iBunny 設定〈"},
+	#endif //USE_BBS2IBUNNY */
+		{u_view_recentlogin,0,				"Login Log    〉  上站記錄  〈"},
+	#ifdef USE_RECENTPAY
+		{u_view_recentpay,	0,				"Money Log    〉  交易記錄  〈"},
+	#endif //USE_RECENTPAY
 	#ifdef USE_ACHIEVE
 		{achieve_user,		PERM_LOGINOK,	"Achieve      〉個人成就勳章〈"},
 	#endif //USE_ACHIEVE
 		{u_editplan,		PERM_LOGINOK,   "QueryEdit    〉 編輯名片檔 〈"},
 		{u_editsig,			PERM_LOGINOK,   "NSignature   〉 編輯簽名檔 〈"},
-		{u_view_recentlogin,0,				"Login Log    〉  上站記錄  〈"},
-	#ifdef USE_RECENTPAY
-		{u_view_recentpay,	0,				"Pay Log      〉  交易記錄  〈"},
-	#endif //USE_RECENTPAY
 	#ifdef ASSESS
 		{u_cancelbadpost,	PERM_LOGINOK,	"Bye BadPost  〉  刪除退文  〈"},
+		{u_customize,		PERM_BASIC,		"Customize    〉 個人化設定 〈"},
 	#endif //ASSESS
 		{NULL, 0, NULL}
 	};
 	int
 	User(void)
 	{
-		domenu(M_UMENU, "個人設定", 'I', userlist);
+		domenu(M_UMENU, "個人設定", 'P', userlist);
 		return 0;
 	}
 	/* XYZ tool menu */
@@ -1075,7 +1090,7 @@ int main_menu(void) {
 // 以下用不到
 // -----------------------------------------------------------
 
-#ifdef PLAY_ANGEL
+/*#ifdef PLAY_ANGEL
 static const commands_t angelmenu[] = {
     {a_angelmsg, PERM_ANGEL,"Leave message 留言給小主人"},
     {a_angelmsg2,PERM_ANGEL,"Call screen   呼叫畫面個性留言"},
@@ -1090,123 +1105,4 @@ static int menu_angelbeats() {
     domenu(M_TMENU, "Angel Beats! 天使公會", 'L', angelmenu);
     return 0;
 }
-#endif
-
-/* Talk menu */
-/*static const commands_t talklist[] = {
-    {t_users, 0,            "Users         線上使用者列表"},
-    {t_query, 0,            "Query         查詢網友"},
-    // PERM_PAGE - 水球都要 PERM_LOGIN 了
-    // 沒道理可以 talk 不能水球。
-    {t_talk, PERM_LOGINOK,  "Talk          找人聊聊"},
-    // PERM_CHAT 非 login 也有，會有人用此吵別人。
-    {t_chat, PERM_LOGINOK,  "Chat          【" BBSMNAME2 "多人聊天室】"},
-    {deprecate_userlist, 0, "Pager         切換呼叫器"},
-    {t_qchicken, 0,         "Watch Pet     查詢寵物"},
-#ifdef PLAY_ANGEL
-    {a_changeangel,
-	PERM_LOGINOK,	    "AChange Angel 更換小天使"},
-    {menu_angelbeats, PERM_ANGEL|PERM_SYSOP,
-                            "BAngel Beats! 天使公會"},
-#endif
-    {t_display, 0,          "Display       顯示上幾次熱訊"},
-    {NULL, 0, NULL}
-};*/
-
-/*static const commands_t myfilelist[] = {
-    {u_editplan,    PERM_LOGINOK,   "QueryEdit    〉編輯名片檔〈"},
-    {u_editsig,	    PERM_LOGINOK,   "Signature    〉編輯簽名檔〈"},
-    {NULL, 0, NULL}
-};
-
-static const commands_t myuserlog[] = {
-    {u_view_recentlogin, 0,   "LRecent Login  最近上站記錄"},
-#ifdef USE_RECENTPAY
-    {u_view_recentpay,   0,   "PRecent Pay    最近交易記錄"},
-#endif
-    {NULL, 0, NULL}
-};
-
-static int
-u_myfiles()
-{
-    domenu(M_UMENU, "個人檔案", 'Q', myfilelist);
-    return 0;
-}
-
-static int
-u_mylogs()
-{
-    domenu(M_UMENU, "個人記錄", 'L', myuserlog);
-    return 0;
-}*/
-
-/* XYZ tool sub menu */
-/*static const commands_t m_xyz_hot[] = {
-    {x_week, 0,      "Week          《本週五十大熱門話題》"},
-    {x_issue, 0,     "Issue         《今日十大熱門話題》"},
-    {x_boardman,0,   "Man Boards    《看板精華區排行榜》"},
-    {NULL, 0, NULL}
-};
-static const commands_t m_xyz_user[] = {
-    {x_user100 ,0,   "Users         《使用者百大排行榜》"},
-    {topsong,PERM_LOGINOK,
-	             "GTop Songs    《使用者心情點播排行》"},
-    {x_today, 0,     "Today         《今日上線人次統計》"},
-    {x_yesterday, 0, "Yesterday     《昨日上線人次統計》"},
-    {NULL, 0, NULL}
-};
-
-static int
-x_hot(void)
-{
-    domenu(M_XMENU, "熱門話題與看板", 'W', m_xyz_hot);
-    return 0;
-}
-
-static int
-x_users(void)
-{
-    domenu(M_XMENU, "使用者統計資訊", 'U', m_xyz_user);
-    return 0;
-}*/
-
-//static int chessroom();
-
-/*static const commands_t conn6list[] = {
-    {conn6_main,       PERM_LOGINOK, "1Conn6Fight    【" ANSI_COLOR(1;33) "六子棋邀局" ANSI_RESET "】"},
-    {conn6_personal,   PERM_LOGINOK, "2Conn6Self     【" ANSI_COLOR(1;34) "六子棋打譜" ANSI_RESET "】"},
-    {conn6_watch,      PERM_LOGINOK, "3Conn6Watch    【" ANSI_COLOR(1;35) "六子棋觀棋" ANSI_RESET "】"},
-    {NULL, 0, NULL}
-};
-
-static int conn6_menu() {
-    domenu(M_CHC, BBSMNAME2 "六子棋", '1', conn6list);
-    return 0;
-}
-
-static const commands_t chesslist[] = {
-    {chc_main,         PERM_LOGINOK, "1CChessFight   【" ANSI_COLOR(1;33) " 象棋邀局 " ANSI_RESET "】"},
-    {chc_personal,     PERM_LOGINOK, "2CChessSelf    【" ANSI_COLOR(1;34) " 象棋打譜 " ANSI_RESET "】"},
-    {chc_watch,        PERM_LOGINOK, "3CChessWatch   【" ANSI_COLOR(1;35) " 象棋觀棋 " ANSI_RESET "】"},
-    {gomoku_main,      PERM_LOGINOK, "4GomokuFight   【" ANSI_COLOR(1;33) "五子棋邀局" ANSI_RESET "】"},
-    {gomoku_personal,  PERM_LOGINOK, "5GomokuSelf    【" ANSI_COLOR(1;34) "五子棋打譜" ANSI_RESET "】"},
-    {gomoku_watch,     PERM_LOGINOK, "6GomokuWatch   【" ANSI_COLOR(1;35) "五子棋觀棋" ANSI_RESET "】"},
-    {gochess_main,     PERM_LOGINOK, "7GoChessFight  【" ANSI_COLOR(1;33) " 圍棋邀局 " ANSI_RESET "】"},
-    {gochess_personal, PERM_LOGINOK, "8GoChessSelf   【" ANSI_COLOR(1;34) " 圍棋打譜 " ANSI_RESET "】"},
-    {gochess_watch,    PERM_LOGINOK, "9GoChessWatch  【" ANSI_COLOR(1;35) " 圍棋觀棋 " ANSI_RESET "】"},
-    {conn6_menu,       PERM_LOGINOK, "CConnect6      【" ANSI_COLOR(1;33) "  六子棋  " ANSI_RESET "】"},
-    {NULL, 0, NULL}
-};
-
-static int chessroom() {
-    domenu(M_CHC, BBSMNAME2 "棋院", '1', chesslist);
-    return 0;
-}
-
-int
-Talk(void)
-{
-    domenu(M_TMENU, "聊天說話", 'U', talklist);
-    return 0;
-}*/
+#endif*/

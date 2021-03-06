@@ -52,15 +52,15 @@
 
  8. 切換到 pttbbs 的目錄下 ( cd /home/bbs/pttbbs )
 
- 9. 如果您的 pttbbs.conf並不存在, 可以拷一份預設的來用:
-     cp sample/pttbbs.conf pttbbs.conf
+ 9. 如果您的 main.conf並不存在, 可以拷一份預設的來用:
+     cp sample/main.conf main.conf
 
- 10.依據您的須求, 修改 pttbbs.conf
-    請注意, 預設的 pttbbs.conf是給相當大規模的 bbs用的.
+ 10.依據您的須求, 修改 main.conf
+    請注意, 預設的 main.conf是給相當大規模的 bbs用的.
     通常您須要進行修改以符合您的須求.
 
     如果是在 64bit 的作業系統編譯安裝 PttBBS
-    請記得在 pttbbs.conf 取消以下兩個定義的註解：
+    請記得在 main.conf 取消以下兩個定義的註解：
 
     #define SHMALIGNEDSIZE (1048576*4)
     #define TIMET64

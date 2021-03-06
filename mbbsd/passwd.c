@@ -22,15 +22,15 @@ int
 passwd_sync_update(int num, userec_t * buf)
 {
     if (num < 1 || num > MAX_USERS)
-	return -1;
+    return -1;
 
     // money update should be done before everything.
     buf->money = moneyof(num);
     if (passwd_update(num, buf) != 0)
-	return -1;
+    return -1;
 
     if (num == usernum)
-	cuser.money = moneyof(num);
+    cuser.money = moneyof(num);
 
     return 0;
 }
@@ -39,12 +39,12 @@ int
 passwd_sync_query(int num, userec_t * buf)
 {
     if (passwd_query(num, buf) < 0)
-	return -1;
+    return -1;
 
     buf->money = moneyof(num);
 
     if (num == usernum)
-	cuser.money = moneyof(num);
+    cuser.money = moneyof(num);
 
     return 0;
 }
@@ -56,14 +56,14 @@ pwcuInitCUser(userec_t *u)
 {
     assert(usernum > 0 && usernum <= MAX_USERS);
     if (passwd_sync_query(usernum, u) != 0)
-	return -1;
+    return -1;
 #ifdef DEBUG
     log_filef("log/pwcu_exitsave.log", LOG_CREAT, "%s InitCUser  invoked at %s\n",
-	    cuser.userid, Cdatelite(&now));
+        cuser.userid, Cdatelite(&now));
 #endif
     assert(strncmp(u->userid, cuser.userid, IDLEN) == 0);
     if    (strncmp(u->userid, cuser.userid, IDLEN) != 0)
-	return -1;
+    return -1;
     return 0;
 }
 
@@ -74,26 +74,26 @@ pwcuFinalCUser(userec_t *u)
     assert(strcmp(u->userid, cuser.userid) == 0);
 #ifdef DEBUG
     log_filef("log/pwcu_exitsave.log", LOG_CREAT, "%s FinalCUser invoked at %s\n",
-	    cuser.userid, Cdatelite(&now));
+        cuser.userid, Cdatelite(&now));
 #endif
     if (passwd_sync_update(usernum, u) != 0)
-	return -1;
+    return -1;
     return 0;
 }
 
 #ifdef   DISABLE_AGGRESSIVE_PWCU_CACHE
-# define PWCU_START()	userec_t u; if(pwcuInitCUser (&u) != 0) return -1
-# define PWCU_END()	if (pwcuFinalCUser(&u) != 0) return -1; return 0
+# define PWCU_START()   userec_t u; if(pwcuInitCUser (&u) != 0) return -1
+# define PWCU_END() if (pwcuFinalCUser(&u) != 0) return -1; return 0
 #else
-# define PWCU_START()	userec_t u, u_orig; do { if(pwcuInitCUser (&u) != 0) return -1; memcpy(&u_orig, &u, sizeof(u)); } while(0)
-# define PWCU_END()	do { if (memcmp(&u_orig, &u, sizeof(u)) != 0 && pwcuFinalCUser(&u) != 0) return -1; return 0; } while(0)
+# define PWCU_START()   userec_t u, u_orig; do { if(pwcuInitCUser (&u) != 0) return -1; memcpy(&u_orig, &u, sizeof(u)); } while(0)
+# define PWCU_END() do { if (memcmp(&u_orig, &u, sizeof(u)) != 0 && pwcuFinalCUser(&u) != 0) return -1; return 0; } while(0)
 #endif
 
 #define _ENABLE_BIT( var,mask) var |=  (mask)
 #define _DISABLE_BIT(var,mask) var &= ~(mask)
 #define _SETBY_BIT(var,mask,val) if (val) { _ENABLE_BIT(var, (mask)); } else { _DISABLE_BIT(var, (mask)); }
 
-int pwcuBitEnableLevel	(unsigned int mask)
+int pwcuBitEnableLevel  (unsigned int mask)
 {
     PWCU_START();
     _ENABLE_BIT(    u.userlevel, mask);
@@ -101,7 +101,7 @@ int pwcuBitEnableLevel	(unsigned int mask)
     PWCU_END();
 }
 
-int pwcuBitDisableLevel	(unsigned int mask)
+int pwcuBitDisableLevel (unsigned int mask)
 {
     PWCU_START();
     _DISABLE_BIT(    u.userlevel, mask);
@@ -122,13 +122,13 @@ pwcuDecNumPost()
 {
     PWCU_START();
     if (u.numposts > 0)
-	u.numposts--;
+    u.numposts--;
     cuser.numposts = u.numposts;
     PWCU_END();
 }
 
 int
-pwcuViolateLaw	()
+pwcuViolateLaw  ()
 {
     PWCU_START();
     _ENABLE_BIT(    u.userlevel, PERM_VIOLATELAW);
@@ -162,9 +162,9 @@ pwcuCancelBadpost()
     // check timebomb again
     day = (now - u.timeremovebadpost ) / DAY_SECONDS;
     if (day < BADPOST_CLEAR_DURATION)
-	return -1;
+    return -1;
     if (u.badpost < 1)
-	return -1;
+    return -1;
 
     cuser.badpost = --u.badpost;
     cuser.timeremovebadpost = u.timeremovebadpost = now;
@@ -189,7 +189,7 @@ int pwcuSetLastSongTime (time4_t clk)
     PWCU_END();
 }
 
-int pwcuSetMyAngel	(const char *angel_uid)
+/*int pwcuSetMyAngel  (const char *angel_uid)
 {
     PWCU_START();
     strlcpy(    u.myangel, angel_uid, sizeof(    u.myangel));
@@ -205,9 +205,9 @@ int pwcuPlayAngel       (void)
     PWCU_START();
     u.timeplayangel = cuser.timeplayangel = now;
     PWCU_END();
-}
+}*/
 
-int pwcuSetNickname	(const char *nickname)
+int pwcuSetNickname (const char *nickname)
 {
     PWCU_START();
     strlcpy(    u.nickname, nickname, sizeof(    u.nickname));
@@ -221,7 +221,7 @@ pwcuToggleOutMail()
     PWCU_START();
     u.uflag     ^=  UF_REJ_OUTTAMAIL;
     _SETBY_BIT(cuser.uflag, UF_REJ_OUTTAMAIL,
-	    u.uflag & UF_REJ_OUTTAMAIL);
+        u.uflag & UF_REJ_OUTTAMAIL);
     PWCU_END();
 }
 
@@ -259,10 +259,10 @@ pwcuRegSetTemporaryJustify(const char *justify, const char *email)
 }
 
 int pwcuRegisterSetInfo (const char *rname,
-			 const char *addr,
-			 const char *career,
-			 const char *email,
-			 uint8_t     is_foreign)
+             const char *addr,
+             const char *career,
+             const char *email,
+             uint8_t     is_foreign)
 {
     PWCU_START();
     strlcpy(u.realname, rname,  sizeof(u.realname));
@@ -289,13 +289,13 @@ int pwcuSetUserAgreementVersion(uint8_t version)
     PWCU_END();
 }
 
-#include "chess.h"
-int
+//#include "chess.h"
+/*int
 pwcuChessResult(int sigType, ChessGameResult r)
 {
     uint16_t *utmp_win = NULL, *cuser_win = NULL, *u_win = NULL,
-	     *utmp_lose= NULL, *cuser_lose= NULL, *u_lose= NULL,
-	     *utmp_tie = NULL, *cuser_tie = NULL, *u_tie = NULL;
+         *utmp_lose= NULL, *cuser_lose= NULL, *u_lose= NULL,
+         *utmp_tie = NULL, *cuser_tie = NULL, *u_tie = NULL;
 
     PWCU_START();
 
@@ -308,101 +308,101 @@ pwcuChessResult(int sigType, ChessGameResult r)
     // determine variables
     switch(sigType)
     {
-	case SIG_CHC:
-	    utmp_win  = &(currutmp->chc_win);
-	    utmp_lose = &(currutmp->chc_lose);
-	    utmp_tie  = &(currutmp->chc_tie);
-	    cuser_win = &(    cuser.chc_win);
-	    cuser_lose= &(    cuser.chc_lose);
-	    cuser_tie = &(    cuser.chc_tie);
-	    u_win     = &(        u.chc_win);
-	    u_lose    = &(        u.chc_lose);
-	    u_tie     = &(        u.chc_tie);
-	    break;
+    case SIG_CHC:
+        utmp_win  = &(currutmp->chc_win);
+        utmp_lose = &(currutmp->chc_lose);
+        utmp_tie  = &(currutmp->chc_tie);
+        cuser_win = &(    cuser.chc_win);
+        cuser_lose= &(    cuser.chc_lose);
+        cuser_tie = &(    cuser.chc_tie);
+        u_win     = &(        u.chc_win);
+        u_lose    = &(        u.chc_lose);
+        u_tie     = &(        u.chc_tie);
+        break;
 
-	case SIG_GO:
-	    utmp_win  = &(currutmp->go_win);
-	    utmp_lose = &(currutmp->go_lose);
-	    utmp_tie  = &(currutmp->go_tie);
-	    cuser_win = &(    cuser.go_win);
-	    cuser_lose= &(    cuser.go_lose);
-	    cuser_tie = &(    cuser.go_tie);
-	    u_win     = &(        u.go_win);
-	    u_lose    = &(        u.go_lose);
-	    u_tie     = &(        u.go_tie);
-	    break;
+    case SIG_GO:
+        utmp_win  = &(currutmp->go_win);
+        utmp_lose = &(currutmp->go_lose);
+        utmp_tie  = &(currutmp->go_tie);
+        cuser_win = &(    cuser.go_win);
+        cuser_lose= &(    cuser.go_lose);
+        cuser_tie = &(    cuser.go_tie);
+        u_win     = &(        u.go_win);
+        u_lose    = &(        u.go_lose);
+        u_tie     = &(        u.go_tie);
+        break;
 
-	case SIG_GOMO:
-	    utmp_win  = &(currutmp->five_win);
-	    utmp_lose = &(currutmp->five_lose);
-	    utmp_tie  = &(currutmp->five_tie);
-	    cuser_win = &(    cuser.five_win);
-	    cuser_lose= &(    cuser.five_lose);
-	    cuser_tie = &(    cuser.five_tie);
-	    u_win     = &(        u.five_win);
-	    u_lose    = &(        u.five_lose);
-	    u_tie     = &(        u.five_tie);
-	    break;
+    case SIG_GOMO:
+        utmp_win  = &(currutmp->five_win);
+        utmp_lose = &(currutmp->five_lose);
+        utmp_tie  = &(currutmp->five_tie);
+        cuser_win = &(    cuser.five_win);
+        cuser_lose= &(    cuser.five_lose);
+        cuser_tie = &(    cuser.five_tie);
+        u_win     = &(        u.five_win);
+        u_lose    = &(        u.five_lose);
+        u_tie     = &(        u.five_tie);
+        break;
 
         case SIG_DARK:
-	    utmp_win  = &(currutmp->dark_win);
-	    utmp_lose = &(currutmp->dark_lose);
-	    utmp_tie  = &(currutmp->dark_tie);
-	    cuser_win = &(    cuser.dark_win);
-	    cuser_lose= &(    cuser.dark_lose);
-	    cuser_tie = &(    cuser.dark_tie);
-	    u_win     = &(        u.dark_win);
-	    u_lose    = &(        u.dark_lose);
-	    u_tie     = &(        u.dark_tie);
+        utmp_win  = &(currutmp->dark_win);
+        utmp_lose = &(currutmp->dark_lose);
+        utmp_tie  = &(currutmp->dark_tie);
+        cuser_win = &(    cuser.dark_win);
+        cuser_lose= &(    cuser.dark_lose);
+        cuser_tie = &(    cuser.dark_tie);
+        u_win     = &(        u.dark_win);
+        u_lose    = &(        u.dark_lose);
+        u_tie     = &(        u.dark_tie);
             break;
 
 
-	case SIG_CONN6:
-	    utmp_win  = &(currutmp->conn6_win);
-	    utmp_lose = &(currutmp->conn6_lose);
-	    utmp_tie  = &(currutmp->conn6_tie);
-	    cuser_win = &(    cuser.conn6_win);
-	    cuser_lose= &(    cuser.conn6_lose);
-	    cuser_tie = &(    cuser.conn6_tie);
-	    u_win     = &(        u.conn6_win);
-	    u_lose    = &(        u.conn6_lose);
-	    u_tie     = &(        u.conn6_tie);
-	    break;
+    case SIG_CONN6:
+        utmp_win  = &(currutmp->conn6_win);
+        utmp_lose = &(currutmp->conn6_lose);
+        utmp_tie  = &(currutmp->conn6_tie);
+        cuser_win = &(    cuser.conn6_win);
+        cuser_lose= &(    cuser.conn6_lose);
+        cuser_tie = &(    cuser.conn6_tie);
+        u_win     = &(        u.conn6_win);
+        u_lose    = &(        u.conn6_lose);
+        u_tie     = &(        u.conn6_tie);
+        break;
 
-	default:
-	    assert(!"unknown sigtype");
-	    break;
+    default:
+        assert(!"unknown sigtype");
+        break;
     }
 
     // perform action
     switch(r)
     {
-	case CHESS_RESULT_WIN:
-	    *utmp_win = *cuser_win =
-		++(*u_win);
-	    // recover init lose
-	    if (*u_lose > 0)
-		*utmp_lose = *cuser_lose =
-		    --(*u_lose);
-	    break;
+    case CHESS_RESULT_WIN:
+        *utmp_win = *cuser_win =
+        ++(*u_win);
+        // recover init lose
+        if (*u_lose > 0)
+        *utmp_lose = *cuser_lose =
+            --(*u_lose);
+        break;
 
-	case CHESS_RESULT_TIE:
-	    *utmp_tie = *cuser_tie =
-		++*u_tie;
-	    // recover init lose
-	    if (*u_lose > 0)
-		*utmp_lose = *cuser_lose =
-		    --(*u_lose);
-	    break;
+    case CHESS_RESULT_TIE:
+        *utmp_tie = *cuser_tie =
+        ++*u_tie;
+        // recover init lose
+        if (*u_lose > 0)
+        *utmp_lose = *cuser_lose =
+            --(*u_lose);
+        break;
 
-	case CHESS_RESULT_LOST:
-	    *utmp_lose = *cuser_lose =
-		++(*u_lose);
-	    break;
+    case CHESS_RESULT_LOST:
+        *utmp_lose = *cuser_lose =
+        ++(*u_lose);
+        break;
 
-	default:
-	    assert(!"unknown result");
-	    return -1;
+    default:
+        assert(!"unknown result");
+        return -1;
     }
 
     PWCU_END();
@@ -414,15 +414,15 @@ pwcuSetChessEloRating(uint16_t elo_rating)
     PWCU_START();
     cuser.chess_elo_rating = u.chess_elo_rating = elo_rating;
     PWCU_END();
-}
+}*/
 
 int
-pwcuToggleUserFlag	(unsigned int mask)
+pwcuToggleUserFlag  (unsigned int mask)
 {
     PWCU_START();
     u.uflag ^= mask;
     _SETBY_BIT(cuser.uflag,  mask,
-	           u.uflag & mask);
+               u.uflag & mask);
     PWCU_END();
 }
 
@@ -454,8 +454,8 @@ pwcuSetPagerUIType  (unsigned int  uitype)
     uitype %= PAGER_UI_TYPES;
     if (cuser.pager_ui_type != uitype)
     {
-	pwcu_dirty = 1;
-	cuser.pager_ui_type = uitype;
+    pwcu_dirty = 1;
+    cuser.pager_ui_type = uitype;
     }
     return 0;
 }
@@ -466,8 +466,8 @@ pwcuSetSignature(unsigned char newsig)
     // XXX you MUST save this variable in pwcuExitSave();
     if (cuser.signature != newsig)
     {
-	pwcu_dirty = 1;
-	cuser.signature = newsig;
+    pwcu_dirty = 1;
+    cuser.signature = newsig;
     }
     return 0;
 }
@@ -476,7 +476,7 @@ pwcuSetSignature(unsigned char newsig)
 
 // XXX this is a little different - only invoked at login,
 // which we should update/calculate every variables to log.
-int pwcuLoginSave	()
+int pwcuLoginSave   ()
 {
     // XXX because LoginSave was called very long after
     // login_start_time, so we must reload passwd again
@@ -503,13 +503,13 @@ int pwcuLoginSave	()
     baseref = u.firstlogin;
     if (localtime4_r(&baseref, &baseref_tm))
     {
-	baseref_tm.tm_sec = baseref_tm.tm_min = baseref_tm.tm_hour = 0;
-	baseref = mktime(&baseref_tm);
+    baseref_tm.tm_sec = baseref_tm.tm_min = baseref_tm.tm_hour = 0;
+    baseref = mktime(&baseref_tm);
     }
 
     // invalid session?
     if (reftime < u.lastlogin)
-	reftime = u.lastlogin;
+    reftime = u.lastlogin;
 
     regdays =      (    reftime - baseref) / DAY_SECONDS;
     prev_regdays = (u.lastlogin - baseref) / DAY_SECONDS;
@@ -517,13 +517,13 @@ int pwcuLoginSave	()
 
     // plus one for initial day
     if ((int)u.numlogindays > prev_regdays+1)
-	u.numlogindays = prev_regdays+1;
+    u.numlogindays = prev_regdays+1;
 
     // calculate numlogindays (only increase one per each key)
     if (regdays > prev_regdays)
     {
-	++u.numlogindays;
-	is_first_login_of_today = 1;
+    ++u.numlogindays;
+    is_first_login_of_today = 1;
     }
     cuser.numlogindays = u.numlogindays;
 
@@ -531,7 +531,7 @@ int pwcuLoginSave	()
     cuser.lastlogin = u.lastlogin = reftime;
 
     if (!PERM_HIDE(currutmp))
-	cuser.lastseen = u.lastseen = reftime;
+    cuser.lastseen = u.lastseen = reftime;
 
     PWCU_END();
 }
@@ -539,47 +539,47 @@ int pwcuLoginSave	()
 // XXX this is a little different - only invoked at exist,
 // so no need to sync back to cuser.
 int
-pwcuExitSave	()
+pwcuExitSave    ()
 {
     // determine dirty
-    if (pwcu_dirty	||
-	cuser.withme	!= currutmp->withme ||
-	cuser.pager	!= currutmp->pager  ||
-	cuser.invisible != currutmp->invisible)
+    if (pwcu_dirty  ||
+    cuser.withme    != currutmp->withme ||
+    cuser.pager != currutmp->pager  ||
+    cuser.invisible != currutmp->invisible)
     {
-	// maybe dirty, let's work harder.
-	PWCU_START();
-	pwcu_dirty = 1;
+    // maybe dirty, let's work harder.
+    PWCU_START();
+    pwcu_dirty = 1;
 
-	// XXX we may work harder to determine if this is a real
-	// dirty cache, however maybe it's not that important.
+    // XXX we may work harder to determine if this is a real
+    // dirty cache, however maybe it's not that important.
 
-	// configure new utmp values
-	u.withme    = currutmp->withme;
-	u.pager     = currutmp->pager;
-	u.invisible = currutmp->invisible;
+    // configure new utmp values
+    u.withme    = currutmp->withme;
+    u.pager     = currutmp->pager;
+    u.invisible = currutmp->invisible;
 
-	// configure those changed by 'not important variables' API
-	u.signature	= cuser.signature;
-	u.pager_ui_type = cuser.pager_ui_type;
-	// u.money		= moneyof(usernum); // should be already updated by deumoney
+    // configure those changed by 'not important variables' API
+    u.signature = cuser.signature;
+    u.pager_ui_type = cuser.pager_ui_type;
+    // u.money      = moneyof(usernum); // should be already updated by deumoney
 
 #ifdef DEBUG
-	log_filef("log/pwcu_exitsave.log", LOG_CREAT, "%s exit %s at %s\n",
-		cuser.userid, pwcu_dirty ? "DIRTY" : "CLEAN", Cdatelite(&now));
+    log_filef("log/pwcu_exitsave.log", LOG_CREAT, "%s exit %s at %s\n",
+        cuser.userid, pwcu_dirty ? "DIRTY" : "CLEAN", Cdatelite(&now));
 #endif
-	PWCU_END();
-	// XXX return 0 here (PWCU_END), following code is not executed.
+    PWCU_END();
+    // XXX return 0 here (PWCU_END), following code is not executed.
     }
 #ifdef DEBUG
-	log_filef("log/pwcu_exitsave.log", LOG_CREAT, "%s exit %s at %s\n",
-		cuser.userid, pwcu_dirty ? "DIRTY" : "CLEAN", Cdatelite(&now));
+    log_filef("log/pwcu_exitsave.log", LOG_CREAT, "%s exit %s at %s\n",
+        cuser.userid, pwcu_dirty ? "DIRTY" : "CLEAN", Cdatelite(&now));
 #endif
     return 0;
 }
 
 int
-pwcuReload	()
+pwcuReload  ()
 {
     // XXX TODO verify cuser structure?
     int r = passwd_sync_query(usernum, &cuser);
@@ -595,7 +595,7 @@ pwcuReloadMoney ()
 }
 
 int
-pwcuDeMoney	(int money)
+pwcuDeMoney (int money)
 {
     deumoney(usernum, money);
     cuser.money = moneyof(usernum);
@@ -604,23 +604,23 @@ pwcuDeMoney	(int money)
 
 // Initialization
 
-void pwcuInitZero	()
+void pwcuInitZero   ()
 {
     bzero(&cuser, sizeof(cuser));
 }
 
-int pwcuInitAdminPerm	()
+int pwcuInitAdminPerm   ()
 {
     PWCU_START();
     cuser.userlevel = PERM_BASIC | PERM_CHAT | PERM_PAGE |
-	PERM_POST | PERM_LOGINOK | PERM_MAILLIMIT |
-	PERM_CLOAK | PERM_SEECLOAK | PERM_XEMPT |
-	PERM_SYSOPHIDE | PERM_BM | PERM_ACCOUNTS |
-	PERM_ANNOUNCE | PERM_BOARD | PERM_SYSOP | PERM_BBSADM;
+    PERM_POST | PERM_LOGINOK | PERM_MAILLIMIT |
+    PERM_CLOAK | PERM_SEECLOAK | PERM_XEMPT |
+    PERM_SYSOPHIDE | PERM_BM | PERM_ACCOUNTS |
+    PERM_ANNOUNCE | PERM_BOARD | PERM_SYSOP | PERM_BBSADM;
     PWCU_END();
 }
 
-void pwcuInitGuestPerm	()
+void pwcuInitGuestPerm  ()
 {
     cuser.userlevel = 0;
     cuser.uflag = UF_BRDSORT;
@@ -636,19 +636,19 @@ void pwcuInitGuestPerm	()
 #undef  DIM
 #define DIM(x) (sizeof(x)/sizeof(x[0]))
 
-void pwcuInitGuestInfo	()
+void pwcuInitGuestInfo  ()
 {
     int i;
     char *nick[] = {
-	"·¦¤l", "¨©´ß", "¤º¦ç", "Ä_¯S²~", "Â½¨®³½",
-	"¾ð¸­", "¯BµÓ", "¾c¤l", "¼ç¤ô¸¥", "Å]¤ý",
-	"ÅKÅø", "¦Ò¨÷", "¤j¬ü¤k"
+    "æ¤°å­", "è²æ®¼", "å…§è¡£", "å¯¶ç‰¹ç“¶", "ç¿»è»Šé­š",
+    "æ¨¹è‘‰", "æµ®è", "éž‹å­", "æ½›æ°´è‰‡", "é­”çŽ‹",
+    "éµç½", "è€ƒå·", "å¤§ç¾Žå¥³"
     };
 
     i = random() % DIM(nick);
     snprintf(cuser.nickname, sizeof(cuser.nickname),
-	    "®üÃäº}¨Óªº%s", nick[i]);
+        "æµ·é‚Šæ¼‚ä¾†çš„%s", nick[i]);
     strlcpy(currutmp->nickname, cuser.nickname,
-	    sizeof(currutmp->nickname));
+        sizeof(currutmp->nickname));
     strlcpy(cuser.realname, "guest", sizeof(cuser.realname));
 }

@@ -41,7 +41,7 @@ int main()
     printf("SHMSIZE = %lu\n", SHMSIZE);
 
     // Data types that need to be checked.
-    ENSURE3(time4_t, 4, "Please define TIMET64 in your pttbbs.conf.");
+    ENSURE3(time4_t, 4, "Please define TIMET64 in your main.conf.");
     ENSURE(userec_t, 512);
     ENSURE(fileheader_t, 128);
     ENSURE(boardheader_t, 256);

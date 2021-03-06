@@ -88,7 +88,7 @@ typedef struct userec_t {
     // r3968 移出 sizeof(chicken_t)=128 bytes
     char    _unused5[4];
     char    career[40]; /* 學歷職業 */
-    char    achieve[20];   /* 成就勳章 *//*char _unused_phone[20];*/    /* 電話 */
+    char    achieve[20];   /* 成就勳章 */
     uint32_t    _unused6;   /* 從前放轉換前的 numlogins, 使用前請先清0 */
     char    chkpad1[44];
     uint32_t    role;           /* Role-specific permissions */
@@ -103,28 +103,30 @@ typedef struct userec_t {
     uint8_t pad_2;
 
     uint16_t    vl_count;   /* 違法記錄 ViolateLaw counter */
-    uint16_t    five_win;   /* 五子棋戰績 勝 */
-    uint16_t    five_lose;  /* 五子棋戰績 敗 */
-    uint16_t    five_tie;   /* 五子棋戰績 和 */
-    uint16_t    chc_win;    /* 象棋戰績 勝 */
-    uint16_t    chc_lose;   /* 象棋戰績 敗 */
-    uint16_t    chc_tie;    /* 象棋戰績 和 */
-    uint16_t    conn6_win;      /* 六子棋戰績 勝 */
-    uint16_t    conn6_lose;     /* 六子棋戰績 敗 */
-    uint16_t    conn6_tie;      /* 六子棋戰績 和 */
-    char    _unused_mind[2];/* 舊心情 */
-    uint16_t    go_win;     /* 圍棋戰績 勝 */
-    uint16_t    go_lose;    /* 圍棋戰績 敗 */
-    uint16_t    go_tie;     /* 圍棋戰績 和 */
-    uint16_t    dark_win;       /* 暗棋戰績 勝 */
-    uint16_t    dark_lose;      /* 暗棋戰績 敗 */
+    //uint16_t    five_win;   /* 五子棋戰績 勝 */
+    //uint16_t    five_lose;  /* 五子棋戰績 敗 */
+    //uint16_t    five_tie;   /* 五子棋戰績 和 */
+    //uint16_t    chc_win;    /* 象棋戰績 勝 */
+    //uint16_t    chc_lose;   /* 象棋戰績 敗 */
+    //uint16_t    chc_tie;    /* 象棋戰績 和 */
+    //uint16_t    conn6_win;      /* 六子棋戰績 勝 */
+    //uint16_t    conn6_lose;     /* 六子棋戰績 敗 */
+    //uint16_t    conn6_tie;      /* 六子棋戰績 和 */
+    //char    _unused_mind[2];/* 舊心情 */
+    //uint16_t    go_win;     /* 圍棋戰績 勝 */
+    //uint16_t    go_lose;    /* 圍棋戰績 敗 */
+    //uint16_t    go_tie;     /* 圍棋戰績 和 */
+    //uint16_t    dark_win;       /* 暗棋戰績 勝 */
+    //uint16_t    dark_lose;      /* 暗棋戰績 敗 */
+    char    cellphone[15]; /* 手機號碼 */
     uint8_t     ua_version;     /* Applicable user agreement version */
 
     uint8_t signature;  /* 慣用簽名檔 */
     uint8_t _unused10;  /* 從前放好文章數, 使用前請先清0 */
     uint8_t badpost;    /* 評價為壞文章數 */
-    uint16_t    dark_tie;       /* 暗棋戰績 和 */
-    char    myangel[IDLEN+1];/* 我的小天使 */
+    //uint16_t    dark_tie;       /* 暗棋戰績 和 */
+    //char    myangel[IDLEN+1];/* 我的小天使 */
+    char    _unused_a[30];
     char    pad_3;
 
     uint16_t    chess_elo_rating;/* 象棋等級分 */
