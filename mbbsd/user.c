@@ -275,6 +275,10 @@ user_display_advanced(const userec_t * u, int adminmode)
 					vmsg("查無這個帳號！");
 					return 0;
 				}
+				if(!strcmp(witness, cuser.userid)){
+					vmsg("不接受輸入自己的帳號！");
+					return -1;
+				}
 			    passwd_sync_query(uid, &atuser);
                 if (!(atuser.userlevel & PERM_ADMIN)) {
 					vmsg("這個帳號不具有公務身份！");
@@ -984,6 +988,7 @@ int cellphone_verify(char *user, char *cellphone)
 		prints("錯誤：%s",msg);
 		return -1;
 	}
+	mvouts(7,0,"驗證碼簡訊已傳送至您所輸入的手機號碼中。");
 	for (int i = 3; i > 0; i--) {
 		if (i < 3) {
 			char buf2[80];
@@ -1060,7 +1065,8 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 
     if (ans == '1' || ans == '3' || ans == 'm' || ans == 'p') {
 	clear();
-	y = 1;
+	vs_hdr(" 修改資料 ");
+	y = 2;
 	move(y++, 0);
 	outs(msg_uid);
 	outs(x.userid);
@@ -1143,10 +1149,11 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 	break;
 
     case 'p':
+    mvouts(y,0,"本站僅接受臺灣(+886)以09為首共計10碼之手機號碼");
 	if(!strcmp(x.userid, cuser.userid))
-    	getdata_str(y, 0,"手機號碼：", buf, sizeof(x.cellphone), DOECHO, x.cellphone);
+    	getdata_str(y++, 0,"手機號碼：", buf, 11, DOECHO, x.cellphone);
 	else
-    	getdata_str(y, 0,"手機號碼：", buf, sizeof(x.cellphone), DOECHO, "");
+    	getdata_str(y++, 0,"手機號碼：", buf, 11, DOECHO, "");
 
     if(!strcmp(x.cellphone, buf))
     	return;

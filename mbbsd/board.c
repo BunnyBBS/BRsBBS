@@ -114,6 +114,10 @@ int sysop_into_hide(boardheader_t *bp)
 					vmsg("查無這個帳號！");
 					return -1;
 				}
+				if(!strcmp(witness, cuser.userid)){
+					vmsg("不接受輸入自己的帳號！");
+					return -1;
+				}
 			    passwd_sync_query(uid, &atuser);
                 if (!(atuser.userlevel & PERM_ADMIN)) {
 					vmsg("這個帳號不具有公務身份！");
