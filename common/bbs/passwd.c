@@ -249,6 +249,14 @@ genpasswd(char *pw)
     return "";
 }
 
+void
+log_usersecurity(const char *userid, const char *log, const char *loghost)
+{
+    char buf[200];
+    now = time(NULL);
+    sethomefile(buf, userid, FN_USERSECURITY);
+    log_filef(buf, LOG_CREAT, "[%s] %s(%s)\n", Cdate(&now), log, loghost);
+}
 
 void
 logattempt(const char *uid, char type, time4_t now, const char *loghost)
@@ -268,13 +276,14 @@ logattempt(const char *uid, char type, time4_t now, const char *loghost)
     // log to user private log
     if (type == '-') {
 	snprintf(genbuf, sizeof(genbuf),
-		 "[%s] %s\n", Cdate(&now), loghost);
+		 "[%s] ±K½X¿ù»~(%s)\n", Cdate(&now), loghost);
 	len = strlen(genbuf);
-	sethomefile(fname, uid, FN_BADLOGIN);
-	if ((fd = OpenCreate(fname, O_WRONLY | O_APPEND)) >= 0) {
-	    write(fd, genbuf, len);
-	    close(fd);
-	}
+    sethomefile(fname, uid, FN_BADLOGIN);
+    if ((fd = OpenCreate(fname, O_WRONLY | O_APPEND)) >= 0) {
+        write(fd, genbuf, len);
+        close(fd);
+    }
+    log_usersecurity(uid, "±K½X¿ù»~", loghost);
     }
 }
 

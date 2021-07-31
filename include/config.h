@@ -519,4 +519,43 @@
 # define SHOW_IDLE_TIME          /* 顯示閒置時間 */
 #endif
 
+/* 看板人氣文字顏色預設設定
+ * [數字 -> 黃 -> 紅] -> HOT ->  [爆 ->  紅 ->  藍 ->   青->   綠->    黃->    紫]
+ *         10    50     100   1000   2000   5000   10000  20000  60000  100000
+ *                                                 EXTRA_HOTBOARD_COLORS
+ */
+#ifndef HOTBOARD_DEFAULT
+#define HOTBOARD_DEFAULT (10)
+#endif
+#ifndef HOTBOARD_33NUM
+#define HOTBOARD_33NUM	(50)
+#endif
+#ifndef HOTBOARD_37HOT
+#define HOTBOARD_37HOT	(100)
+#endif
+#ifndef HOTBOARD_37BOMB
+#define HOTBOARD_37BOMB	(1000)
+#endif
+#ifndef HOTBOARD_31BOMB
+#define HOTBOARD_31BOMB	(2000)
+#endif
+#ifndef HOTBOARD_34BOMB
+#define HOTBOARD_34BOMB	(5000)
+#endif
+
+#ifdef EXTRA_HOTBOARD_COLORS
+#ifndef HOTBOARD_36BOMB
+#define HOTBOARD_36BOMB	(10000)
+#endif
+#ifndef HOTBOARD_32BOMB
+#define HOTBOARD_32BOMB	(30000)
+#endif
+#ifndef HOTBOARD_33BOMB
+#define HOTBOARD_33BOMB	(60000)
+#endif
+#ifndef HOTBOARD_35BOMB
+#define HOTBOARD_35BOMB	(100000)
+#endif
+#endif //EXTRA_HOTBOARD_COLORS
+
 #endif

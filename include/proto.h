@@ -869,6 +869,7 @@ int  pwcuInitAdminPerm	(void);
 int verify_captcha(const char *reason);
 
 bool isFileExist(); /* in mbbsd.c */
+const char *ibunny_code2msg(int code);
 
 /* Board Tax */
 #ifdef USE_BOARDTAX

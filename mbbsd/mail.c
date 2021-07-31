@@ -251,6 +251,18 @@ mail_id(const char *id, const char *title, const char *src, const char *owner)
     if (Copy(src, dst) < 0)
 	return -1;
 
+	FILE *fp, *fp2;
+	fp = fopen(dst, "w");
+	fprintf(fp, "作者: %s\n標題: %s \n", owner, title);
+	fprintf(fp, "時間: %s\n", ctime4(&now));
+    char buf[200];
+	fp2 = fopen(src, "r");
+	while(fgets(buf, sizeof(buf), fp2)){
+		fputs(buf, fp);
+	}
+	fclose(fp2);
+	fclose(fp);
+
     sethomedir(dirf, id);
     append_record_forward(dirf, &mhdr, sizeof(mhdr), id);
     sendalert(id, ALERT_NEW_MAIL);

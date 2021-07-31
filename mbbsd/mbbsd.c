@@ -672,11 +672,11 @@ multi_user_check(void)
 		}
     } else {
 	/* allow multiple guest user */
-	/*if (search_ulistn(usernum, MAX_GUEST) != NULL) {*/
-	    prints("抱歉，本站不提供 guest 訪問，請以 new 註冊新帳號。");
+	if (search_ulistn(usernum, MAX_GUEST) != NULL) {
 	    sleep(1);
-	    abort_bbs(0);
-	/*}*/
+	    vmsg("抱歉，目前已有太多 guest 在站上, 請用new註冊。");
+	    exit(1);
+	}
     }
 }
 

@@ -541,6 +541,7 @@ extern const char *build_remote;
 extern const char *build_origin;
 extern const char *build_hash;
 extern const char *build_time;
+extern const char *build_ver_name;
 
 int
 p_sysinfo(void)
@@ -584,13 +585,9 @@ p_sysinfo(void)
            Cdatelite(&start_time),
 	   build_time);
     if (*build_remote) {
-      prints("基礎版本: %s %s %s\n", build_remote, build_origin, build_hash);
+      prints("Git: %s\n", build_remote);
+      prints("Ver: %s (%s)\n", build_ver_name, build_hash);
     }
-	  prints("\n程式是以批踢踢實業坊PTT所開發釋出的PttBBS（https://github.com/ptt/pttbbs）為\n"
-			 "基礎，由大兔的神密世界BunnyBBS.tk工程業務處開發與修改重新以BRsBBS編列發行版本\n"
-			 "號後公開釋出於Github並運用於BunnyBBS。\n\n");
-      prints("Github : https://github.bunnybbs.tk/\n");
-	  prints("發行版本號與更新紀錄請參考(X)yz系統資訊區→(L)Updates更新紀錄。\n\n");
 
 #ifdef REPORT_PIAIP_MODULES
     outs("\n" ANSI_COLOR(1;30)

@@ -1,7 +1,7 @@
 #define PWCU_IMPL
 #include "bbs.h"
 
-#ifdef CHESSCOUNTRY
+/*#ifdef CHESSCOUNTRY
 static const char * const chess_photo_name[4] = {
     "photo_fivechess",
     "photo_cchess",
@@ -15,7 +15,7 @@ static const char * const chess_type[4] = {
     "六子旗",
     "圍棋",
 };
-#endif
+#endif*/
 
 void
 ban_usermail(const userec_t *u, const char *reason) {
@@ -174,39 +174,77 @@ user_display_advanced_auth(void)
 	clear();
 	vs_hdr2(" 民政事務局 ", " 授權認證設定");
 
-	char userid[IDLEN+1];
+	char userid[IDLEN+1], userid2[IDLEN+1];
+	userec_t atuser;
+	int uid;
 	move(1,0);
-	usercomplete("請輸入要設定的帳號 ", userid);
-	if (!is_validuserid(userid)){
-		vmsg("查無ID");
+	usercomplete("請輸入欲授權的帳號 ", userid);
+	if (!(uid = searchuser(userid, NULL))){
+		vmsg("查無此帳號");
+		return 0;
+	}
+	passwd_sync_query(uid, &atuser);
+	if (!(atuser.userlevel & PERM_ADMIN)) {
+		vmsg("這個帳號不具有公務身份！");
+		return 0;
+	}
+
+	move(2,0);
+	usercomplete("要授權讓他查詢誰的帳號？ ", userid2);
+	if (!is_validuserid(userid2)){
+		vmsg("查無此帳號");
 		return 0;
 	}
 
 	FILE *fp;
-	char buf[200], code[9];
-	sethomefile(buf, userid, "query_data.auth");
+	char buf[200], buf2[200], genbuf[3], code[11];
+	snprintf(buf2, sizeof(buf2), "%s.query_auth", userid2);
+	sethomefile(buf, userid, buf2);
 	move(4, 0);
-	prints("設定帳號： %s\n\n", userid);
+	prints("您即將授權予 %s 查詢 %s 的資料\n\n", userid, userid2);
+	getdata(5, 0, "正確嗎？[y/N] ", genbuf, 3, LCECHO);
+	if(genbuf[0] != 'y'){
+		vmsg("已取消設定。");
+		return 0;
+	}
+
+	outs("\n");
 	if(fp = fopen(buf, "r")){
-		outs( " " ANSI_COLOR(1;31) "注意: " ANSI_COLOR(1;37) "這個帳號已經有被設定一組授權碼尚未被使用，不可以設定第二組。" ANSI_RESET "\n\n");
+		outs( " " ANSI_COLOR(1;31) "注意: " ANSI_COLOR(1;37) "已經有被設定一組授權碼尚未被使用，不可以設定第二組。" ANSI_RESET "\n\n");
 		fgets(code, sizeof(code), fp);
 		fclose(fp);
 		outs(" 授權認證碼：" ANSI_COLOR(1)); outs(code); outs(ANSI_RESET "\n");
-		outs(" 共計8碼，會出現英文字母I、L、O，不會出現數字0、1。\n");
-		pressanykey();
+		outs(" 共計10碼，會出現英文字母I、L、O，不會出現數字0、1。\n");
+		getdata(b_lines - 2, 0, "要刪除嗎？[y/N] ", genbuf, 3, LCECHO);
+		if(genbuf[0] == 'y'){
+			move(1,0); clrtobot();
+			unlink(buf);
+			vmsg("已刪除授權檔。");
+		}
+		return 0;
 	}else{
 		if(!(fp = fopen(buf, "w"))){
 			vmsg("系統錯誤，請稍後再試。(Error code: UDA-G-001)");
 			return 0;
 		}
 		const char * const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-	    for (int i = 0; i < 8; i++)
+	    for (int i = 0; i < 10; i++)
 		code[i] = chars[random() % strlen(chars)];
-	    code[8] = '\0';
+	    code[10] = '\0';
 		fprintf(fp,"%s", code);
 		fclose(fp);
+
+		unlink("etc/queryData.auth");
+		fp = fopen("etc/queryData.auth", "w+");
+		fprintf(fp, "作者: [國家安全局]\n"
+					"標題: [個資] 資料查詢授權碼被新增\n"
+					"時間: %s\n", ctime4(&now));
+		fprintf(fp,"\n國家安全局通知\n站務人員 %s 授權 %s 查詢 %s 的個人資料，已產生一組專用授權碼。", cuser.userid, userid, userid2);
+		fclose(fp);
+
+		post_file(BN_SECURITY, "[個資] 資料查詢授權碼被新增", "etc/queryData.auth", "[國家安全局]");
 		outs(" 授權認證碼：" ANSI_COLOR(1)); outs(code); outs(ANSI_RESET "\n");
-		outs(" 共計8碼，會出現英文字母I、L、O，不會出現數字0、1。");
+		outs(" 共計10碼，會出現英文字母I、L、O，不會出現數字0、1。");
 		pressanykey();
 	}
 	return 0;
@@ -233,11 +271,12 @@ user_display_advanced(const userec_t * u, int adminmode)
     prints("\n即將查詢 %s 的資料\n", u->userid);
 
 	if(!HasUserPerm(PERM_SYSOP)){
-		char code[9], code_input[9], buf[200];
+		char code[11], code_input[11], buf[200], buf2[200];
     	FILE *fp;
-    	sethomefile(buf, cuser.userid, "query_data.auth");
+		snprintf(buf2, sizeof(buf2), "%s.query_auth", u->userid);
+		sethomefile(buf, cuser.userid, buf2);
 		if (!(fp = fopen(buf, "r"))){
-			vmsg("總站長沒有設定授權碼，請先洽詢總站長。");
+			vmsg("沒有對應的授權。");
 			return 0;
 		}
 		fgets(code, sizeof(code), fp);
@@ -308,15 +347,19 @@ user_display_advanced(const userec_t * u, int adminmode)
         }else{
             unlink("etc/queryData.mail");
 			fp = fopen("etc/queryData.mail", "w+");
-    		fprintf(fp,"\n國家安全局通知\n站務人員 %s 查詢了 %s 的個人資料，\n時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，\n理由是 %s，\n如果您認為該站務人員的行為不當請立即至%s提報。\n若無其他異況可直接略過本通知。", cuser.userid, u->userid, ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason, BN_SYSOP);
+    		fprintf(fp,"國家安全局通知\n站務人員 %s 查詢了 %s 的個人資料，\n"
+	    			   "理由是 %s，\n相關關係人如有異議，請逕恰%s。",
+	    			   cuser.userid, u->userid, reason, BN_SYSOP);
     		if(inform_user == 0)
     			fprintf(fp,"\n\n[此次操作未直接通知國民]\n本信已同時知會以下人員：%s", atuser.userid);
     		fclose(fp);
     		if(inform_user == 0)
     			mail_id(atuser.userid, "[通知] 有站務人員查詢 他人 個人資料", "etc/queryData.mail", "[國家安全局]");
-    		else
+    		else{
     			mail_id(u->userid, "[通知] 有站務人員查詢 您的 個人資料", "etc/queryData.mail", "[國家安全局]");
-    		post_file(BN_SECURITY, "[通知] 有站務人員查詢個人敏感資料", "etc/queryData.mail", "[國家安全局]");
+				log_usersecurity(u->userid, "個人資料被查詢", cuser.userid);
+    		}
+    		post_file(BN_SECURITY, "[個資] 有站務人員查詢個人敏感資料", "etc/queryData.mail", "[國家安全局]");
             outs("正在查詢使用者資料…");
         }
 	}
@@ -339,7 +382,9 @@ user_display_advanced(const userec_t * u, int adminmode)
 		prints("\t職業學歷: %s\n", u->career);
 		prints("\t居住地址: %s\n", u->address);
 		prints("\t電子信箱: %s\n", u->email);
+#ifdef USE_PHONE_SMS
 		prints("\t手機號碼: %s\n", u->cellphone);
+#endif //USE_PHONE_SMS
 
     pressanykey();
 	return 0;
@@ -374,7 +419,9 @@ user_display(const userec_t * u, int adminmode)
 	    prints("\t職業學歷: %s\n", u->career);
 	    prints("\t居住地址: %s\n", u->address);
 	    prints("\t電子信箱: %s\n", u->email);
+#ifdef USE_PHONE_SMS
 		prints("\t手機號碼: %s\n", u->cellphone);
+#endif //USE_PHONE_SMS
     }
 
     prints("\t是否成年: %s滿18歲\n", u->over_18 ? "已" : "未");
@@ -924,9 +971,10 @@ userPass_change(userec_t x, int adminmode, int unum)
 		mail_id(witness[i], title, "etc/updatepwd.log", cuser.userid);
 	    }
 	}
-	
+
     passwd_sync_update(unum, &x);
 
+	log_usersecurity(x.userid, "修改密碼", (adminmode ? cuser.userid : fromhost));
     if (!adminmode){
 		vmsg("已修改密碼，請重新登入。");
 		kick_all(x.userid);
@@ -934,22 +982,18 @@ userPass_change(userec_t x, int adminmode, int unum)
 		kick_all(x.userid);
 		vmsg("已修改密碼。");
 	}
-	
+
 	return 0;
 }
 
-static const char *
-sms_verify_send(char *user, char *authcode, char *cellphone)
+#ifdef USE_PHONE_SMS
+int sms_verify_send(char *user, char *authcode, char *cellphone)
 {
 	int ret, code = 0;
 	char uri[320] = "",buf[200];
 
 	snprintf(uri, sizeof(uri), "/%s?user=%s&cellphone=%s&code=%s"
-#ifdef BETA
-			 "&beta=true"
-#endif
-			 , SMS_VERIFY_URI, user, cellphone , authcode
-			);
+			 , SMS_VERIFY_URI, user, cellphone , authcode);
 
 	THTTP t;
 	thttp_init(&t);
@@ -962,22 +1006,14 @@ sms_verify_send(char *user, char *authcode, char *cellphone)
 	if(code == 200)
 		return NULL;
 
-	if(code == 400)
-		return "帳號細節有誤，無法發送驗證碼。(SMS-V400)";
-	if(code == 401)
-		return "API串接出錯，請聯繫工程業務處協助。(SMS-V401)";
-	if(code == 410)
-		return "帳號限額已滿，無法發送驗證碼。(SMS-V410)";
-	if(code == 500)
-		return "伺服器出錯，請聯繫工程業務處協助。(SMS-V500)";
-	if(ret)
-		return "系統錯誤，請聯繫工程業務處協助。(SMS-V001)";
+	return code;
 }
 int cellphone_verify(char *user, char *cellphone)
 {
-	mvouts(6,0,"即將驗證您的手機號碼…");clrtobot();pressanykey();
+	move(9, 0); clrtobot();
+	outs("即將驗證您的手機號碼…"); pressanykey();
 	char code[7], code_input[7];
-	const char *msg = NULL;
+	int msg;
 	const char * const chars = "1234567890";
     for (int i = 0; i < 6; i++)
 		code[i] = chars[random() % strlen(chars)];
@@ -985,19 +1021,19 @@ int cellphone_verify(char *user, char *cellphone)
 	msg = sms_verify_send(user, code, cellphone);
 	if (msg != NULL){
 		move(10,0);
-		prints("錯誤：%s",msg);
+		prints("錯誤：%s", ibunny_code2msg(msg));
 		return -1;
 	}
-	mvouts(7,0,"驗證碼簡訊已傳送至您所輸入的手機號碼中。");
+	mvouts(10, 0, "驗證碼簡訊已傳送至您所輸入的手機號碼中。");
 	for (int i = 3; i > 0; i--) {
 		if (i < 3) {
 			char buf2[80];
-			move(10, 0);
+			move(13, 0);
 			snprintf(buf2, sizeof(buf2), ANSI_COLOR(1;31) "驗證碼錯誤，您還有 %d 次機會。" ANSI_RESET, i);
 			outs(buf2);
 		}
 		code_input[0] = '\0';
-		getdata(9, 0, "請輸入驗證碼：", code_input,
+		getdata(12, 0, "請輸入驗證碼：", code_input,
 			sizeof(code_input), DOECHO);
 
 		size_t length = strlen(code_input);
@@ -1009,6 +1045,7 @@ int cellphone_verify(char *user, char *cellphone)
     }
     return -1;
 }
+#endif //USE_PHONE_SMS
 
 void
 uinfo_query(const char *orig_uid, int adminmode, int unum)
@@ -1067,9 +1104,10 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 	clear();
 	vs_hdr(" 修改資料 ");
 	y = 2;
-	move(y++, 0);
+	move(y, 0);
 	outs(msg_uid);
 	outs(x.userid);
+	y = y + 2;
     }
 
     if (adminmode && ((ans >= '1' && ans <= '8') || ans == 'm') &&
@@ -1143,13 +1181,18 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 		break;
 	    }
 #endif
+
+		log_usersecurity(x.userid, "修改電子信箱", (adminmode ? cuser.userid : fromhost));
 	    strlcpy(x.email, buf, sizeof(x.email));
 	    mail_changed = 1;
 	}
 	break;
 
     case 'p':
-    mvouts(y,0,"本站僅接受臺灣(+886)以09為首共計10碼之手機號碼");
+#ifdef USE_PHONE_SMS
+    mvouts(y, 0, "本站僅接受臺灣(886)以09為首共計10碼之手機號碼");
+    mvouts(y++, 0, "當您新增或修改手機號碼時需要進行簡訊驗證");
+    y++;
 	if(!strcmp(x.userid, cuser.userid))
     	getdata_str(y++, 0,"手機號碼：", buf, 11, DOECHO, x.cellphone);
 	else
@@ -1157,6 +1200,20 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 
     if(!strcmp(x.cellphone, buf))
     	return;
+
+    if(buf[0] == '\0'){
+    	vmsg("暫未開放自行刪除手機號碼，如有任何需求請逕洽有關單位。");
+    	return;
+    }
+
+	if(buf[0] != '0' || buf[1] != '9'){
+		vmsg("手機號碼不正確。");
+		return;
+	}
+	if(strlen(buf) != 10){
+		vmsg("手機號碼不正確。");
+		return;
+	}
 
 	int msg = 0;
 	if (!adminmode){
@@ -1166,8 +1223,14 @@ uinfo_query(const char *orig_uid, int adminmode, int unum)
 	if(msg != 0){
 		vmsg("未修改。");
 		return;
-	}else
+	}else{
+		log_usersecurity(x.userid, "修改手機號碼", (adminmode ? cuser.userid : fromhost));
 		strlcpy(x.cellphone, buf, sizeof(x.cellphone));
+	}
+#else
+	vmsg("此資料項目未開放。");
+	return;
+#endif //USE_PHONE_SMS
 	break;
 
     case '1':

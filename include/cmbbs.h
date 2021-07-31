@@ -112,6 +112,7 @@ int passwd_require_secure_connection(const userec_t *u);
 int  checkpasswd  (const char *passwd, char *test);  // test will be destroyed
 void logattempt   (const char *uid, char type, time4_t now, const char *fromhost);
 char*genpasswd    (char *pw);
+void log_usersecurity(const char *userid, const char *log, const char *loghost);
 
 /* record */
 int substitute_fileheader(const char *dir_path, const void *srcptr, const void *destptr, int id);

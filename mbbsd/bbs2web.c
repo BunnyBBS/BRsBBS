@@ -1,5 +1,20 @@
 #include "bbs.h"
 
+const char *
+ibunny_code2msg(int code)
+{
+	if(code == 400)
+		return "帳號細節錯誤，已被拒絕。(400)";
+	if(code == 401)
+		return "伺服器串接發生錯誤。(401)";
+	if(code == 402)
+		return "您的帳號限額已滿，已被拒絕。(402)";
+	if(code == 500)
+		return "伺服器發生程式錯誤。(500)";
+
+	return "系統異常：發生未被定義的錯誤。";
+}
+
 #ifdef USE_BBS2WEB
 
 int web_sync_board(int bid, const boardheader_t *board, char *type)
@@ -11,10 +26,8 @@ int web_sync_board(int bid, const boardheader_t *board, char *type)
 		return 2;
 
 	/* 板標在這裡同步會出錯，暫時不設計在這裡同步 */
-	snprintf(uri, sizeof(uri), "/%s?type=%s&bid=%d&gid=%d&is_board=%d&name=%s&mod=%s&hide=%d&no_post=%d&friend_post=%d&no_reply=%d&no_money=%d&no_push=%d&ip_rec=%d&align=%d"
-#ifdef BETA
-			 "&beta=true"
-#endif
+	snprintf(uri, sizeof(uri), "/%s?type=%s&bid=%d&gid=%d&is_board=%d&name=%s&mod=%s&hide=%d"
+			 "&no_post=%d&friend_post=%d&no_reply=%d&no_money=%d&no_push=%d&ip_rec=%d&align=%d"
 			 , WEB_SYNCBRD_URI, type, bid, board->gid, ((board->brdattr & BRD_GROUPBOARD) ? 0 : 1),
 			 board->brdname, board->BM,
 			((board->brdattr & BRD_HIDE) ? 1 : 0), ((board->brdattr & BRD_NOPOST) ? 1 : 0),
@@ -69,19 +82,17 @@ web_user_register(void)
 	outs("\n請稍後，註冊中…\n");
 
 	int ret, code = 0;
-	char uri[320] = "",buf[200];
-	snprintf(uri, sizeof(uri), "/%s?username=%s&passwd=%s&nickname=%s&email=%s&reg_ip=%s"
-#ifdef BETA
-			 "&beta=true"
-#endif
-			 , WEB_USERREG_URI, cuser.userid, buf2,
-			 cuser.nickname, cuser.email, fromhost
-			);
+	char uri[320] = "",buf[200],post[200];
+	snprintf(post, sizeof(post), "username=%s&passwd=%s&nickname=%s&email=%s&reg_ip=%s"
+			 , cuser.userid, buf2, cuser.nickname, cuser.email, fromhost);
+	//TODO: 先做SHA256再丟給Web API? 那會需要弄個SHA256的Function來。
 
 	THTTP t;
 	thttp_init(&t);
 	snprintf(buf, sizeof(buf), "Bearer %s", WEB_API_KEY);
-	ret = thttp_get(&t, WEB_API_SERVER, uri, WEB_API_SERVER, buf);
+	snprintf(uri, sizeof(uri), "/%s", WEB_USERREG_URI);
+	ret = thttp_post(&t, WEB_API_SERVER, uri, WEB_API_SERVER,
+					 "application/x-www-form-urlencoded", post, sizeof(post), buf);
 	if(!ret)
 		code = thttp_code(&t);
 	thttp_cleanup(&t);
@@ -128,9 +139,6 @@ web_user_resetpass(void)
 	int ret, code = 0;
 	char uri[320] = "",buf[200];
 	snprintf(uri, sizeof(uri), "/%s?username=%s&passwd=%s"
-#ifdef BETA
-			 "&beta=true"
-#endif
 			 , WEB_RESETPASS_URI, cuser.userid, buf2);
 
 	THTTP t;
@@ -188,11 +196,7 @@ web_user_lock(void)
 
 	int ret, code = 0;
 	char uri[320] = "",buf[200];
-	snprintf(uri, sizeof(uri), "/%s?username=%s"
-#ifdef BETA
-			 "&beta=true"
-#endif
-			 , WEB_USERLOCK_URI, cuser.userid);
+	snprintf(uri, sizeof(uri), "/%s?username=%s", WEB_USERLOCK_URI, cuser.userid);
 
 	THTTP t;
 	thttp_init(&t);

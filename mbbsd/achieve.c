@@ -99,7 +99,7 @@ int achieve_user(void)
 	int i=0, count=0;
     char genbuf[3];
     char buf[200], buf2[200], buf3[200];
-    FILE *fp;
+    FILE *fp, *fp2;
 
 	clear();
 	vs_hdr2(" " BBSNAME " ", " 我的成就勳章");
@@ -112,9 +112,17 @@ int achieve_user(void)
 				move(1,0);clrtobot();
 				i = count + 1;
 				outs("成就名稱：");outs(getAchName(buf2,false));outs("\n");
-				outs("成就說明：");outs(getAchDesc(buf2));outs("\n");
 				outs("成就屬性：");outs(getAchAttr(buf2));outs("\n");
-				outs("\n狀態：");
+
+				outs("成就說明：\n");
+				snprintf(buf3, sizeof(buf3), "achieve/%s.desc", buf2);
+				if(fp2 = fopen(buf3, "r")){
+					while(fgets(buf3, sizeof(buf3), fp2)){
+						outs(buf3);
+					}
+				}
+
+				mvouts(b_lines - 2, 0, "狀態：");
 				if(strcmp(cuser.achieve, buf2) == 0)
 					outs(ANSI_COLOR(1;32)"使用中"ANSI_RESET);
 				else
@@ -122,7 +130,7 @@ int achieve_user(void)
 				outs("\n");
 
 				if(strcmp(cuser.achieve, buf2) == 0){
-					getdata(b_lines - 1, 0, "[ENTER] 下一個  (U) 拔掉勳章 ",genbuf, 3, LCECHO);
+					getdata(b_lines - 1, 0, "[N] 下一個  (U) 拔掉勳章 ",genbuf, 3, LCECHO);
 					if(genbuf[0] == 'u'){
 						strlcpy(cuser.achieve, "", sizeof(cuser.achieve));
 						passwd_update(usernum, &cuser);
@@ -130,7 +138,7 @@ int achieve_user(void)
 						return 0;
 					}
 				}else{
-					getdata(b_lines - 1, 0, "[ENTER] 下一個  (W) 配戴勳章 ",genbuf, 3, LCECHO);
+					getdata(b_lines - 1, 0, "[N] 下一個  (W) 配戴勳章 ",genbuf, 3, LCECHO);
 					if(genbuf[0] == 'w'){
 						strlcpy(cuser.achieve, buf2, sizeof(cuser.achieve));
 						passwd_update(usernum, &cuser);
@@ -351,13 +359,23 @@ VIEWLIST:
 
 int achieve_view(char *achieve)
 {
+	FILE *fp;
+	char buf[200];
+
 	clear();
 	vs_hdr2(" " BBSNAME " ", " 查詢成就勳章詳情");
 	
 	move(2,0);
 	outs("成就名稱：");outs(getAchName(achieve,false));outs("\n");
-	outs("成就說明：");outs(getAchDesc(achieve));outs("\n");
 	outs("成就屬性：");outs(getAchAttr(achieve));outs("\n");
+
+	outs("成就說明：\n");
+	snprintf(buf, sizeof(buf), "achieve/%s.desc", achieve);
+	if(fp = fopen(buf, "r")){
+		while(fgets(buf, sizeof(buf), fp)){
+			outs(buf);
+		}
+	}
 	pressanykey();
 
     return 0;

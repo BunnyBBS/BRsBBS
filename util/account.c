@@ -412,11 +412,11 @@ main(/*int argc, char **argv*/)
         /*Copy("etc/today", "etc/yesterday");*/
 	/* system("rm -f note.dat"); */
 
-	//keeplog("etc/today", BN_RECORD, "上站人次統計", NULL);
+	/*keeplog("etc/today", BN_RECORD, "上站人次統計", NULL);
 	keeplog(FN_MONEY, BN_SECURITY, "本日金錢往來記錄", NULL);
 	keeplog("etc/illegal_money", BN_SECURITY, "本日違法賺錢記錄", NULL);
 	keeplog("etc/osong.log", BN_SECURITY, "本日點歌記錄", NULL);
-	//keeplog("etc/chicken", BN_RECORD, "雞場報告", NULL);
+	keeplog("etc/chicken", BN_RECORD, "雞場報告", NULL);*/
 
         // Restore etc/yesterday because keeplog removes it.
         //Copy("etc/yesterday", "etc/today");

@@ -126,7 +126,7 @@ int sysop_into_hide(boardheader_t *bp)
 	            inform_user = 0;
 			}
 		}
-		FILE		   *fp, *fp2;
+		FILE		   *fp;
 		char			reason[100];
 		char bmStr[IDLEN * 3 + 10];
 		char * bmArr;
@@ -146,11 +146,13 @@ int sysop_into_hide(boardheader_t *bp)
 			return -1;
 		}else{
 			unlink("etc/intoHide.log");
-			fp2 = fopen("etc/intoHide.log", "w");
-			fprintf(fp2,"\n國家安全局通知\n站務人員 %s 進入 %s 的隱藏看板：%s，\n時間是%03d/%02d/%02d (%c%c) %02d:%02d:%02d，\n理由是 %s，\n如果您認為該站務人員的行為不當請立即至%s回報。\n若無其他異況可直接略過本通知。", cuser.userid, bp->BM, bp->brdname,ptime.tm_year - 11, ptime.tm_mon + 1, ptime.tm_mday, myweek[i], myweek[i + 1],ptime.tm_hour, ptime.tm_min, ptime.tm_sec, reason, BN_SYSOP);
+			fp = fopen("etc/intoHide.log", "w");
+    		fprintf(fp,"國家安全局通知\n站務人員 %s 進入了 %s 的隱藏看板：%s，\n"
+	    			   "理由是 %s，\n相關關係人如有異議，請逕恰%s。",
+	    			   cuser.userid, bp->BM, bp->brdname, reason, BN_SYSOP);
 			if(inform_user == 0)
-    			fprintf(fp2,"\n\n[此次操作未直接通知國民]\n本信已同時知會以下人員：%s", atuser.userid);
-			fclose(fp2);
+    			fprintf(fp,"\n\n[此次操作未直接通知國民]\n本信已同時知會以下人員：%s", atuser.userid);
+			fclose(fp);
 			if(inform_user == 1){
 				if(does_board_have_public_bm(bp)){
 					snprintf(bmStr, sizeof(bmStr), "%s", bp->BM);
@@ -163,7 +165,7 @@ int sysop_into_hide(boardheader_t *bp)
 			}else{
 				mail_id(atuser.userid, "[通知] 有站務人員進入隱藏看版", "etc/intoHide.log", "[國家安全局]");
 			}
-			post_file(BN_SECURITY, "[通知] 有站務人員進入隱藏看版", "etc/intoHide.log", "[國家安全局]");
+			post_file(BN_SECURITY, "[隱板] 有站務人員進入隱藏看版", "etc/intoHide.log", "[國家安全局]");
 			outs("正在進入隱形看板…");
 		}
 	}
@@ -1676,30 +1678,30 @@ show_brdlist(int head, int clsflag, int newflag)
                     // Note the nuser is not updated realtime, or have some bug.
 		    else if (B_BH(ptr)->nuser < 1)
 			prints(" %c ", B_BH(ptr)->bvote ? 'V' : ' ');
-		    else if (B_BH(ptr)->nuser <= 10)
+		    else if (B_BH(ptr)->nuser <= HOTBOARD_DEFAULT)
 			prints("%2d ", B_BH(ptr)->nuser);
-		    else if (B_BH(ptr)->nuser <= 50)
+		    else if (B_BH(ptr)->nuser <= HOTBOARD_33NUM)
 			prints(ANSI_COLOR(1;33) "%2d" ANSI_RESET " ", B_BH(ptr)->nuser);
 #ifdef EXTRA_HOTBOARD_COLORS
 		    // piaip 2008/02/04: new colors
-		    else if (B_BH(ptr)->nuser >= 100000)
+		    else if (B_BH(ptr)->nuser >= HOTBOARD_35BOMB)
 			outs(ANSI_COLOR(1;35) "爆!" ANSI_RESET);
-		    else if (B_BH(ptr)->nuser >= 60000)
+		    else if (B_BH(ptr)->nuser >= HOTBOARD_33BOMB)
 			outs(ANSI_COLOR(1;33) "爆!" ANSI_RESET);
-		    else if (B_BH(ptr)->nuser >= 30000)
+		    else if (B_BH(ptr)->nuser >= HOTBOARD_32BOMB)
 			outs(ANSI_COLOR(1;32) "爆!" ANSI_RESET);
-		    else if (B_BH(ptr)->nuser >= 10000)
+		    else if (B_BH(ptr)->nuser >= HOTBOARD_36BOMB)
 			outs(ANSI_COLOR(1;36) "爆!" ANSI_RESET);
 #endif
-		    else if (B_BH(ptr)->nuser >= 5000)
+		    else if (B_BH(ptr)->nuser >= HOTBOARD_34BOMB)
 			outs(ANSI_COLOR(1;34) "爆!" ANSI_RESET);
-		    else if (B_BH(ptr)->nuser >= 2000)
+		    else if (B_BH(ptr)->nuser >= HOTBOARD_31BOMB)
 			outs(ANSI_COLOR(1;31) "爆!" ANSI_RESET);
-		    else if (B_BH(ptr)->nuser >= 1000)
+		    else if (B_BH(ptr)->nuser >= HOTBOARD_37BOMB)
 			outs(ANSI_COLOR(1) "爆!" ANSI_RESET);
-		    else if (B_BH(ptr)->nuser >= 100)
+		    else if (B_BH(ptr)->nuser >= HOTBOARD_37HOT)
 			outs(ANSI_COLOR(1) "HOT" ANSI_RESET);
-		    else //if (B_BH(ptr)->nuser > 50)
+		    else //if (B_BH(ptr)->nuser > HOTBOARD_33NUM)
 			prints(ANSI_COLOR(1;31) "%2d" ANSI_RESET " ", B_BH(ptr)->nuser);
 		    prints("%.*s" ANSI_CLRTOEND, t_columns - 68, B_BH(ptr)->BM);
 		} else {
@@ -1807,6 +1809,7 @@ choose_board(int newflag)
 		    continue;
 		}
 		if (IS_LISTING_BRD()) {
+			vmsg("沒有任何看板");
 		    if (HasUserPerm(PERM_SYSOP) || GROUPOP()) {
 			if (paste_taged_brds(class_bid) ||
     			    m_newbrd(class_bid, 0) == -1)

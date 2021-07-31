@@ -407,7 +407,15 @@ GetWebUrl(const boardheader_t *bp, const fileheader_t *fhdr, char *buf,
         *fhdr->filename == '.')
 	return 0;
 
-    return snprintf(buf, szbuf, URL_PREFIX "/%s", fn);
+#ifndef URL_EXTENSION
+#define URL_EXTENSION ""
+#endif
+
+#ifdef URL_WITH_BRDNAME
+    return snprintf(buf, szbuf, URL_PREFIX "/%s/%s%s", folder, fn, URL_EXTENSION);
+#else
+    return snprintf(buf, szbuf, URL_PREFIX "/%s%s", fn, URL_EXTENSION);
+#endif
 }
 
 #endif // QUERY_ARTICLE_URL
