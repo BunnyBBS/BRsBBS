@@ -32,6 +32,8 @@ twoFA_Send(char *user, char *authcode)
 			 , IBUNNY_2FA_URI, user
 #ifdef BETA
 			 , authcode
+#else
+			 , ""
 #endif
 			);
 
@@ -60,6 +62,8 @@ twoFA_sms_Send(char *user, char *authcode, char *cellphone)
 			 , SMS_TWOFA_URI, user, cellphone
 #ifdef BETA
 			 , authcode
+#else
+			 , ""
 #endif
 			);
 
