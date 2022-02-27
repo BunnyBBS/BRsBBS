@@ -1001,43 +1001,42 @@ login_query(char *ruid)
 				outs(ERR_PASSWD);
 			}else{
 				outs("密碼正確，");
-#ifdef USE_2FALOGIN
+#ifdef USE_TWOFA_LOGIN
 				if(HasUserFlag(UF_TWOFA_LOGIN)){
-					outs("請稍候...");
+					outs("正在等待兩步驟認證...");
 					move(22, 0); refresh();
 					twofa = twoFA_main(&cuser);
 					move (22, 0); clrtoeol();
 					if(twofa != NULL){
-						outs("兩步驟認證失敗。");
+						outs("登入失敗：兩步驟認證失敗！");
 						move(22, 0); refresh();
 						pressanykey();
-						sleep(2);
 						exit(1);
 					}else{
 						outs("驗證完成，開始登入系統...");
-#ifdef USE_NOTILOGIN
+#ifdef USE_LOGIN_NOTIFY
                         if(HasUserFlag(UF_NOTIFY_LOGIN))
                             notiLogin_main(cuser.userid);
-#endif //USE_NOTILOGIN
+#endif //USE_LOGIN_NOTIFY
 						move(22, 0); refresh();
 						strlcpy(ruid, cuser.userid, IDLEN+1);
 						clrtoeol();
 						break;
 					}
 				}else{
-#endif //USE_2FALOGIN
+#endif //USE_TWOFA_LOGIN
                     outs("開始登入系統...");
-#ifdef USE_NOTILOGIN
+#ifdef USE_LOGIN_NOTIFY
                     if(HasUserFlag(UF_NOTIFY_LOGIN))
                         notiLogin_main(cuser.userid);
-#endif //USE_NOTILOGIN
+#endif //USE_LOGIN_NOTIFY
 					strlcpy(ruid, cuser.userid, IDLEN+1);
 					move(22, 0); refresh();
 					clrtoeol();
 					break;
-#ifdef USE_2FALOGIN
+#ifdef USE_TWOFA_LOGIN
 				}
-#endif //USE_2FALOGIN
+#endif //USE_TWOFA_LOGIN
 			}
 		}
 		}
@@ -1139,20 +1138,21 @@ inline static void check_bad_login(void)
     char            genbuf[200];
     setuserfile(genbuf, FN_BADLOGIN);
     if (more(genbuf, NA) != -1) {
-	move(b_lines - 3, 0);
-	outs("通常並沒有辦法知道該ip是誰所有，\n"
-		"若您有帳號被盜用疑慮，請經常更改您的密碼或使用加密連線。");
-	if (vans("您要刪除以上錯誤嘗試的記錄嗎? [Y/n] ") != 'n')
-	    unlink(genbuf);
+		move(b_lines - 3, 0);
+		outs("若您的帳號疑似有異常活動時，請立即修改您的密碼，以確保您的帳號安全。\n"
+			 "這些登入異常紀錄，您之後仍可以在個人設定區→帳號記錄檔查看。");
+		pressanykey();
+		unlink(genbuf);
     }
-#ifdef USE_2FALOGIN
-    setuserfile(genbuf, "2fa.bad");
+
+#ifdef USE_TWOFA_LOGIN
+    setuserfile(genbuf, FN_BADTWOFA);
     if (more(genbuf, NA) != -1) {
-	move(b_lines - 3, 0);
-	outs("通常並沒有辦法知道該ip是誰所有，\n"
-		"若您有帳號被盜用疑慮，請經常更改您的密碼或使用加密連線。");
-	if (vans("您要刪除以上錯誤嘗試的記錄嗎? [Y/n] ") != 'n')
-	    unlink(genbuf);
+		move(b_lines - 3, 0);
+		outs("若您的帳號疑似有異常活動時，請立即修改您的密碼，以確保您的帳號安全。\n"
+			 "這些登入異常紀錄，您之後仍可以在個人設定區→帳號記錄檔查看。");
+		pressanykey();
+		unlink(genbuf);
     }
 #endif
 }
@@ -1452,7 +1452,7 @@ user_login(void)
         }
 #endif
 
-#ifdef USE_2FALOGIN
+#ifdef USE_TWOFA_LOGIN
     setuserfile(buf, "2fa.recov");
     if(HasUserFlag(UF_TWOFA_LOGIN) && isFileExist(buf) == false){
         clear();

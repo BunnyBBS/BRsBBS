@@ -792,13 +792,13 @@ void Customize(void)
                 vmsg("您必須使用安全連線才能修改此設定");
                 continue;
             }
-#ifdef USE_NOTILOGIN
+#ifdef USE_LOGIN_NOTIFY
             if (masks1[key] == UF_NOTIFY_LOGIN) {
                 vmsg("請至「主選單→個人設定區→密碼與安全」設定。");
                 continue;
             }
 #endif
-#ifdef USE_2FALOGIN
+#ifdef USE_TWOFA_LOGIN
             if (masks1[key] == UF_TWOFA_LOGIN) {
                 vmsg("請至「主選單→個人設定區→密碼與安全」設定。");
                 continue;

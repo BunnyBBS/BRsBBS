@@ -1,13 +1,13 @@
 #include "bbs.h"
 
-#ifdef USE_NOTILOGIN
+#ifdef USE_LOGIN_NOTIFY
 static const char *
 notiLogin_Send(char *user)
 {
     int ret, code = 0;
     char uri[320] = "",buf[200];
 
-    snprintf(uri, sizeof(uri), "/%s?user=%s", NOTILOGIN_URI, user);
+    snprintf(uri, sizeof(uri), "/%s?user=%s", IBUNNY_NOTIFY_URI, user);
 
     THTTP t;
     thttp_init(&t);
@@ -119,4 +119,4 @@ notiLogin_main(char *user){
                          (int)(++dtime), user, msg));
     }
 }
-#endif //USE_NOTILOGIN
+#endif //USE_LOGIN_NOTIFY

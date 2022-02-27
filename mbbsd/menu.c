@@ -1007,13 +1007,13 @@ int main_menu(void) {
 	static const commands_t seculist[] = {
 		{u_pass_change,		PERM_BASIC,		"Password     〉  修改密碼  〈"},
 		{u_view_security,	0,				"Security Log 〉帳號安全記錄〈"},
-	#ifdef USE_NOTILOGIN
+	#ifdef USE_LOGIN_NOTIFY
 		{notiLogin_setting,	PERM_BASIC,		"NotifyLogin  〉  登入通知  〈"},
-	#endif //USE_NOTILOGIN
-	#ifdef USE_2FALOGIN
+	#endif //USE_LOGIN_NOTIFY
+	#ifdef USE_TWOFA_LOGIN
 		{twoFA_setting,		PERM_BASIC,		"TwoFactor    〉 兩步驟認證 〈"},
 		{twoFA_genRecovCode,PERM_BASIC,		"RecoverCode  〉 產生復原碼 〈"},
-	#endif //USE_2FALOGIN
+	#endif //USE_TWOFA_LOGIN
 	#if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
 		{twoFA_RemoveTrust	,PERM_BASIC,	"ERemoveTrust 〉撤銷信任裝置〈"},
 	#endif //defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)

@@ -885,14 +885,14 @@ int list_unpay(void);
 #endif //USE_BOARDTAX
 
 /* Two Factor Auth (should with iBunny) */
-#ifdef USE_2FALOGIN
+#ifdef USE_TWOFA_LOGIN
 int twoFA_setting(void);
 int twoFA_main(const userec_t *u);
 int twoFA_genRecovCode();
 #if defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
 int twoFA_RemoveTrust();
 #endif //defined(DETECT_CLIENT) && defined(USE_TRUSTDEV)
-#endif //USE_2FALOGIN
+#endif //USE_TWOFA_LOGIN
 
 /* Mission */
 #ifdef USE_MISSION
@@ -919,9 +919,9 @@ int web_user_resetpass(void);
 #endif //USE_BBS2WEB
 
 /* Login Notify (should with iBunny) */
-#ifdef USE_2FALOGIN
+#ifdef USE_TWOFA_LOGIN
 int notiLogin_setting(void);
 void notiLogin_main(char *user);
-#endif //USE_2FALOGIN
+#endif //USE_TWOFA_LOGIN
 
 #endif

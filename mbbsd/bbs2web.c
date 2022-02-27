@@ -12,7 +12,9 @@ ibunny_code2msg(int code)
 	if(code == 500)
 		return "伺服器發生程式錯誤。(500)";
 
-	return "系統異常：發生未被定義的錯誤。";
+	char buf[200];
+	snprintf(buf, sizeof(buf), "系統發生未被定義的錯誤。(%d)", code);
+	return buf;
 }
 
 #ifdef USE_BBS2WEB

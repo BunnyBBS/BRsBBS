@@ -51,6 +51,7 @@
 #define FN_MAIL_ACCOUNT_SYSOP_DESC "etc/mail_account_sysop_desc"  // 帳號站長信箱說明
 #define FN_USERMEMO	"memo.txt"	// 使用者個人記事本
 #define FN_BADLOGIN	"logins.bad"	// in BBSHOME & user directory
+#define FN_BADTWOFA	"twofa.bad"	// in BBSHOME & user directory
 #define FN_RECENTLOGIN	"logins.recent"	// in user directory
 #define FN_USERSECURITY	"user.security"	// in user directory
 #define FN_FORWARD      ".forward"      /* auto forward */
