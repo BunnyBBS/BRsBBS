@@ -61,7 +61,7 @@ web_user_register(void)
 	clear();
 	vs_hdr2(" 網站服務 ", " 註冊帳號");
 
-    char passbuf[PASSLEN], buf2[8];
+    char passbuf[PASSLEN], buf2[PASSLEN];
     move(3, 0);
     prints("設定帳號：%s\n", cuser.userid);
 	outs("請注意，本功\能僅限您不曾開通網站帳號時使用。\n");
@@ -123,7 +123,7 @@ web_user_resetpass(void)
 	clear();
 	vs_hdr2(" 網站服務 ", " 重設密碼");
 
-    char passbuf[PASSLEN], buf2[8];
+    char passbuf[PASSLEN], buf2[PASSLEN];
     move(3, 0);
     prints("設定帳號：%s\n", cuser.userid);
 	outs("使用此功\能會將重設你的網站帳號密碼。\n");
