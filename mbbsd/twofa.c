@@ -2,6 +2,25 @@
 
 #ifdef USE_TWOFA_LOGIN
 
+#ifdef USE_TWOFA_TOTP
+/* 請注意，目前TOTP產生須仰賴 {BBSHOME}/bin/totp 這隻程式
+   首次使用時，您須先至 {BBSHOME}/BRsBBS/util 中執行 pmake totp 將totp這隻程式裝起來
+   否則使用時可能會發生不可預期的錯誤
+   編譯util/totp.c時，請確認您有安裝libssl-dev */
+static void totp_code(char *buf2, const char * pubkey)
+{
+   FILE           *fp;
+   char            buf[200];
+   snprintf(buf, sizeof(buf), "%s/bin/totp %s", BBSHOME, pubkey);
+
+   fp = popen(buf, "r");
+   fgets(buf2, sizeof(buf2), fp);
+   pclose(fp);
+
+   buf2[7] = '\0';
+}
+#endif //USE_TWOFA_TOTP
+
 bool isFileExist();
 
 static void twoFA_GenCode(char *buf, size_t len)
@@ -135,17 +154,42 @@ int twoFA_setting(void)
 		getdata(6, 0, "關閉(y) 取消操作[N] ",genbuf, 3, LCECHO);
 	else{
 		move(4, 0);
-		outs("本功\能需透過您已登入的iBunny或您註冊的手機號碼傳送驗證碼。\n");
+		outs("本功\能需透過您已登入的iBunny");
+#ifdef USE_PHONE_SMS
+		outs("或您註冊的手機號碼傳送驗證碼");
+#endif
+		outs("，\n");
+		outs("或者您可以使用Google Authenticator等動態驗證碼產生器。\n");
+#ifdef USE_PHONE_SMS
+		outs("使用Telegram版iBunny，除設定時須使用驗證碼，未來登入時可使用簡易認證。\n\n");
 		outs("請注意：如透過手機號碼傳送驗證碼，每個帳號24小時內只允許\發送3則簡訊，\n");
-		outs("		當超過限額時您將無法收到簡訊驗證碼，只能透過iBunny接收或使用復原碼。\n");
-		outs("		建議您也登入iBunny以避免超過簡訊限額而無法正確驗證登入。\n");
-		outs("		當您有登入iBunny同時也有註冊手機號碼時，系統會優先發送驗證碼至iBunny。\n");
-		getdata(10, 0, "開啟(y) 取消操作[N] ",genbuf, 3, LCECHO);
+		outs("        當超過限額時您將無法收到簡訊驗證碼，只能透過其他方式驗證。\n");
+		outs("        建議您也登入iBunny以避免超過簡訊限額而無法正確驗證登入。\n");
+		outs("        當您有登入iBunny同時也有註冊手機號碼時，系統會優先發送驗證碼至iBunny。\n");
+		getdata(13, 0, "(T)動態驗證碼 (I)iBunny (S)簡訊驗證碼 [N]取消操作 ",genbuf, 3, LCECHO);
+#else
+		getdata(8, 0, "(T)動態驗證碼 (I)iBunny [N]取消操作 ",genbuf, 3, LCECHO);
+#endif
 	}
-	if (genbuf[0] != 'y') {
+
+	if (genbuf[0] != 'y' && genbuf[0] != 't' && genbuf[0] != 'i' && genbuf[0] != 's') {
 		vmsg("取消操作。");
 		return 0;
 	}
+
+#ifndef USE_PHONE_SMS
+	if (genbuf[0] == 's') {
+		vmsg("取消操作。");
+		return 0;
+	}
+#endif
+
+#ifndef USE_TWOFA_TOTP
+	if (genbuf[0] == 't') {
+		vmsg("取消操作。");
+		return 0;
+	}
+#endif
 
 	clear();move(6,0);
 	outs("以下操作需要先確認您的身份。\n");
@@ -163,40 +207,68 @@ int twoFA_setting(void)
 		return 0;
 	}
 
+	/* 以下開始是設定兩步驟認證的程序 */
 	move(4, 0);clrtobot();
-	mvouts(6, 0, "我們將發送一則驗證碼至您的iBunny作為測試。\n");
 
-	twoFA_GenCode(code, 6);
+	if (genbuf[0] == 'i' || genbuf[0] == 's') {
+		twoFA_GenCode(code, 6);
+		setuserfile(buf, "2fa.code");
+		if (!(fp = fopen(buf, "w"))){
+			mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
+			vmsg("系統錯誤，請稍後再試。(Error code: 2FA-S-001)");
+			return 0;
+		}
+		fprintf(fp,"%s", code);
+		fclose(fp);
 
-	setuserfile(buf, "2fa.code");
-	if (!(fp = fopen(buf, "w"))){
-		mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
-		vmsg("系統錯誤，請稍後再試。(Error code: 2FA-S-001)");
-		return 0;
-	}
-	fprintf(fp,"%s", code);
-	fclose(fp);
-
-	msg = twoFA_Send(user,code);
+		if (genbuf[0] == 'i') {
+			mvouts(6, 0, "我們將發送一則驗證碼至您的iBunny作為測試。\n");
+			msg = twoFA_Send(user,code);
+			if (msg != NULL){
+				unlink(buf);
+				mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
+				vmsgf("%s", ibunny_code2msg(msg));
+				return 0;
+			}
+		}
 
 #ifdef USE_PHONE_SMS
-	if (msg == 400 && strcmp(cuser.cellphone, "")){
-		msg = NULL;
-		move(7, 0);
-		outs("您沒有登入iBunny，系統即將發送驗證碼至您註冊的手機號碼。\n");
-		pressanykey();
-		msg = twoFA_sms_Send(user,code,cuser.cellphone);
-	}
+		if (genbuf[0] == 's') {
+			if (strcmp(cuser.cellphone, "")){
+				mvouts(6, 0, "系統即將發送驗證碼至您註冊的手機號碼。\n");
+				pressanykey();
+				msg = twoFA_sms_Send(user,code,cuser.cellphone);
+				if (msg != NULL){
+					unlink(buf);
+					mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
+					vmsgf("%s", ibunny_code2msg(msg));
+					return 0;
+				}
+			}else{
+				unlink(buf);
+				mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
+				vmsg("您還未設定手機號碼！");
+				return 0;
+			}
+		}
 #endif //USE_PHONE_SMS
 
-	if (msg != NULL){
-		mvouts(b_lines - 1, 0 ,"未成功\開啟兩步驟認證。");
-		vmsgf("%s", ibunny_code2msg(msg));
-		return 0;
+		unlink(buf);
+		move(8, 0);outs("驗證碼應為6位數字。\n");
 	}
-	unlink(buf);
-
-	move(8, 0);outs("驗證碼已經發送完畢，驗證碼為6位數字。\n");
+#ifdef USE_TWOFA_TOTP
+	if (genbuf[0] == 't') {
+		char totp_key[17];
+		twoFA_GenRevCode(totp_key, 16);
+		strlcpy(cuser.totp_key, totp_key, sizeof(cuser.totp_key));
+		passwd_update(usernum, &cuser);
+		mvouts(3, 0, "請在動態驗證碼產生器中輸入下方金鑰：\n\n    ");
+		outs(totp_key);
+		outs("\n\n並取得動態驗證碼。\n");
+		outs("您可以將金鑰複製至 https://bunnybbs.tw/TOTP/QRcode 中產生QR-Code。");
+		pressanykey();
+	}
+#endif //USE_TWOFA_TOTP
 
 	for (int i = 3; i > 0; i--) {
 		if (i < 3) {
@@ -205,6 +277,13 @@ int twoFA_setting(void)
 			snprintf(buf, sizeof(buf), ANSI_COLOR(1;31) "驗證碼錯誤，您還有 %d 次機會。" ANSI_RESET, i);
 			outs(buf);
 		}
+#ifdef USE_TWOFA_TOTP
+		if (genbuf[0] == 't') {
+			totp_code(code, cuser.totp_key);
+		}
+		/* 理論上不應該放這裡，可是放下面會影響code_input。Why? No idea...
+		   基本上放這裡主要問題是產生時跟使用者送出時有一點時差而認證失敗 */
+#endif //USE_TWOFA_TOTP
 		code_input[0] = '\0';
 		getdata(9, 0, "請輸入驗證碼：", code_input,
 			sizeof(code_input), DOECHO);
@@ -283,171 +362,204 @@ int twoFA_main(const userec_t *u)
 	clear();
 	vs_hdr2(" 兩步驟認證 ", "");
 
-#ifdef IBUNNY_TWOFA_SIMPLE
-	char token[33];
-	twoFA_GenToken(token, 32);
-	msg = twoFA_Simple(user,token);
-	if(msg == NULL){
-		while(true){
-			msg = twoFA_Simple(user,token);
-			if(msg == 404){
-				sleep(5);
-				continue;
-			}else if(msg == NULL){
-				mvouts(10, 35, ANSI_COLOR(1;33) "驗證成功\！" ANSI_RESET );
-				return NULL; //Success
-			}else if(msg == 403){
-				mvouts(10, 27, ANSI_COLOR(1;31) "驗證失敗：登入請求被拒絕！" ANSI_RESET );
-				now = time(NULL);
-				snprintf(buf2, sizeof(buf2), "[%s] 兩步驟認證失敗：登入請求被拒絕(%s)\n",Cdate(&now), fromhost);
-				setuserfile(buf, FN_BADTWOFA);
-				log_filef(buf, LOG_CREAT, buf2);
-				log_usersecurity(user, "兩步驟認證失敗：登入請求被拒絕", fromhost);
-				return -1;
-			}else if(msg == 408){
-				mvouts(10, 24, ANSI_COLOR(1;31) "驗證失敗：操作逾時，請重新登入！" ANSI_RESET );
-				now = time(NULL);
-				snprintf(buf2, sizeof(buf2), "[%s] 兩步驟認證失敗：操作逾時(%s)\n",Cdate(&now), fromhost);
-				setuserfile(buf, FN_BADTWOFA);
-				log_filef(buf, LOG_CREAT, buf2);
-				log_usersecurity(user, "兩步驟認證失敗：操作逾時", fromhost);
-				return -1;
-			}else{
-				move(10, 0);
-				prints("  錯誤：%s\n", ibunny_code2msg(msg));
-				outs("  即將改用驗證碼登入…");
-				pressanykey();
-				break;
-			}
-		}
-	}else{
-		move(10, 0);
-		prints("  錯誤：%s\n", ibunny_code2msg(msg));
-		outs("  即將改用驗證碼登入…");
-		pressanykey();
-	}
-#endif //IBUNNY_TWOFA_SIMPLE
-
-	twoFA_GenCode(code, 6);
-
 	setuserfile(coded, "2fa.code");
 	setuserfile(revcd, "2fa.recov");
 
-	if (!(fp = fopen(coded, "w"))){
-		move(1,0);
-		outs("系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-F-001)");
-		getdata(2, 0, "使用復原碼？ (y/N) ",genbuf, 3, LCECHO);
-		if (genbuf[0] != 'y') {
-			return -1;
-		}
-		if (!(fp = fopen(revcd, "r"))){
-			outs("系統錯誤，無法使用復原碼，請稍後再試。(Error code: 2FA-F-002)");
-			return -1;
-		}
-		fgets(rev_code, sizeof(rev_code), fp);
-		fclose(fp);
-		int i = 3;
-		for (i = 3; i > 0; i--) {
-			if (i < 3) {
-				char buf[80];
-				snprintf(buf, sizeof(buf), ANSI_COLOR(1;31) "復原碼錯誤，您還有 %d 次機會。" ANSI_RESET, i);
-				move(6, 0);
-				outs(buf);
-			}
-			code_input[0] = '\0';
-			getdata(5, 0, "請輸入復原碼：", code_input, sizeof(code_input), DOECHO);
-			if (!strcmp(rev_code, code_input)){
-				unlink(revcd);
-				move(6, 0);
-				outs(ANSI_COLOR(1;33) "使用了復原碼認證，故復原碼已失效。" ANSI_RESET);
-				return NULL; //Success
-			}
-		}
-
-		now = time(NULL);
-		snprintf(buf2, sizeof(buf2), "[%s] 兩步驟認證失敗：第%d次驗證碼錯誤(%s)\n",Cdate(&now), 4 - i , fromhost);
-		setuserfile(buf, FN_BADTWOFA);
-		log_filef(buf, LOG_CREAT, buf2);
-		log_usersecurity(user, "兩步驟認證失敗：驗證碼錯誤", fromhost);
-		return -1;
-	}
-	fprintf(fp,"%s", code);
-	fclose(fp);
-
-	msg = twoFA_Send(user,code);
-
-#ifdef USE_PHONE_SMS
-	/* 沒有登入iBunny就自動嘗試簡訊 */
 	int use_sms = 0;
-	if(!strcmp(u->cellphone, ""))
-		use_sms = 2; /* 當使用者沒有設定手機號碼，就用use_sms=2來識別 */
+	int use_totp = 0;
+#ifdef USE_TWOFA_TOTP
+	if(strcmp(u->totp_key, "")){
+		use_totp = 1;
+		char totp_key[17];
+		strlcpy(totp_key, u->totp_key, sizeof(totp_key));
 
-	if(msg == 400 && use_sms == 0){
-		msg = NULL; use_sms = 1;
-		msg = twoFA_sms_Send(user, code, u->cellphone);
-		if(msg != NULL){
-			use_sms = -1;
+		/* 原本想讓系統自動跳到輸入畫面，但還是留個選擇好了 */
+		getdata(4, 0, "[ENTER]使用動態驗證碼 (Q)使用iBuuny或簡訊 ",genbuf, 3, LCECHO);
+		if (genbuf[0] == 'q') {
+			use_totp = 0;
 		}
 	}
-#endif //USE_PHONE_SMS
 
-   	if(msg != NULL){
-		move(1, 0); clrtobot();
-		prints("\n錯誤：%s", ibunny_code2msg(msg));
-		outs("\n如果您有收到驗證碼，但系統誤報錯誤，輸入R即可進入驗證程序。");
-#ifdef USE_PHONE_SMS
-		if(use_sms == 0)
-			getdata(4, 0, "(S)改用手機簡訊 (R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
-		else
-#endif //USE_PHONE_SMS
-			getdata(4, 0, /*"(T)再試一次 "*/"(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
-		if (genbuf[0] != 'r' && genbuf[0] != 's') {
-			unlink(coded);
+	if(use_totp == 0){	
+#endif //USE_TWOFA_TOTP
+#ifdef IBUNNY_TWOFA_SIMPLE
+		char token[33];
+		twoFA_GenToken(token, 32);
+		msg = twoFA_Simple(user,token);
+		if(msg == NULL){
+			while(true){
+				msg = twoFA_Simple(user,token);
+				if(msg == 404){
+					sleep(5);
+					continue;
+				}else if(msg == NULL){
+					mvouts(10, 35, ANSI_COLOR(1;33) "驗證成功\！" ANSI_RESET );
+					return NULL; //Success
+				}else if(msg == 403){
+					mvouts(10, 27, ANSI_COLOR(1;31) "驗證失敗：登入請求被拒絕！" ANSI_RESET );
+					now = time(NULL);
+					snprintf(buf2, sizeof(buf2), "[%s] 兩步驟認證失敗：登入請求被拒絕(%s)\n",Cdate(&now), fromhost);
+					setuserfile(buf, FN_BADTWOFA);
+					log_filef(buf, LOG_CREAT, buf2);
+					log_usersecurity(user, "兩步驟認證失敗：登入請求被拒絕", fromhost);
+					return -1;
+				}else if(msg == 408){
+					mvouts(10, 24, ANSI_COLOR(1;31) "驗證失敗：操作逾時，請重新登入！" ANSI_RESET );
+					now = time(NULL);
+					snprintf(buf2, sizeof(buf2), "[%s] 兩步驟認證失敗：操作逾時(%s)\n",Cdate(&now), fromhost);
+					setuserfile(buf, FN_BADTWOFA);
+					log_filef(buf, LOG_CREAT, buf2);
+					log_usersecurity(user, "兩步驟認證失敗：操作逾時", fromhost);
+					return -1;
+				}else{
+					move(10, 0);
+					prints("  錯誤：%s\n", ibunny_code2msg(msg));
+					outs("  即將改用驗證碼登入…");
+					pressanykey();
+					break;
+				}
+			}
+		}/*else{
+			move(10, 0);
+			prints("  錯誤：%s\n", ibunny_code2msg(msg));
+			outs("  即將改用驗證碼登入…");
+			pressanykey();
+		}*/ /* 無法適用簡易認證時不提示，直接繼續下面流程 */
+#endif //IBUNNY_TWOFA_SIMPLE
+
+		twoFA_GenCode(code, 6);
+
+		if (!(fp = fopen(coded, "w"))){
+			move(1,0);
+			outs("系統錯誤，您可以使用復原碼或稍後再試。(Error code: 2FA-F-001)");
+			getdata(2, 0, "使用復原碼？ (y/N) ",genbuf, 3, LCECHO);
+			if (genbuf[0] != 'y') {
+				return -1;
+			}
+			if (!(fp = fopen(revcd, "r"))){
+				outs("系統錯誤，無法使用復原碼，請稍後再試。(Error code: 2FA-F-002)");
+				return -1;
+			}
+			fgets(rev_code, sizeof(rev_code), fp);
+			fclose(fp);
+			int i = 3;
+			for (i = 3; i > 0; i--) {
+				if (i < 3) {
+					char buf[80];
+					snprintf(buf, sizeof(buf), ANSI_COLOR(1;31) "復原碼錯誤，您還有 %d 次機會。" ANSI_RESET, i);
+					move(6, 0);
+					outs(buf);
+				}
+				code_input[0] = '\0';
+				getdata(5, 0, "請輸入復原碼：", code_input, sizeof(code_input), DOECHO);
+				if (!strcmp(rev_code, code_input)){
+					unlink(revcd);
+					move(6, 0);
+					outs(ANSI_COLOR(1;33) "使用了復原碼認證，故復原碼已失效。" ANSI_RESET);
+					return NULL; //Success
+				}
+			}
+
+			now = time(NULL);
+			snprintf(buf2, sizeof(buf2), "[%s] 兩步驟認證失敗：第%d次驗證碼錯誤(%s)\n",Cdate(&now), 4 - i , fromhost);
+			setuserfile(buf, FN_BADTWOFA);
+			log_filef(buf, LOG_CREAT, buf2);
+			log_usersecurity(user, "兩步驟認證失敗：驗證碼錯誤", fromhost);
 			return -1;
 		}
+		fprintf(fp,"%s", code);
+		fclose(fp);
+
+		msg = twoFA_Send(user,code);
+
 #ifdef USE_PHONE_SMS
-		if(use_sms == 0 && genbuf[0] == 's'){
-			use_sms = 1;
-			msg = twoFA_sms_Send(user,code,u->cellphone);
+		if(!strcmp(u->cellphone, ""))
+			use_sms = 2; /* 當使用者沒有設定手機號碼，就用use_sms=2來識別 */
+
+		/* 沒有登入iBunny就自動嘗試簡訊 */
+		if(msg == 400 && use_sms == 0){
+			msg = NULL; use_sms = 1;
+			msg = twoFA_sms_Send(user, code, u->cellphone);
 			if(msg != NULL){
 				use_sms = -1;
-				move(1,0); clrtobot();
-				prints("\n錯誤：%s", ibunny_code2msg(msg));
-				getdata(3, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
-				if (genbuf[0] != 'r') {
-					unlink(coded);
-					return -1;
-				}
 			}
 		}
 #endif //USE_PHONE_SMS
-		/*if(genbuf[0] == 't'){
-			msg = twoFA_Send(user,code);
-			if (msg != NULL){
-				move(1,0); clrtobot();
-				prints("錯誤：%s",msg);
-				getdata(3, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
-				if (genbuf[0] != 'r') {
-					unlink(buf);
-					return -1;
+
+	   	if(msg != NULL){
+			move(1, 0); clrtobot();
+			prints("\n錯誤：%s", ibunny_code2msg(msg));
+			outs("\n如果您有收到驗證碼，但系統誤報錯誤，輸入R即可進入驗證程序。");
+#ifdef USE_PHONE_SMS
+			/* 沒有登入iBunny會自動發簡訊，iBunny系統掛了或其他問題則不會，讓使用者自己選 */
+			if(use_sms == 0)
+				getdata(4, 0, "(S)改用手機簡訊 (R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+			else
+#endif //USE_PHONE_SMS
+				getdata(4, 0, /*"(T)再試一次 "*/"(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+			if (genbuf[0] != 'r' && genbuf[0] != 's') {
+				unlink(coded);
+				return -1;
+			}
+#ifdef USE_PHONE_SMS
+			if(use_sms == 0 && genbuf[0] == 's'){
+				use_sms = 1;
+				msg = twoFA_sms_Send(user,code,u->cellphone);
+				if(msg != NULL){
+					use_sms = -1;
+					move(1,0); clrtobot();
+					prints("\n錯誤：%s", ibunny_code2msg(msg));
+					getdata(3, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+					if (genbuf[0] != 'r') {
+						unlink(coded);
+						return -1;
+					}
 				}
 			}
+#else //USE_PHONE_SMS
+			if(genbuf[0] == 's'){
+				unlink(coded);
+				return -1;
+			}
+#endif //USE_PHONE_SMS
+			/*if(genbuf[0] == 't'){
+				msg = twoFA_Send(user,code);
+				if (msg != NULL){
+					move(1,0); clrtobot();
+					prints("錯誤：%s",msg);
+					getdata(3, 0, "(R)使用復原碼 [C]取消登入 ",genbuf, 3, LCECHO);
+					if (genbuf[0] != 'r') {
+						unlink(buf);
+						return -1;
+					}
+				}
 
-		}*/
+			}*/
+		}
+		unlink(coded);
+		/* 發送程序至此為止，後面不再管驗證碼發送的事情。 */
+#ifdef USE_TWOFA_TOTP
 	}
-	unlink(coded);
-	/* 發送程序至此為止，後面不再管驗證碼發送的事情。 */
+#endif //USE_TWOFA_TOTP
 
 	move(1,0); clrtobot();
-	if(msg == NULL){
-		mvouts(2, 0, "驗證碼將直接被發送到");
+#ifdef USE_TWOFA_TOTP
+	if(use_totp == 1){
+		mvouts(2, 0, "請開啟您的動態驗證碼產生器取得驗證碼。");
+	}else{
+#endif //USE_TWOFA_TOTP
+		if(msg == NULL){
+			mvouts(2, 0, "驗證碼將直接被發送到");
 #ifdef USE_PHONE_SMS
-		if(use_sms == 1)
-			outs("您註冊的手機號碼");
-		else
+			if(use_sms == 1)
+				outs("您註冊的手機號碼");
+			else
 #endif //USE_PHONE_SMS
-			outs("您綁定的iBunny");
+				outs("您綁定的iBunny");
+		}
+#ifdef USE_TWOFA_TOTP
 	}
+#endif //USE_TWOFA_TOTP
 	outs("\n驗證碼為6位數字、復原碼為8位英數混合。\n");
 
 	int y = 5;
@@ -459,6 +571,12 @@ int twoFA_main(const userec_t *u)
 			move(y + 1, 0); clrtobot();
 			outs(buf);
 		}
+#ifdef USE_TWOFA_TOTP
+		if (use_totp == 1) {
+			totp_code(code, cuser.totp_key);
+		}
+		/* 同上述，放這裡主要問題是怕產生時跟使用者送出時有一點時差而認證失敗 */
+#endif //USE_TWOFA_TOTP
 		code_input[0] = '\0';
 		getdata(y, 0, "請輸入驗證碼：", code_input, sizeof(code_input), DOECHO);
 		size_t length = strlen(code_input);

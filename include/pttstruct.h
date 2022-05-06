@@ -126,7 +126,7 @@ typedef struct userec_t {
     uint8_t badpost;    /* 評價為壞文章數 */
     //uint16_t    dark_tie;       /* 暗棋戰績 和 */
     //char    myangel[IDLEN+1];/* 我的小天使 */
-    char    _unused_a[30];
+    char    totp_key[30];   /* TOTP金鑰 */
     char    pad_3;
 
     uint16_t    chess_elo_rating;/* 象棋等級分 */

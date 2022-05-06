@@ -14,10 +14,11 @@
 
  1. ¥´ vipw, ¥[¤J©³¤U¨â¦æ
 
-    bbs::9999:99:PttBBS,,,:/home/bbs:/home/bbs/bin/bbsrf
-    bbsadm::9999:99:PttBBS,,,:/home/bbs:/bin/bash
+    bbs:x:9999:99:BBS,,,:/home/bbs:/home/bbs/bin/bbsrf
+    bbs:x:9999:99:BBS,,,:/home/bbs:/home/bbs/bin/utf8
+    bbsadm:x:9999:99:BBS,,,:/home/bbs:/bin/bash
 
- 2. °õ¦æ passwd bbsadm ³] bbsadmªº±K½X
+ 2. °õ¦æ passwd bbsadm ³]©wbbsadmªº±K½X
 
  3. ¦b /etc/group ¤¤¥[¤J¤@¦æ
 
@@ -36,64 +37,53 @@
 ¥H¤U¥Î bbsadm ªº¨­¥÷
 ====================
 
- 7. ±z¥i¥H³z¹L¤U¦C¤è¦¡¤U¸ü¨ì¥»¯¸ªº­ì©lµ{¦¡½X:
-    https://github.com/ptt/pttbbs
-    ³o¬O¥Ø«e¥D­n¶}µoªºª©¥», ¤]¬O§å½ð½ð¹ê·~§{©M§å½ð½ð¨ß¨â­Ó¯¸¥x
-    ©Ò¨Ï¥Îªºª©¥». ¦b³o­Óª©¥»¤¤§t¦³³Ì·sªºµ{¦¡, ¦ý¬O¥i¯à·|¤£Ã­©w,
-    ¦³ bug, ¬Æ¦Ü©M¤§«eªºª©¥»¤£¬Û®e. «ØÄ³±z¦³°òÂ¦ªºµ{¦¡¯à¤O, ¨Ã
-    ÀH®Éª`·N PttCurrent ¬ÝªO (¦b telnet://ptt.cc ¤¤, ©Î¥i¥H¨Ï¥Î
-    ºô­¶ª©¥» http://www.ptt.cc/bbs/PttCurrent/index.html) , ¤×
-    ¨ä·í±z¦b§ó·sµ{¦¡ªº®É­Ô.
+ 7. ±z¥i¥H³z¹Lgithub¤U¸ü­ì©lµ{¦¡½X
+    git clone http://github.com/BunnyBBS/BRsBBS
 
-    git clone http://github.com/ptt/pttbbs
+    ±z¥i¥H¦b¸Ó¥Ø¿ý¤Uª½±µ³z¹L git pull §ó·s¦Ü³Ì·sªº·½½X. ¦p:
+    cd /home/bbs/BRsBBS; git pull; git rebase
 
-    ±z¥i¥H¦b¸Ó¥Ø¿ý¤Uª½±µ³z¹L git pull §ó·s¦Ü pttbbs ³Ì·sªº·½½X. ¦p:
-    cd /home/bbs/pttbbs; git pull; git rebase
-
- 8. ¤Á´«¨ì pttbbs ªº¥Ø¿ý¤U ( cd /home/bbs/pttbbs )
+ 8. ¤Á´«¨ì BRsBBS ªº¥Ø¿ý¤U ( cd /home/bbs/BRsBBS )
 
  9. ¦pªG±zªº main.conf¨Ã¤£¦s¦b, ¥i¥H«þ¤@¥÷¹w³]ªº¨Ó¥Î:
      cp sample/main.conf main.conf
 
  10.¨Ì¾Ú±zªº¶·¨D, ­×§ï main.conf
-    ½Ðª`·N, ¹w³]ªº main.conf¬Oµ¹¬Û·í¤j³W¼Òªº bbs¥Îªº.
     ³q±`±z¶·­n¶i¦æ­×§ï¥H²Å¦X±zªº¶·¨D.
 
-    ¦pªG¬O¦b 64bit ªº§@·~¨t²Î½sÄ¶¦w¸Ë PttBBS
+    ¦pªG¬O¦b 64bit ªº§@·~¨t²Î½sÄ¶¦w¸Ë BRsBBS
     ½Ð°O±o¦b main.conf ¨ú®ø¥H¤U¨â­Ó©w¸qªºµù¸Ñ¡G
 
     #define SHMALIGNEDSIZE (1048576*4)
     #define TIMET64
 
-    * ¦pªG±z¬O¥Î Linux ¨t²Î, ½Ð¥ý¦w¸Ë pmake, µM«á±N make alias ¦¨ pmake *
-    * ¦pªG±z¬O¥Î MacOSX ¨t²Î, ½Ð¥ý¥Ñ ports ¦w¸Ë bmake,
-      µM«á±N make alias ¦¨ pmake *
-
     ¥H¤U¬O½sÄ¶«e«ØÄ³¥ý¦w¸Ëªº®M¥ó²M³æ¡A
-    ¥i¥H¥Î apt-get / yum µ¥³nÅéºÞ²z­û«ü¥OÀË¬d¦Û¤v¦³¨S¦³¦w¸Ë¨ì¡G
+    ¥i¥H¥Î apt / yum µ¥³nÅéºÞ²z­û«ü¥OÀË¬d¦Û¤v¦³¨S¦³¦w¸Ë¨ì¡G
 
-    clang
+    pmake
+    clang
     ccache
     libevent-dev
+    python-is-python2
 
- 11.(¦b /home/bbs/pttbbs ¤U)  °õ¦æ make BBSHOME=/home/bbs all install
+ 11.(¦b /home/bbs/BRsBBS ¤U)  °õ¦æ pmake all install
 
  12.¦pªG¬O·s¬[°_¨Óªº¯¸, ½Ð°õ¦æ cd sample; make install
 
- 13.°õ¦æ cd /home/bbs; bin/initbbs -DoIt
+ 13.°õ¦æ /home/bbs/bin/initbbs -DoIt
 
-¨ä¤¤²Ä 13 ¥H¤Î 14 ¨B¬Oµ¹²Ä¤@¦¸¦w¸Ëªº®É­Ô¨Ï¥Îªº,
+¨ä¤¤²Ä 12 ¥H¤Î 13 ¨B¬Oµ¹²Ä¤@¦¸¦w¸Ëªº®É­Ô¨Ï¥Îªº,
 ¦pªG±zªº BBS¤¤¤w¸g¦³¸ê®Æ¤F, ½Ð°È¥²¤£­n°õ¦æ³o¨â­Ó¨BÆJ.
 
 °²¦p¤@¤Á³£«Ü¶¶§Qªº¸Ü, ³o¼Ë¤l¤j·§´N¦w¸Ë§¹¤F, ±µ¤U¨Ó¬O±Ò°Ê bbs ªº³¡¥÷.
 
- 15.°õ¦æ /home/bbs/bin/shmctl init (*µù1, *µù2)
+ 14.°õ¦æ /home/bbs/bin/shmctl init (*µù1, *µù2)
 
- 16.¥Î root °õ¦æ /home/bbs/bin/mbbsd -p 23 -d (*µù3)
+ 15.¥Î root °õ¦æ /home/bbs/bin/mbbsd -p 23 -d (*µù3)
     ¨ä¤¤ -d ¬O«ü©w daemon mode. ­Y³s½u¦³°ÝÃD»Ý­n¤è«K´ú¸Õ®É¥i¥H¥ý¤£¥[ -d¡A
     ¥Î§Oµ¡ª½±µ¶i¦æ³s½u¥H¤è«K§ä¥X°ÝÃD¡C
 
- 17.´ú¸Õ¾ã­Ó¨t²Î¬O§_§¹¦¨:
+ 16.´ú¸Õ¾ã­Ó¨t²Î¬O§_§¹¦¨:
     telnet localhost 23 ¬Ý¬Ý
 
     new ¤@­Ó±b¸¹¥sSYSOP, µM«á logout¦A login, ³o¼Ë¤l´N·|¾Ö¦³¯¸ªøÅv­­Åo~
@@ -104,21 +94,21 @@
 
     ¶}ªO, ¶}¸s²Õ, ¥H¤Î·h°Ê¸s²Õªº¤èªk½Ð¬Ý ptt2.cc PttSrc ªOªº¤åºK
 
- 18.¬ÛÃö¶i¶¥¥\¯à½Ð°Ñ¦Ò ADVANCE
+ 17.¬ÛÃö¶i¶¥¥\¯à½Ð°Ñ¦Ò ADVANCE
 
- 19.¬°¤FÅý¶}¾÷ªº®É­Ô·|¦Û¤v§â bbs (¥H¤Î©Ò¶·­nªºµ{¦¡) ¶]°_¨Ó,
+ 18.¬°¤FÅý¶}¾÷ªº®É­Ô·|¦Û¤v§â bbs (¥H¤Î©Ò¶·­nªºµ{¦¡) ¶]°_¨Ó,
     ­Y±z¨Ï¥Î Linux, ±z¥i¥H°Ñ¦Ò /home/bbs/sample/rc.local ªº¤º®e
     ¥H root Åv­­«Ø¥ß /etc/rc.local ÀÉ®×±N¸Ó¤º®e½Æ»s¶i¥h, ¨Ã±NÅv­­³]©w¥i°õ¦æ
 
     ¤§«á±z¥i¥H­«·s¶}¾÷¸Õ¸Õ¬Ý¬O¤£¬O¦b­«¶}«á¥i¥H¥¿±`¹B§@ :)
 
- 20.pttbbs ¶·­n©w®É°õ¦æ¤@¨Ç¤p tool ¨Óºû«ù¨t²Î¥¿±`¹B§@,
+ 19.BRsBBS ¶·­n©w®É°õ¦æ¤@¨Ç¤p tool ¨Óºû«ù¨t²Î¥¿±`¹B§@,
     reload cache, ³Æ¥÷, ¸`¤éÂIºqµ¥¨t²Î¸ê°T¡A©Î¨ä¥¦¯S®í¥~³¡µ{¦¡µ¥µ¥.
     ½Ð¥Î bbsªºÅv­­, °õ¦æ crontab -e , ¤º®e½Ð°Ñ·Ó sample/crontab
     (¦b¤j³¡¥÷ªº±¡ªp¤U, ª½±µ±N sample/crontab ¤º®e«þ³Æ¶i¥h
-    ©Î¬Oª½±µ crontab /home/bbs/pttbbs/sample/crontab §Y¥i
+    ©Î¬Oª½±µ crontab /home/bbs/BRsBBS/sample/crontab §Y¥i
 
- 21.¦b¬Y¨Ç±¡ªp¤U, pttbbs·|¶·­n¤@¨Ç¨ä¥Lªºµ{¦¡¨Ó»²§U.
+ 20.¦b¬Y¨Ç±¡ªp¤U, pttbbs·|¶·­n¤@¨Ç¨ä¥Lªºµ{¦¡¨Ó»²§U.
 
     ¤U­±¦C¥X©Ò¶·­nªºµ{¦¡, µ{¦¡©ÒÄÝªº¸ô®|¥i¥H¨Ï¥Î«ü¥O¬d¸ß: type <µ{¦¡¦WºÙ>
 
@@ -131,7 +121,7 @@
 
     §Ú­Ì¤j³¡¥÷ªº perl script·|¥Î¨ì LocalVars.pm , ¸ÓÀÉ®×¤º­t³d©w¸q
     ¦U§O¾÷¾¹ªº³]©w (¦p¥~³¡µ{¦¡ªº¸ô®|) .
-    ½Ð±N /home/bbs/pttbbs/sample/LocalVars.pm ½Æ»s¤@¥÷¦Ü /home/bbs/bin/
+    ½Ð±N /home/bbs/BRsBBS/sample/LocalVars.pm ½Æ»s¤@¥÷¦Ü /home/bbs/bin/
     ¤U, ¨Ã­×¥¿¸ÓÀÉ¥H²Å¦X¶QÀô¹Òªº³]©w.
 
     ¥t¥~¦C¥X§Ú­Ì perl script·|¥Î¨ìªº perl module

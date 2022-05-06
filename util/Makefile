@@ -79,6 +79,7 @@ install: $(PROGS)
 	install -d $(BBSHOME)/bin/
 	install -c -m 755 $(PROGS) $(BBSHOME)/bin/
 	chmod 4755 $(BBSHOME)/bin/post
+	ln -f -s $(BBSHOME)/bin/bbsrf $(BBSHOME)/bin/utf8
 .if defined(WITHFILTERMAIL)
 	$(MAKE) installfiltermail
 .endif
@@ -86,6 +87,7 @@ install: $(PROGS)
 clean:
 	rm -f *.o $(CPROGS) $(CPROG_WITH_UTIL) $(CPROG_WITHOUT_UTIL) $(CPP_WITH_UTIL)
 	rm -f shmctl
+	rm -f totp
 
 
 installfiltermail:
@@ -104,3 +106,6 @@ installbbsctl: bbsctl
 
 cleanpasswd: cleanpasswd.c ${UTIL_OBJS}
 	${CC} ${CFLAGS} ${LDFLAGS} -o cleanpasswd ${UTIL_OBJS} cleanpasswd.c
+
+totp: ${BBSBASE} totp.c ${UTIL_OBJS}
+	${CC} ${CFLAGS} ${LDFLAGS} -o totp ${UTIL_OBJS} totp.c /usr/lib/x86_64-linux-gnu/libcrypto.so $(LDLIBS)
