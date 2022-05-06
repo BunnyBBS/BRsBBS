@@ -109,3 +109,4 @@ cleanpasswd: cleanpasswd.c ${UTIL_OBJS}
 
 totp: ${BBSBASE} totp.c ${UTIL_OBJS}
 	${CC} ${CFLAGS} ${LDFLAGS} -o totp ${UTIL_OBJS} totp.c /usr/lib/x86_64-linux-gnu/libcrypto.so $(LDLIBS)
+	cp $(BBSHOME)/BRsBBS/util/totp $(BBSHOME)/bin/totp
