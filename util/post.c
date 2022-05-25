@@ -1,5 +1,72 @@
 #include "bbs.h"
 
+aidu_t fn2aidu(const char *fn)
+{
+  aidu_t aidu = 0;
+  aidu_t type = 0;
+  aidu_t v1 = 0;
+  aidu_t v2 = 0;
+  char fnbuf[FNLEN + 1];
+  char *sp = NULL;
+
+  if(fn == NULL)
+    return 0;
+  strncpy(fnbuf, fn, FNLEN);
+  fnbuf[FNLEN] = '\0';
+  sp = fnbuf;
+
+  switch(*(sp ++))
+  {
+    case 'M':
+      type = 0;
+      break;
+    case 'G':
+      type = 1;
+      break;
+    default:
+      return 0;
+      break;
+  }
+
+  if(*(sp ++) != '.')
+    return 0;
+  v1 = strtoul(sp, &sp, 10);
+  if(sp == NULL)
+    return 0;
+  if(*sp != '.' || *(sp + 1) != 'A')
+    return 0;
+  sp += 2;
+  if(*(sp ++) == '.')
+  {
+    v2 = strtoul(sp, &sp, 16);
+    if(sp == NULL)
+      return 0;
+  }
+  aidu = ((type & 0xf) << 44) | ((v1 & 0xffffffff) << 12) | (v2 & 0xfff);
+
+  return aidu;
+}
+
+char *aidu2aidc(char *buf, const aidu_t orig_aidu)
+{
+  const char aidu2aidc_table[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
+  const int aidu2aidc_tablesize = sizeof(aidu2aidc_table) - 1;
+  char *sp = buf + 8;
+  aidu_t aidu = orig_aidu;
+  aidu_t v;
+
+  *(sp --) = '\0';
+  while(sp >= buf)
+  {
+    /* FIXME: 能保證 aidu2aidc_tablesize 是 2 的冪次的話，
+              這裡可以改用 bitwise operation 做 */
+    v = aidu % aidu2aidc_tablesize;
+    aidu = aidu / aidu2aidc_tablesize;
+    *(sp --) = aidu2aidc_table[v];
+  }
+  return buf;
+}
+
 static int
 payMoney(const char *username, int money, const char *reason)
 {
@@ -68,10 +135,31 @@ void keeplog(FILE *fin, char *board, char *title, char *owner, int money, char *
     sprintf(genbuf2, BBSHOME "/boards/%c/%s/%s", board[0], board, fhdr.filename);
     log_filef(genbuf2, LOG_CREAT,
               "\n--\n※ 發信站: " BBSNAME "(" MYHOSTNAME "), 來自: %s\n", ip);
+
 #ifdef QUERY_ARTICLE_URL
-    log_filef(genbuf2, LOG_CREAT,
-              "※ " URL_DISPLAYNAME ": " URL_PREFIX "/%s\n", fhdr.filename);
+    const char *fn = fhdr.filename;
+
+#ifdef USE_AID_URL
+    char aidc[32] = "";
+    aidu_t aidu = fn2aidu(fhdr.filename);
+
+    aidu2aidc(aidc, aidu);
+    fn = aidc;
+#endif //USE_AID_URL
+
+#ifndef URL_EXTENSION
+#define URL_EXTENSION ""
 #endif
+
+#ifdef URL_WITH_BRDNAME
+    log_filef(genbuf2, LOG_CREAT,
+              "※ " URL_DISPLAYNAME ": " URL_PREFIX "/%s/%s%s\n", board, fn, URL_EXTENSION);
+#else
+    log_filef(genbuf2, LOG_CREAT,
+              "※ " URL_DISPLAYNAME ": " URL_PREFIX "/%s%s\n", fn, URL_EXTENSION);
+#endif //URL_WITH_BRDNAME
+
+#endif //QUERY_ARTICLE_URL
 
     if (is_validuserid(owner)){
         char buf2[200];
